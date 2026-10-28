@@ -19,6 +19,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
+// Маршрут для проверки логина и пароля
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Логин и пароль для входа:
+  const ADMIN_USER = "admin";
+  const ADMIN_PASS = "kipluch2026"; // При необходимости измените пароль на свой
+
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    res.json({ success: true });
+  } else {
+    res.json({ success: false, message: "Неверный логин или пароль" });
+  }
+});
+
 // Порт для Render.com
 const PORT = process.env.PORT || 3000;
 
