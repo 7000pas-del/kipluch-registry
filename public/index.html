@@ -5,18 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ТОО КИП Луч — Реестр взвешиваний</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f4f6f9;
       margin: 0;
       padding: 0;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    /* Экран входа */
+    .login-wrapper {
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
     }
-    
-    /* Форма авторизации */
     .login-card {
       background: #ffffff;
       padding: 35px 30px;
@@ -52,7 +59,6 @@
       padding: 10px 12px;
       border: 1px solid #cccccc;
       border-radius: 6px;
-      box-sizing: border-box;
       font-size: 14px;
     }
     .btn-login {
@@ -77,27 +83,30 @@
       display: none;
     }
 
-    /* Основной контент реестра */
+    /* Основной интерполяционный интерфейс сайта */
     #main-content {
       display: none;
-      width: 90%;
-      max-width: 1100px;
-      margin: 40px auto;
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
     .header-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid #e9ecef;
-      padding-bottom: 15px;
-      margin-bottom: 20px;
+      background: #ffffff;
+      padding: 15px 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 25px;
+    }
+    .header-bar h1 {
+      margin: 0;
+      font-size: 22px;
+      color: #2c3e50;
     }
     .btn-logout {
-      padding: 8px 16px;
+      padding: 8px 18px;
       background: #dc3545;
       color: #ffffff;
       border: none;
@@ -108,38 +117,150 @@
     .btn-logout:hover {
       background: #c82333;
     }
+
+    /* Блоки реестра */
+    .card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .card h3 {
+      margin-top: 0;
+      color: #2c3e50;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .form-grid input, .form-grid select {
+      padding: 9px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 100%;
+    }
+    .btn-submit {
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-submit:hover {
+      background: #218838;
+    }
+
+    /* Таблица данных */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    table th, table td {
+      border: 1px solid #e9ecef;
+      padding: 12px;
+      text-align: left;
+    }
+    table th {
+      background-color: #f8f9fa;
+      color: #495057;
+    }
+    table tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Окно авторизации -->
-  <div id="login-block" class="login-card">
-    <h2>ТОО «КИП Луч»</h2>
-    <p>Вход в систему учета веса</p>
-    
-    <form id="loginForm">
-      <div class="input-group">
-        <label for="username">Логин</label>
-        <input type="text" id="username" required placeholder="Введите логин">
-      </div>
-      <div class="input-group">
-        <label for="password">Пароль</label>
-        <input type="password" id="password" required placeholder="Введите пароль">
-      </div>
-      <button type="submit" class="btn-login">Войти</button>
-      <div id="error-message" class="error-msg">Неверный логин или пароль</div>
-    </form>
+  <!-- Блок Авторизации -->
+  <div id="login-block" class="login-wrapper">
+    <div class="login-card">
+      <h2>ТОО «КИП Луч»</h2>
+      <p>Вход в систему учета веса</p>
+      
+      <form id="loginForm">
+        <div class="input-group">
+          <label for="username">Логин</label>
+          <input type="text" id="username" required placeholder="Введите логин">
+        </div>
+        <div class="input-group">
+          <label for="password">Пароль</label>
+          <input type="password" id="password" required placeholder="Введите пароль">
+        </div>
+        <button type="submit" class="btn-login">Войти</button>
+        <div id="error-message" class="error-msg">Неверный логин или пароль</div>
+      </form>
+    </div>
   </div>
 
-  <!-- Панель реестра (видна после успешного входа) -->
+  <!-- Главный Рабочий Сайт (открывается после авторизации) -->
   <div id="main-content">
     <div class="header-bar">
-      <h1 style="margin: 0; font-size: 22px; color: #2c3e50;">Реестр взвешиваний ТОО «КИП Луч»</h1>
+      <h1>Реестр взвешиваний ТОО «КИП Луч»</h1>
       <button onclick="logout()" class="btn-logout">Выйти</button>
     </div>
-    
-    <!-- Сюда помещается ваш основной интерфейс реестра -->
-    <p style="color: #28a745; font-weight: 600;">✓ Вы успешно вошли в систему!</p>
+
+    <!-- Форма внесения записей -->
+    <div class="card">
+      <h3>Новое взвешивание</h3>
+      <form id="addWeightForm">
+        <div class="form-grid">
+          <div>
+            <label>Номер авто / Вагона:</label>
+            <input type="text" placeholder="А 123 БВ" required>
+          </div>
+          <div>
+            <label>Брутто (кг):</label>
+            <input type="number" placeholder="0" required>
+          </div>
+          <div>
+            <label>Тара (кг):</label>
+            <input type="number" placeholder="0" required>
+          </div>
+          <div>
+            <label>Наименование груза:</label>
+            <input type="text" placeholder="Уголь / Щебень">
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Сохранить запись</button>
+      </form>
+    </div>
+
+    <!-- Журнал / Таблица взвешиваний -->
+    <div class="card">
+      <h3>Журнал учета взвешиваний</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Дата / Время</th>
+            <th>Транспорт</th>
+            <th>Брутто (кг)</th>
+            <th>Тара (кг)</th>
+            <th>Нетто (кг)</th>
+            <th>Груз</th>
+          </tr>
+        </thead>
+        <tbody id="registryTable">
+          <tr>
+            <td>1</td>
+            <td>28.10.2026 14:00</td>
+            <td>010 AAA 01</td>
+            <td>15000</td>
+            <td>5000</td>
+            <td><b>10000</b></td>
+            <td>Песок</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <script>
@@ -148,7 +269,7 @@
     const mainContent = document.getElementById('main-content');
     const errorMsg = document.getElementById('error-message');
 
-    // Проверка сохраненного входа
+    // Проверка состояния авторизации
     if (localStorage.getItem('isLoggedIn') === 'true') {
       showRegistry();
     }
@@ -174,7 +295,7 @@
           errorMsg.style.display = 'block';
         }
       } catch (err) {
-        alert('Ошибка соединения с сервером');
+        alert('Ошибка связи с сервером');
       }
     });
 
