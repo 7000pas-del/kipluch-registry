@@ -22,10 +22,9 @@ const db = new sqlite3.Database('./archive.db', (err) => {
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS equipment (
     id TEXT PRIMARY KEY, name TEXT, serialNumber TEXT, gsiNumber TEXT, 
-    ownerName TEXT, location TEXT, capacity TEXT, minCapacity TEXT, 
+    ownerName TEXT, location TEXT, installationDate TEXT, capacity TEXT, minCapacity TEXT, 
     discrete TEXT, adcType TEXT, sensorType TEXT, platformCount TEXT, 
-    weighingMode TEXT, installationDate TEXT, lastVerification TEXT, 
-    nextVerification TEXT, certNumber TEXT, phone TEXT, email TEXT, status TEXT, notes TEXT
+    weighingMode TEXT, lastVerification TEXT, nextVerification TEXT, certNumber TEXT, phone TEXT, email TEXT, status TEXT, notes TEXT
   )`);
   db.run(`CREATE TABLE IF NOT EXISTS folders (id TEXT PRIMARY KEY, type TEXT, name TEXT)`);
   db.run(`CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, type TEXT, name TEXT, filePath TEXT, size TEXT, date TEXT, folderId TEXT, equipmentId TEXT, content TEXT)`);
@@ -61,14 +60,14 @@ app.get('/api/equipment', (req, res) => {
 app.post('/api/equipment', (req, res) => {
   const eq = req.body;
   if (eq.id) {
-    db.run(`UPDATE equipment SET name=?, serialNumber=?, gsiNumber=?, ownerName=?, location=?, capacity=?, minCapacity=?, discrete=?, adcType=?, sensorType=?, platformCount=?, weighingMode=?, installationDate=?, lastVerification=?, nextVerification=?, certNumber=?, phone=?, email=?, status=?, notes=? WHERE id=?`,
-      [eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.installationDate, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes, eq.id],
+    db.run(`UPDATE equipment SET name=?, serialNumber=?, gsiNumber=?, ownerName=?, location=?, installationDate=?, capacity=?, minCapacity=?, discrete=?, adcType=?, sensorType=?, platformCount=?, weighingMode=?, lastVerification=?, nextVerification=?, certNumber=?, phone=?, email=?, status=?, notes=? WHERE id=?`,
+      [eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes, eq.id],
       function(err) { res.json({ success: !err, error: err ? err.message : null }); }
     );
   } else {
     const newId = 'eq_' + Date.now();
-    db.run(`INSERT INTO equipment (id, name, serialNumber, gsiNumber, ownerName, location, capacity, minCapacity, discrete, adcType, sensorType, platformCount, weighingMode, installationDate, lastVerification, nextVerification, certNumber, phone, email, status, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [newId, eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.installationDate, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes],
+    db.run(`INSERT INTO equipment (id, name, serialNumber, gsiNumber, ownerName, location, installationDate, capacity, minCapacity, discrete, adcType, sensorType, platformCount, weighingMode, lastVerification, nextVerification, certNumber, phone, email, status, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [newId, eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes],
       function(err) { res.json({ success: !err, error: err ? err.message : null }); }
     );
   }
@@ -132,7 +131,7 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
   });
 });
 
-// Удаление файлов/элементов/заметок
+// Удаление файлов/элементов
 app.delete('/api/items/:id', (req, res) => {
   const itemId = req.params.id;
   db.get("SELECT filePath FROM items WHERE id = ?", [itemId], (err, row) => {
@@ -147,7 +146,7 @@ app.delete('/api/items/:id', (req, res) => {
   });
 });
 
-// Создание и редактирование заметок
+// Заметки
 app.post('/api/notes', (req, res) => {
   const { id, name, content, folderId } = req.body;
   const dateStr = new Date().toISOString().slice(0, 10);
@@ -185,26 +184,6 @@ app.delete('/api/maintenance/:id', (req, res) => {
   db.run("DELETE FROM maintenance WHERE id = ?", [req.params.id], function(err) {
     res.json({ success: !err });
   });
-});
-
-// Системная статистика и бэкап
-app.get('/api/system/stats', (req, res) => {
-  let stats = { dbSizeKB: 0, eqCount: 0, itemsCount: 0, uploadsSizeMB: 0 };
-  try {
-    const statsStat = fs.statSync('./archive.db');
-    stats.dbSizeKB = Math.round(statsStat.size / 1024);
-  } catch(e) {}
-  db.get("SELECT COUNT(*) as cnt FROM equipment", [], (e, r) => {
-    if (r) stats.eqCount = r.cnt;
-    db.get("SELECT COUNT(*) as cnt FROM items", [], (e2, r2) => {
-      if (r2) stats.itemsCount = r2.cnt;
-      res.json(stats);
-    });
-  });
-});
-
-app.get('/api/backup', (req, res) => {
-  res.download('./archive.db');
 });
 
 const PORT = process.env.PORT || 3000;
