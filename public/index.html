@@ -152,6 +152,9 @@
         .detail-label { font-size: 10px; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
         .detail-value { font-size: 12px; font-weight: 600; color: var(--primary); word-break: break-word; }
 
+        .maint-row { display: flex; flex-direction: column; background: #fff; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 6px; word-break: break-word; }
+        .maint-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #e2e8f0; color: var(--primary); display: inline-block; }
+
         .folder-banner { background: #e0f2fe; border: 1px solid #93c5fd; color: #0369a1; padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 12px; }
         .folders-container { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 14px; }
         .folder-item { background: var(--surface); border: 2px dashed var(--border); border-radius: 10px; padding: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
@@ -216,6 +219,7 @@
             .file-name { white-space: normal; }
             .file-actions { width: auto; }
             .file-actions .btn { flex: initial; padding: 6px 12px; font-size: 13px; }
+            .maint-row { flex-direction: row; align-items: flex-start; justify-content: space-between; padding: 10px 14px; }
             .modal-backdrop { align-items: center; padding: 16px; }
             .modal-box { border-radius: 20px; padding: 20px 24px; }
             .table-responsive { display: block; }
@@ -422,7 +426,7 @@
     </div>
 </div>
 
-<!-- Модальное окно ПАСПОРТА ВЕСОВ (ПОЛНАЯ КАРТОЧКА) -->
+<!-- Модальное окно ПАСПОРТА ВЕСОВ (ПОЛНАЯ КАРТОЧКА КАК НА СКРИНШОТЕ) -->
 <div class="modal-backdrop" id="viewEquipmentModal">
     <div class="modal-box">
         <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()" title="Закрыть">✕</button>
@@ -432,22 +436,48 @@
         </div>
         <div class="modal-body-scroll">
             <div class="detail-card">
-                <div class="detail-grid">
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
                     <div class="detail-item"><div class="detail-label">Модель / Наименование:</div><div class="detail-value" id="viewEqName">-</div></div>
                     <div class="detail-item"><div class="detail-label">Заводской номер:</div><div class="detail-value" id="viewEqSerial">-</div></div>
                     <div class="detail-item"><div class="detail-label">№ в Реестре ГСИ РК:</div><div class="detail-value" id="viewEqGsiNumber">-</div></div>
                 </div>
-                <div class="detail-grid">
-                    <div class="detail-item"><div class="detail-label">👤 Владелец:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Место установки:</div><div class="detail-value" id="viewEqLocation">-</div></div>
-                    <div class="detail-item"><div class="detail-label">НПВ (Max):</div><div class="detail-value" id="viewEqCapacity">-</div></div>
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">👤 Владелец / Организация:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Место установки / Объект:</div><div class="detail-value" id="viewEqLocation">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Дата ввода в экспл.:</div><div class="detail-value" id="viewEqInstallationDate">-</div></div>
                 </div>
-                <div class="detail-grid">
-                    <div class="detail-item"><div class="detail-label">Дата посл. поверки:</div><div class="detail-value" id="viewEqLastVer">-</div></div>
-                    <div class="detail-item"><div class="detail-label">След. поверка до:</div><div class="detail-value" id="viewEqNextVer">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Текущий статус:</div><div class="detail-value" id="viewEqStatus">-</div></div>
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">НПВ (Max):</div><div class="detail-value" id="viewEqCapacity">-</div></div>
+                    <div class="detail-item"><div class="detail-label">НмПВ (Min):</div><div class="detail-value" id="viewEqMinCapacity">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Дискретность (d=e):</div><div class="detail-value" id="viewEqDiscrete">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">Терминал / ПО:</div><div class="detail-value" id="viewEqAdcType">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Датчики:</div><div class="detail-value" id="viewEqSensorType">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Платформа / Размеры:</div><div class="detail-value" id="viewEqPlatformCount">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: 1fr;">
+                    <div class="detail-item"><div class="detail-label">Режим взвешивания:</div><div class="detail-value" id="viewEqWeighingMode">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">Дата последней поверки:</div><div class="detail-value" id="viewEqLastVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Срок поверки (до):</div><div class="detail-value" id="viewEqNextVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">№ аттестата / клейма:</div><div class="detail-value" id="viewEqCertNumber">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="detail-item"><div class="detail-label">📞 Телефон ответственного:</div><div class="detail-value" id="viewEqPhone">-</div></div>
+                    <div class="detail-item"><div class="detail-label">✉️ Email ответственного:</div><div class="detail-value" id="viewEqEmail">-</div></div>
                 </div>
                 <div class="detail-item"><div class="detail-label">Примечания:</div><div class="detail-value" id="viewEqNotes" style="font-weight: 400; white-space: pre-wrap;">-</div></div>
+            </div>
+
+            <!-- Блок журнала обслуживания -->
+            <div class="detail-card">
+                <div style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
+                    <span>🛠️ Журнал обслуживания</span>
+                    <button class="btn btn-success" type="button" style="padding: 4px 8px; font-size: 11px;" onclick="openMaintenanceModal()">➕ Запись</button>
+                </div>
+                <div id="maintenanceListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;"></div>
             </div>
         </div>
         <div class="modal-buttons">
@@ -458,40 +488,78 @@
     </div>
 </div>
 
-<!-- Модальное окно РЕДАКТИРОВАНИЯ/ДОБАВЛЕНИЯ ВЕСОВ -->
+<!-- Модальное окно РЕДАКТИРОВАНИЯ/ДОБАВЛЕНИЯ ВЕСОВ (СО ВСЕМИ ПОЛЯМИ) -->
 <div class="modal-backdrop" id="equipmentModal">
     <div class="modal-box">
         <button class="modal-close-btn" type="button" onclick="closeEquipmentModal()" title="Закрыть">✕</button>
         <h3 id="eqModalTitle" style="padding-right: 30px;">➕ Оборудование</h3>
         <div class="modal-body-scroll">
             <div class="form-row">
-                <div class="form-group"><label>Наименование / Модель:*</label><input type="text" id="eqName" placeholder="Автомобильные весы ВА-60"></div>
-                <div class="form-group"><label>Заводской номер:</label><input type="text" id="eqSerial" placeholder="№ 45892"></div>
+                <div class="form-group"><label>Наименование / Модель:*</label><input type="text" id="eqName" placeholder="Весы Автомобильные"></div>
+                <div class="form-group"><label>Заводской номер:</label><input type="text" id="eqSerial" placeholder="968"></div>
             </div>
             <div class="form-row-3">
-                <div class="form-group"><label>№ в Реестре ГСИ РК:</label><input type="text" id="eqGsiNumber" placeholder="KZ.02.02.01823-2021"></div>
-                <div class="form-group"><label>👤 Владелец:</label><input type="text" id="eqOwnerName" placeholder="ТОО «ТрансЛогистик»"></div>
-                <div class="form-group"><label>Место установки:</label><input type="text" id="eqLocation" placeholder="КПП №1"></div>
+                <div class="form-group"><label>№ в Реестре ГСИ РК:</label><input type="text" id="eqGsiNumber" placeholder="KZ.02.02..."></div>
+                <div class="form-group"><label>👤 Владелец / Организация:</label><input type="text" id="eqOwnerName" placeholder="ТОО ТрансТелеком"></div>
+                <div class="form-group"><label>Место установки / Объект:</label><input type="text" id="eqLocation" placeholder="Тепском"></div>
             </div>
             <div class="form-row-3">
-                <div class="form-group"><label>НПВ (Max):</label><input type="text" id="eqCapacity" placeholder="60 тонн"></div>
+                <div class="form-group"><label>Дата ввода в экспл.:</label><input type="date" id="eqInstallationDate"></div>
+                <div class="form-group"><label>НПВ (Max):</label><input type="text" id="eqCapacity" placeholder="200 т"></div>
+                <div class="form-group"><label>НмПВ (Min):</label><input type="text" id="eqMinCapacity" placeholder="2 т"></div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group"><label>Дискретность (d=e):</label><input type="text" id="eqDiscrete" placeholder="20 кг"></div>
+                <div class="form-group"><label>Терминал / ПО:</label><input type="text" id="eqAdcType" placeholder="Тензо-М"></div>
+                <div class="form-group"><label>Датчики:</label><input type="text" id="eqSensorType" placeholder="Zemic"></div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group"><label>Платформа / Размеры:</label><input type="text" id="eqPlatformCount" placeholder="1,5x1 м"></div>
+                <div class="form-group"><label>Режим взвешивания:</label><input type="text" id="eqWeighingMode" placeholder="Статика"></div>
+                <div class="form-group"><label>№ аттестата / клейма:</label><input type="text" id="eqCertNumber" placeholder="№..."></div>
+            </div>
+            <div class="form-row-3">
                 <div class="form-group"><label>Посл. поверка:</label><input type="date" id="eqLastVer"></div>
-                <div class="form-group"><label>След. поверка:</label><input type="date" id="eqNextVer"></div>
+                <div class="form-group"><label>След. поверка (до):</label><input type="date" id="eqNextVer"></div>
+                <div class="form-group">
+                    <label>Статус:</label>
+                    <select id="eqStatus">
+                        <option value="В эксплуатации">🟢 В эксплуатации</option>
+                        <option value="Требует поверки">🟡 Требует поверки</option>
+                        <option value="В ремонте">🔴 В ремонте</option>
+                        <option value="Выведены из эксплуатации">⚫ Выведены</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Статус:</label>
-                <select id="eqStatus">
-                    <option value="В эксплуатации">🟢 В эксплуатации</option>
-                    <option value="Требует поверки">🟡 Требует поверки</option>
-                    <option value="В ремонте">🔴 В ремонте</option>
-                    <option value="Выведены из эксплуатации">⚫ Выведены</option>
-                </select>
+            <div class="form-row">
+                <div class="form-group"><label>📞 Телефон ответственного:</label><input type="text" id="eqPhone" placeholder="+77052596954"></div>
+                <div class="form-group"><label>✉️ Email ответственного:</label><input type="text" id="eqEmail" placeholder="7000pas@gmail.com"></div>
             </div>
             <div class="form-group"><label>Примечания:</label><textarea id="eqNotes" style="height: 50px;" placeholder="Примечания..."></textarea></div>
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeEquipmentModal()">Отмена</button>
             <button class="btn btn-success" type="button" onclick="saveEquipment(event)">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно ДОБАВЛЕНИЯ ЗАПИСИ ОБСЛУЖИВАНИЯ -->
+<div class="modal-backdrop" id="maintenanceModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeMaintenanceModal()">✕</button>
+        <h3>🛠️ Добавить запись обслуживания</h3>
+        <div class="modal-body-scroll">
+            <div class="form-row">
+                <div class="form-group"><label>Вид работы:</label><input type="text" id="maintWorkType" placeholder="Ремонт кабеля связи"></div>
+                <div class="form-group"><label>Дата:</label><input type="date" id="maintDate"></div>
+            </div>
+            <div class="form-group"><label>Что сделано / Описание:</label><textarea id="maintDesc" style="height: 80px;" placeholder="Описание работ..."></textarea></div>
+            <div class="form-group"><label>Исполнитель:</label><input type="text" id="maintPerformedBy" placeholder="ФИО / Компания"></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeMaintenanceModal()">Отмена</button>
+            <button class="btn btn-success" type="button" onclick="saveMaintenance(event)">Добавить</button>
         </div>
     </div>
 </div>
@@ -636,7 +704,7 @@
         `).join('');
     }
 
-    function viewEquipment(id) {
+    async function viewEquipment(id) {
         const eq = equipmentList.find(e => e.id === id);
         if (!eq) return;
         viewingEqId = id;
@@ -645,10 +713,19 @@
         document.getElementById('viewEqGsiNumber').textContent = eq.gsiNumber || '-';
         document.getElementById('viewEqOwnerName').textContent = eq.ownerName || '-';
         document.getElementById('viewEqLocation').textContent = eq.location || '-';
+        document.getElementById('viewEqInstallationDate').textContent = eq.installationDate || '-';
         document.getElementById('viewEqCapacity').textContent = eq.capacity || '-';
+        document.getElementById('viewEqMinCapacity').textContent = eq.minCapacity || '-';
+        document.getElementById('viewEqDiscrete').textContent = eq.discrete || '-';
+        document.getElementById('viewEqAdcType').textContent = eq.adcType || '-';
+        document.getElementById('viewEqSensorType').textContent = eq.sensorType || '-';
+        document.getElementById('viewEqPlatformCount').textContent = eq.platformCount || '-';
+        document.getElementById('viewEqWeighingMode').textContent = eq.weighingMode || '-';
         document.getElementById('viewEqLastVer').textContent = eq.lastVerification || '-';
         document.getElementById('viewEqNextVer').textContent = eq.nextVerification || '-';
-        document.getElementById('viewEqStatus').textContent = eq.status || '-';
+        document.getElementById('viewEqCertNumber').textContent = eq.certNumber || '-';
+        document.getElementById('viewEqPhone').textContent = eq.phone || '-';
+        document.getElementById('viewEqEmail').textContent = eq.email || '-';
         document.getElementById('viewEqNotes').textContent = eq.notes || '-';
 
         document.getElementById('btnEditFromView').onclick = function() {
@@ -656,14 +733,82 @@
             editEquipment(eq.id);
         };
         document.getElementById('viewEquipmentModal').style.display = 'flex';
+        loadMaintenance(id);
     }
 
     function closeViewEquipmentModal() { document.getElementById('viewEquipmentModal').style.display = 'none'; viewingEqId = null; }
 
+    async function loadMaintenance(eqId) {
+        const container = document.getElementById('maintenanceListContainer');
+        try {
+            const res = await fetch(`/api/maintenance/${eqId}`);
+            const list = await res.json();
+            if (!list || list.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-muted); font-size: 11px;">Записей обслуживания нет.</div>`;
+                return;
+            }
+            container.innerHTML = list.map(m => `
+                <div class="maint-row">
+                    <div>
+                        <div style="font-weight: 700; font-size: 12px; color: var(--primary);">${m.workType} <span style="font-weight: 400; color: var(--text-muted);">(${m.date})</span></div>
+                        <div style="font-size: 11px; color: var(--text-main); margin-top: 2px;">${m.description || ''}</div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Исполнитель: ${m.performedBy || '-'}</div>
+                    </div>
+                    <button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteMaintenance('${m.id}', '${eqId}')">🗑️</button>
+                </div>
+            `).join('');
+        } catch(e) {}
+    }
+
+    function openMaintenanceModal() {
+        document.getElementById('maintWorkType').value = '';
+        document.getElementById('maintDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('maintDesc').value = '';
+        document.getElementById('maintPerformedBy').value = '';
+        document.getElementById('maintenanceModal').style.display = 'flex';
+    }
+
+    function closeMaintenanceModal() { document.getElementById('maintenanceModal').style.display = 'none'; }
+
+    async function saveMaintenance(e) {
+        e.preventDefault();
+        if (!viewingEqId) return;
+        const workType = document.getElementById('maintWorkType').value.trim();
+        if (!workType) { alert('Введите вид работы'); return; }
+
+        const payload = {
+            equipmentId: viewingEqId,
+            workType,
+            date: document.getElementById('maintDate').value,
+            description: document.getElementById('maintDesc').value.trim(),
+            performedBy: document.getElementById('maintPerformedBy').value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/maintenance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if ((await res.json()).success) {
+                closeMaintenanceModal();
+                loadMaintenance(viewingEqId);
+            }
+        } catch(e) {}
+    }
+
+    async function deleteMaintenance(mId, eqId) {
+        if (!confirm('Удалить запись обслуживания?')) return;
+        try {
+            await fetch(`/api/maintenance/${mId}`, { method: 'DELETE' });
+            loadMaintenance(eqId);
+        } catch(e) {}
+    }
+
     function openEquipmentModal() {
         editingEqId = null;
         document.getElementById('eqModalTitle').textContent = '➕ Добавить весы';
-        ['eqName', 'eqSerial', 'eqGsiNumber', 'eqOwnerName', 'eqLocation', 'eqCapacity', 'eqLastVer', 'eqNextVer', 'eqNotes'].forEach(id => {
+        ['eqName', 'eqSerial', 'eqGsiNumber', 'eqOwnerName', 'eqLocation', 'eqInstallationDate', 'eqCapacity', 'eqMinCapacity', 'eqDiscrete', 'eqAdcType', 'eqSensorType', 'eqPlatformCount', 'eqWeighingMode', 'eqLastVer', 'eqNextVer', 'eqCertNumber', 'eqPhone', 'eqEmail', 'eqNotes'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -680,9 +825,19 @@
         document.getElementById('eqGsiNumber').value = eq.gsiNumber || '';
         document.getElementById('eqOwnerName').value = eq.ownerName || '';
         document.getElementById('eqLocation').value = eq.location || '';
+        document.getElementById('eqInstallationDate').value = eq.installationDate || '';
         document.getElementById('eqCapacity').value = eq.capacity || '';
+        document.getElementById('eqMinCapacity').value = eq.minCapacity || '';
+        document.getElementById('eqDiscrete').value = eq.discrete || '';
+        document.getElementById('eqAdcType').value = eq.adcType || '';
+        document.getElementById('eqSensorType').value = eq.sensorType || '';
+        document.getElementById('eqPlatformCount').value = eq.platformCount || '';
+        document.getElementById('eqWeighingMode').value = eq.weighingMode || '';
         document.getElementById('eqLastVer').value = eq.lastVerification || '';
         document.getElementById('eqNextVer').value = eq.nextVerification || '';
+        document.getElementById('eqCertNumber').value = eq.certNumber || '';
+        document.getElementById('eqPhone').value = eq.phone || '';
+        document.getElementById('eqEmail').value = eq.email || '';
         document.getElementById('eqStatus').value = eq.status || 'В эксплуатации';
         document.getElementById('eqNotes').value = eq.notes || '';
         document.getElementById('equipmentModal').style.display = 'flex';
@@ -702,255 +857,14 @@
             gsiNumber: document.getElementById('eqGsiNumber').value.trim(),
             ownerName: document.getElementById('eqOwnerName').value.trim(),
             location: document.getElementById('eqLocation').value.trim(),
+            installationDate: document.getElementById('eqInstallationDate').value,
             capacity: document.getElementById('eqCapacity').value.trim(),
+            minCapacity: document.getElementById('eqMinCapacity').value.trim(),
+            discrete: document.getElementById('eqDiscrete').value.trim(),
+            adcType: document.getElementById('eqAdcType').value.trim(),
+            sensorType: document.getElementById('eqSensorType').value.trim(),
+            platformCount: document.getElementById('eqPlatformCount').value.trim(),
+            weighingMode: document.getElementById('eqWeighingMode').value.trim(),
             lastVerification: document.getElementById('eqLastVer').value,
             nextVerification: document.getElementById('eqNextVer').value,
-            status: document.getElementById('eqStatus').value,
-            notes: document.getElementById('eqNotes').value.trim()
-        };
-
-        try {
-            const res = await fetch('/api/equipment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if ((await res.json()).success) { closeEquipmentModal(); loadEquipment(); }
-        } catch (err) { alert('Ошибка сервера'); }
-    }
-
-    async function deleteEquipment(id) {
-        if (!confirm('Удалить весы?')) return;
-        try {
-            await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
-            loadEquipment();
-        } catch (e) {}
-    }
-
-    function selectTab(tab) { activeTab = tab; currentFolderId = null; updateHash(); updateNavUI(); render(); }
-    function goHome() { activeTab = null; currentFolderId = null; document.getElementById('searchInput').value = ''; updateHash(); updateNavUI(); render(); }
-    function openFolder(id) { currentFolderId = id; updateHash(); updateNavUI(); render(); }
-    function exitFolder() { currentFolderId = null; updateHash(); updateNavUI(); render(); }
-
-    async function promptCreateFolder() {
-        if (!activeTab || activeTab === 'admin') return;
-        const name = prompt('Название папки:');
-        if (!name || !name.trim()) return;
-        try {
-            const res = await fetch('/api/folders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: 'folder_' + Date.now(), type: activeTab, name: name.trim() })
-            });
-            if ((await res.json()).success) loadDB();
-        } catch (e) {}
-    }
-
-    async function deleteFolder(id) {
-        if (!confirm('Удалить папку?')) return;
-        try {
-            const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
-            if ((await res.json()).success) { if (currentFolderId === id) currentFolderId = null; updateHash(); loadDB(); }
-        } catch (e) {}
-    }
-
-    async function uploadFiles(files) {
-        if (!files || files.length === 0) return;
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
-        if (currentFolderId) formData.append('folderId', currentFolderId);
-        try {
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            if ((await res.json()).success) loadDB();
-        } catch (e) {}
-    }
-
-    function openNoteModal() {
-        document.getElementById('noteNameInput').value = '';
-        document.getElementById('noteContentInput').value = '';
-        document.getElementById('noteModal').style.display = 'flex';
-    }
-
-    function openNoteModalView(id) {
-        const item = db.items.find(i => i.id === id);
-        if (!item) return;
-        viewingNoteId = id;
-        document.getElementById('viewNoteNameInput').value = item.name || '';
-        document.getElementById('viewNoteContentInput').value = item.content || '';
-        document.getElementById('viewNoteDate').textContent = `Создано: ${item.date || ''}`;
-        document.getElementById('viewNoteModal').style.display = 'flex';
-    }
-
-    function closeViewNoteModal() { document.getElementById('viewNoteModal').style.display = 'none'; viewingNoteId = null; }
-
-    async function updateExistingNote() {
-        if (!viewingNoteId) return;
-        const name = document.getElementById('viewNoteNameInput').value.trim();
-        const content = document.getElementById('viewNoteContentInput').value.trim();
-        if (!name) { alert('Введите название'); return; }
-        try {
-            const res = await fetch('/api/notes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: viewingNoteId, name, content })
-            });
-            if ((await res.json()).success) { closeViewNoteModal(); loadDB(); }
-        } catch (e) {}
-    }
-
-    async function saveNote(e) {
-        e.preventDefault();
-        const name = document.getElementById('noteNameInput').value.trim();
-        const content = document.getElementById('noteContentInput').value.trim();
-        if (!name) { alert('Введите название'); return; }
-        try {
-            const res = await fetch('/api/notes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, content, folderId: currentFolderId || null })
-            });
-            if ((await res.json()).success) { closeModals(); loadDB(); }
-        } catch (e) {}
-    }
-
-    async function deleteItem(id) {
-        if (!confirm('Удалить элемент?')) return;
-        try {
-            const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
-            if ((await res.json()).success) loadDB();
-        } catch (e) {}
-    }
-
-    function closeModals() { document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none'); }
-
-    function updateNavUI() {
-        ['doc', 'image', 'note', 'admin'].forEach(t => {
-            const card = document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}`);
-            if (card) {
-                if (activeTab === t) card.classList.add('active');
-                else card.classList.remove('active');
-            }
-        });
-
-        const welcome = document.getElementById('welcomeScreen');
-        const content = document.getElementById('contentSection');
-        const adminSec = document.getElementById('adminSection');
-
-        if (!activeTab) {
-            if (welcome) welcome.style.display = 'flex';
-            if (content) content.style.display = 'none';
-            if (adminSec) adminSec.style.display = 'none';
-        } else if (activeTab === 'admin') {
-            if (welcome) welcome.style.display = 'none';
-            if (content) content.style.display = 'none';
-            if (adminSec) adminSec.style.display = 'flex';
-        } else {
-            if (welcome) welcome.style.display = 'none';
-            if (content) content.style.display = 'flex';
-            if (adminSec) adminSec.style.display = 'none';
-        }
-
-        const btnPhoto = document.getElementById('btnUploadPhoto');
-        const btnDoc = document.getElementById('btnUploadDoc');
-        if (activeTab === 'image') {
-            if (btnPhoto) btnPhoto.style.display = 'inline-flex';
-            if (btnDoc) btnDoc.style.display = 'none';
-        } else if (activeTab === 'doc') {
-            if (btnPhoto) btnPhoto.style.display = 'none';
-            if (btnDoc) btnDoc.style.display = 'inline-flex';
-        } else {
-            if (btnPhoto) btnPhoto.style.display = 'none';
-            if (btnDoc) btnDoc.style.display = 'none';
-        }
-
-        const counts = { doc: 0, image: 0, note: 0 };
-        db.items.forEach(item => { if (counts[item.type] !== undefined) counts[item.type]++; });
-        document.getElementById('countDoc').textContent = counts.doc;
-        document.getElementById('countImage').textContent = counts.image;
-        document.getElementById('countNote').textContent = counts.note;
-    }
-
-    function render() {
-        const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
-        updateNavUI();
-        if (query) { renderGlobalSearch(query); return; }
-        if (!activeTab || activeTab === 'admin') return;
-
-        const sectionTitle = document.getElementById('sectionTitle');
-        const tabNames = { doc: '📄 Документы', image: '🖼️ Фото', note: '📝 Заметки' };
-        sectionTitle.textContent = tabNames[activeTab] || 'Элементы';
-
-        const folderBanner = document.getElementById('folderBanner');
-        const foldersContainer = document.getElementById('foldersContainer');
-        if (currentFolderId) {
-            folderBanner.style.display = 'flex';
-            const f = db.folders.find(x => x.id === currentFolderId);
-            if (f) document.getElementById('folderBannerTitle').textContent = `📁 ${f.name}`;
-            foldersContainer.style.display = 'none';
-        } else {
-            folderBanner.style.display = 'none';
-            foldersContainer.style.display = 'grid';
-            renderFolders();
-        }
-        renderItems();
-    }
-
-    function renderFolders() {
-        const container = document.getElementById('foldersContainer');
-        const list = db.folders.filter(f => f.type === activeTab);
-        if (list.length === 0) { container.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px;">Папок нет.</div>`; return; }
-        container.innerHTML = list.map(f => `
-            <div class="folder-item" onclick="openFolder('${f.id}')">
-                <div class="folder-info">
-                    <span>📁</span>
-                    <div class="folder-title">${f.name}</div>
-                </div>
-                <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>
-            </div>
-        `).join('');
-    }
-
-    function renderItems() {
-        const container = document.getElementById('filesContainer');
-        let list = db.items.filter(i => i.type === activeTab && !i.equipmentId);
-        if (currentFolderId) list = list.filter(i => i.folderId === currentFolderId);
-        else list = list.filter(i => !i.folderId);
-
-        if (list.length === 0) { container.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">Элементов нет.</div>`; return; }
-
-        if (activeTab === 'note') {
-            container.innerHTML = `<div class="files-list">${list.map(item => `
-                <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px; cursor: pointer;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
-                        <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-main);">${item.content || ''}</div>
-                </div>`).join('')}</div>`;
-        } else if (activeTab === 'image') {
-            container.innerHTML = `<div class="gallery-grid">${list.map(item => `
-                <div class="photo-card">
-                    <div class="photo-preview" onclick="window.open('${item.filePath}', '_blank')"><img src="${item.filePath}" alt="${item.name}"></div>
-                    <div class="photo-content"><div style="font-weight: 600; font-size: 12px;">${item.name}</div></div>
-                    <div class="photo-footer"><span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span><button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteItem('${item.id}')">🗑️</button></div>
-                </div>`).join('')}</div>`;
-        } else if (activeTab === 'doc') {
-            container.innerHTML = `<div class="files-list">${list.map(item => `
-                <div class="file-row">
-                    <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${item.name}</div></div>
-                    <div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button><button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button></div>
-                </div>`).join('')}</div>`;
-        }
-    }
-
-    function renderGlobalSearch(q) {
-        const container = document.getElementById('filesContainer');
-        document.getElementById('sectionTitle').textContent = `🔍 Поиск: "${q}"`;
-        const found = db.items.filter(i => i.name.toLowerCase().includes(q));
-        container.innerHTML = found.length ? `<div class="files-list">${found.map(i => `<div class="file-row"><div class="file-meta" onclick="window.open('${i.filePath}', '_blank')"><span>📄</span><div class="file-name">${i.name}</div></div></div>`).join('')}</div>` : `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено.</div>`;
-    }
-
-    if (localStorage.getItem('isLoggedIn') === 'true') { loadDB(); }
-</script>
-</body>
-</html>
+            certNumber: document.getElementById('eqCertNumber').value.trim(),
