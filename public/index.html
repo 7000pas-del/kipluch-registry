@@ -159,7 +159,7 @@
         .folder-title { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .files-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; width: 100%; }
-        .file-row { display: flex; flex-direction: column; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; width: 100%; overflow: hidden; }
+        .file-row { display: flex; flex-direction: column; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; width: 100%; overflow: hidden; cursor: pointer; }
         .file-row:hover { background: #f8fafc; }
         .file-meta { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; overflow: hidden; }
         .file-name { font-weight: 600; font-size: 13px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -422,7 +422,7 @@
     </div>
 </div>
 
-<!-- Модальное окно ПАСПОРТА ВЕСОВ -->
+<!-- Модальное окно ПАСПОРТА ВЕСОВ (ПОЛНАЯ КАРТОЧКА) -->
 <div class="modal-backdrop" id="viewEquipmentModal">
     <div class="modal-box">
         <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()" title="Закрыть">✕</button>
@@ -433,14 +433,19 @@
         <div class="modal-body-scroll">
             <div class="detail-card">
                 <div class="detail-grid">
-                    <div class="detail-item"><div class="detail-label">Модель:</div><div class="detail-value" id="viewEqName">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Зав. номер:</div><div class="detail-value" id="viewEqSerial">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Модель / Наименование:</div><div class="detail-value" id="viewEqName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Заводской номер:</div><div class="detail-value" id="viewEqSerial">-</div></div>
                     <div class="detail-item"><div class="detail-label">№ в Реестре ГСИ РК:</div><div class="detail-value" id="viewEqGsiNumber">-</div></div>
                 </div>
                 <div class="detail-grid">
                     <div class="detail-item"><div class="detail-label">👤 Владелец:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Объект:</div><div class="detail-value" id="viewEqLocation">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Поверка до:</div><div class="detail-value" id="viewEqNextVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Место установки:</div><div class="detail-value" id="viewEqLocation">-</div></div>
+                    <div class="detail-item"><div class="detail-label">НПВ (Max):</div><div class="detail-value" id="viewEqCapacity">-</div></div>
+                </div>
+                <div class="detail-grid">
+                    <div class="detail-item"><div class="detail-label">Дата посл. поверки:</div><div class="detail-value" id="viewEqLastVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">След. поверка до:</div><div class="detail-value" id="viewEqNextVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Текущий статус:</div><div class="detail-value" id="viewEqStatus">-</div></div>
                 </div>
                 <div class="detail-item"><div class="detail-label">Примечания:</div><div class="detail-value" id="viewEqNotes" style="font-weight: 400; white-space: pre-wrap;">-</div></div>
             </div>
@@ -547,10 +552,6 @@
     let viewingEqId = null;
     let editingEqId = null;
 
-    let sortColumn = 'id';
-    let sortAsc = false;
-    let verificationFilter = 'all';
-
     function toggleMobileSearch() {
         const container = document.getElementById('searchBoxContainer');
         const input = document.getElementById('searchInput');
@@ -644,7 +645,10 @@
         document.getElementById('viewEqGsiNumber').textContent = eq.gsiNumber || '-';
         document.getElementById('viewEqOwnerName').textContent = eq.ownerName || '-';
         document.getElementById('viewEqLocation').textContent = eq.location || '-';
+        document.getElementById('viewEqCapacity').textContent = eq.capacity || '-';
+        document.getElementById('viewEqLastVer').textContent = eq.lastVerification || '-';
         document.getElementById('viewEqNextVer').textContent = eq.nextVerification || '-';
+        document.getElementById('viewEqStatus').textContent = eq.status || '-';
         document.getElementById('viewEqNotes').textContent = eq.notes || '-';
 
         document.getElementById('btnEditFromView').onclick = function() {
@@ -916,7 +920,7 @@
 
         if (activeTab === 'note') {
             container.innerHTML = `<div class="files-list">${list.map(item => `
-                <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px;">
+                <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px; cursor: pointer;">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
                         <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>
