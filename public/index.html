@@ -836,8 +836,16 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if ((await res.json()).success) { closeEquipmentModal(); loadEquipment(); }
-        } catch (err) { alert('Ошибка сервера'); }
+            const data = await res.json();
+            if (data.success) { 
+                closeEquipmentModal(); 
+                loadEquipment(); 
+            } else {
+                alert('Ошибка сохранения на сервере: ' + (data.error || 'неизвестная ошибка'));
+            }
+        } catch (err) { 
+            alert('Ошибка соединения с сервером'); 
+        }
     }
 
     async function deleteEquipment(id) {
