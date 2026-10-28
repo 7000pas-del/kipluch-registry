@@ -74,34 +74,14 @@
             text-align: center;
             gap: 6px; 
             border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
         }
 
-        header h1 { 
-            font-size: 22px; 
-            font-weight: 800; 
-            line-height: 1.2; 
-            letter-spacing: 0.5px;
-            color: #ffffff;
-        }
-
-        header h1 span.company-highlight {
-            background: linear-gradient(90deg, #60a5fa, #93c5fd);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        header h1 .subtitle {
-            display: block;
-            margin-top: 6px;
-            font-size: 11px; 
-            font-weight: 500; 
-            color: #94a3b8;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-        }
+        header h1 { font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: 0.5px; color: #ffffff; }
+        header h1 span.company-highlight { background: linear-gradient(90deg, #60a5fa, #93c5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        header h1 .subtitle { display: block; margin-top: 6px; font-size: 11px; font-weight: 500; color: #94a3b8; letter-spacing: 1.2px; text-transform: uppercase; }
 
         .toolbar { background: var(--surface); padding: 14px; border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; }
-        
         .toolbar-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex: 1; }
 
@@ -118,7 +98,6 @@
         .search-input { padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; width: 220px; outline: none; background: #f8fafc; transition: all 0.3s ease; }
         .search-input:focus { background: #fff; border-color: var(--accent); width: 280px; }
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; pointer-events: none; }
-        
         .mobile-search-toggle { display: none; background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; width: 36px; height: 36px; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--text-main); }
 
         .nav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
@@ -158,17 +137,7 @@
         .eq-table td { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; vertical-align: middle; }
         .eq-table tr:hover { background: #f8fafc; }
 
-        .badge-status { 
-            padding: 4px 8px; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            font-weight: 700; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center;
-            text-align: center;
-            white-space: nowrap;
-        }
+        .badge-status { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; }
         .status-ok { background: #d1fae5; color: #065f46; }
         .status-warn { background: #fef3c7; color: #92400e; }
         .status-err { background: #fee2e2; color: #991b1b; }
@@ -196,8 +165,9 @@
         .folder-title { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .files-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; width: 100%; }
-        .file-row { display: flex; flex-direction: column; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; width: 100%; overflow: hidden; }
-        .file-meta { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; overflow: hidden; }
+        .file-row { display: flex; flex-direction: column; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; width: 100%; overflow: hidden; cursor: pointer; }
+        .file-row:hover { background: #f8fafc; }
+        .file-meta { display: flex; align-items: center; gap: 8px; width: 100%; overflow: hidden; }
         .file-name { font-weight: 600; font-size: 13px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .file-info-sub { font-size: 11px; color: var(--text-muted); }
         .file-actions { display: flex; gap: 6px; width: 100%; }
@@ -227,9 +197,6 @@
         .modal-buttons { display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); background: var(--surface); margin-top: auto; }
         .modal-buttons .btn { flex: 1; padding: 8px; font-size: 12px; min-width: auto; }
 
-        .print-signature-block { display: none; margin-top: 25px; border-top: 1px solid #000; padding-top: 15px; }
-        .print-signature-grid { display: flex; flex-direction: column; gap: 20px; font-size: 11pt; }
-
         @media (min-width: 768px) {
             body { padding: 32px 16px; }
             header { padding: 28px 32px; }
@@ -255,10 +222,8 @@
             .file-name { white-space: normal; }
             .file-actions { width: auto; }
             .file-actions .btn { flex: initial; padding: 6px 12px; font-size: 13px; }
-            .maint-row { flex-direction: row; align-items: flex-start; justify-content: space-between; padding: 10px 14px; }
             .modal-backdrop { align-items: center; padding: 16px; }
             .modal-box { border-radius: 20px; padding: 20px 24px; }
-            .print-signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
             .table-responsive { display: block; }
             .mobile-eq-list { display: none !important; }
         }
@@ -276,7 +241,7 @@
 </head>
 <body>
 
-<!-- ОКНО ВХОДА (ПОВЕРХ ВАШЕГО САЙТА) -->
+<!-- ОКНО ВХОДА -->
 <div id="authOverlay">
     <div class="auth-card">
         <h2>ТОО «КИП «Луч»</h2>
@@ -402,44 +367,25 @@
 
     <!-- Администрирование -->
     <div id="adminSection" style="display: none; flex-direction: column; gap: 14px;">
-        <div class="section-header">
-            <div class="section-title" style="font-weight: 700; font-size: 15px;">⚙️ Панель управления и обслуживания</div>
-        </div>
-
         <div class="admin-grid">
             <div class="admin-card">
                 <div class="admin-card-title">🗄️ Резервное копирование БД</div>
                 <div class="admin-card-body">
                     Управление файлом базы данных (`archive.db`).
-                    <div class="stat-row">
-                        <span>Файл БД:</span> <span id="admDbFile">archive.db</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Размер:</span> <span id="admDbSize">- KB</span>
-                    </div>
+                    <div class="stat-row"><span>Файл БД:</span> <span id="admDbFile">archive.db</span></div>
+                    <div class="stat-row"><span>Размер:</span> <span id="admDbSize">- KB</span></div>
                     <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
                         <button class="btn" type="button" style="background: #334155; padding: 6px 10px; font-size: 11px;" onclick="backupDatabase()">💾 Бэкап</button>
-                        <label class="btn" style="cursor: pointer; background: #7f1d1d; padding: 6px 10px; font-size: 11px;">
-                            📂 Восстановить
-                            <input type="file" accept=".db" onchange="restoreDatabase(this)">
-                        </label>
                     </div>
                 </div>
             </div>
-
             <div class="admin-card">
                 <div class="admin-card-title">📊 Статистика и ресурсы</div>
                 <div class="admin-card-body">
                     Информация о системе.
-                    <div class="stat-row">
-                        <span>Оборудование:</span> <span id="admEqCount">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Файлы:</span> <span id="admItemsCount">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Хранилище:</span> <span id="admUploadsSize">- MB</span>
-                    </div>
+                    <div class="stat-row"><span>Оборудование:</span> <span id="admEqCount">0</span></div>
+                    <div class="stat-row"><span>Файлы:</span> <span id="admItemsCount">0</span></div>
+                    <div class="stat-row"><span>Хранилище:</span> <span id="admUploadsSize">- MB</span></div>
                 </div>
             </div>
         </div>
@@ -449,7 +395,7 @@
     <div id="contentSection" style="display: none; flex-direction: column; gap: 14px;">
         <div id="folderBanner" class="folder-banner" style="display: none;">
             <span id="folderBannerTitle">📁 Название папки</span>
-            <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; background: var(--primary); min-width: auto;" onclick="exitFolder()">← Назад</button>
+            <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; background: var(--primary);" onclick="exitFolder()">← Назад</button>
         </div>
 
         <div class="section-header">
@@ -465,287 +411,54 @@
     </div>
 </div>
 
-<!-- Модальное окно ПАСПОРТА -->
-<div class="modal-backdrop" id="viewEquipmentModal">
+<!-- Модальное окно ПРОСМОТРА И РЕДАКТИРОВАНИЯ ЗАМЕТКИ -->
+<div class="modal-backdrop" id="viewNoteModal">
     <div class="modal-box">
-        <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()" title="Закрыть">✕</button>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 30px;">
-            <h3 id="viewEqTitle">🔍 Паспорт весов</h3>
-            <span id="viewEqBadge"></span>
-        </div>
-
+        <button class="modal-close-btn" type="button" onclick="closeViewNoteModal()">✕</button>
+        <h3 id="viewNoteTitle">📝 Просмотр заметки</h3>
         <div class="modal-body-scroll">
-            <div class="detail-card">
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <div class="detail-label">Модель / Наименование:</div>
-                        <div class="detail-value" id="viewEqName">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Заводской номер:</div>
-                        <div class="detail-value" id="viewEqSerial">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">№ в Реестре ГСИ РК:</div>
-                        <div class="detail-value" id="viewEqGsiNumber">-</div>
-                    </div>
-                </div>
-
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <div class="detail-label">👤 Владелец / Организация:</div>
-                        <div class="detail-value" id="viewEqOwnerName">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Место установки / Объект:</div>
-                        <div class="detail-value" id="viewEqLocation">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">📅 Дата ввода в экспл.:</div>
-                        <div class="detail-value" id="viewEqInstallationDate">-</div>
-                    </div>
-                </div>
-
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <div class="detail-label">НПВ (Max):</div>
-                        <div class="detail-value" id="viewEqCapacity">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">НмПВ (Min):</div>
-                        <div class="detail-value" id="viewEqMinCapacity">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Дискретность (e=d):</div>
-                        <div class="detail-value" id="viewEqDiscrete">-</div>
-                    </div>
-                </div>
-
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <div class="detail-label">Терминал / ПО:</div>
-                        <div class="detail-value" id="viewEqAdcType">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Датчики:</div>
-                        <div class="detail-value" id="viewEqSensorType">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Платформа / Размеры:</div>
-                        <div class="detail-value" id="viewEqPlatformCount">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Режим взвешивания:</div>
-                        <div class="detail-value" id="viewEqWeighingMode">-</div>
-                    </div>
-                </div>
-
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <div class="detail-label">Дата последней поверки:</div>
-                        <div class="detail-value" id="viewEqLastVer">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Срок поверки (до):</div>
-                        <div class="detail-value" id="viewEqNextVer">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">№ Аттестата / Клейма:</div>
-                        <div class="detail-value" id="viewEqCertNumber">-</div>
-                    </div>
-                </div>
-
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <div class="detail-label">📞 Телефон ответственного:</div>
-                        <div class="detail-value" id="viewEqPhone">-</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">✉️ Email ответственного:</div>
-                        <div class="detail-value" id="viewEqEmail">-</div>
-                    </div>
-                </div>
-
-                <div class="detail-item">
-                    <div class="detail-label">Примечания:</div>
-                    <div class="detail-value" id="viewEqNotes" style="font-weight: 400; white-space: pre-wrap;">-</div>
-                </div>
+            <div class="form-group">
+                <label>Название:</label>
+                <input type="text" id="viewNoteNameInput" placeholder="Название...">
             </div>
-
-            <!-- Журнал обслуживания -->
-            <div class="detail-card">
-                <div style="font-size: 13px; font-weight: 700; color: var(--primary);">🛠️ Журнал обслуживания</div>
-                
-                <div style="display: flex; flex-direction: column; gap: 6px; background: #fff; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
-                    <div style="display: flex; gap: 6px;">
-                        <select id="maintWorkType" style="flex: 1; font-size: 11px; padding: 6px;">
-                            <option value="ТО">ТО</option>
-                            <option value="Поверка">Поверка</option>
-                            <option value="Калибровка">Калибровка</option>
-                            <option value="Ремонт">Ремонт</option>
-                        </select>
-                        <input type="date" id="maintDate" style="width: 115px; font-size: 11px; padding: 6px;">
-                    </div>
-                    <input type="text" id="maintDesc" placeholder="Что сделано?" style="font-size: 11px; padding: 6px;">
-                    <div style="display: flex; gap: 6px;">
-                        <input type="text" id="maintBy" placeholder="Исполнитель" style="flex: 1; font-size: 11px; padding: 6px;">
-                        <button class="btn btn-success" type="button" style="padding: 6px 10px; font-size: 11px; flex: initial; min-width: auto;" onclick="addMaintenanceLog()">➕ Добавить</button>
-                    </div>
-                </div>
-
-                <div id="maintenanceLogsContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;"></div>
+            <div class="form-group">
+                <label>Текст:</label>
+                <textarea id="viewNoteContentInput" style="height: 150px;" placeholder="Текст заметки..."></textarea>
             </div>
-
-            <!-- Блок подписей для печати -->
-            <div class="print-signature-block">
-                <div class="print-signature-grid">
-                    <div>
-                        <b>Ответственный за метрологический контроль:</b><br><br>
-                        ___________________ / ___________________
-                    </div>
-                    <div>
-                        <b>Представитель сервисной службы:</b><br><br>
-                        ___________________ / ___________________
-                    </div>
-                </div>
-            </div>
-
-            <div class="detail-card" style="margin-top: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 13px; font-weight: 700; color: var(--primary);">📎 Файлы</div>
-                    <label class="btn btn-success" style="padding: 4px 8px; font-size: 11px; cursor: pointer; flex: initial; min-width: auto;">
-                        ➕ Загрузить
-                        <input type="file" multiple onchange="uploadEquipmentFile(this.files)">
-                    </label>
-                </div>
-                <div id="equipmentFilesContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;"></div>
-            </div>
+            <div style="font-size: 11px; color: var(--text-muted);" id="viewNoteDate"></div>
         </div>
-
         <div class="modal-buttons">
-            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewEquipmentModal()">Закрыть</button>
-            <button class="btn btn-folder" type="button" onclick="window.print()">🖨️ Печать</button>
-            <button class="btn" type="button" id="btnEditFromView">✏️ Изменить</button>
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewNoteModal()">Закрыть</button>
+            <button class="btn btn-success" type="button" onclick="updateExistingNote()">Сохранить изменения</button>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно РЕДАКТИРОВАНИЯ ВЕСОВ -->
-<div class="modal-backdrop" id="equipmentModal">
+<!-- Модальные окна Паспорта, Оборудования и т.д. -->
+<div class="modal-backdrop" id="viewEquipmentModal">
     <div class="modal-box">
-        <button class="modal-close-btn" type="button" onclick="closeEquipmentModal()" title="Закрыть">✕</button>
-        <h3 id="eqModalTitle" style="padding-right: 30px;">➕ Оборудование</h3>
-        
+        <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()">✕</button>
+        <h3 id="viewEqTitle">🔍 Паспорт весов</h3>
         <div class="modal-body-scroll">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Наименование / Модель:*</label>
-                    <input type="text" id="eqName" placeholder="Автомобильные весы ВА-60">
+            <div class="detail-card">
+                <div class="detail-grid">
+                    <div class="detail-item"><div class="detail-label">Модель:</div><div class="detail-value" id="viewEqName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Зав. номер:</div><div class="detail-value" id="viewEqSerial">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Владелец:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
                 </div>
-                <div class="form-group">
-                    <label>Заводской номер:</label>
-                    <input type="text" id="eqSerial" placeholder="№ 45892">
-                </div>
-            </div>
-
-            <div class="form-row-3">
-                <div class="form-group">
-                    <label>№ в Реестре ГСИ РК:</label>
-                    <input type="text" id="eqGsiNumber" placeholder="KZ.02.02.01823-2021">
-                </div>
-                <div class="form-group">
-                    <label>👤 Владелец:</label>
-                    <input type="text" id="eqOwnerName" placeholder="ТОО «ТрансЛогистик»">
-                </div>
-                <div class="form-group">
-                    <label>Место установки:</label>
-                    <input type="text" id="eqLocation" placeholder="КПП №1">
-                </div>
-            </div>
-
-            <div class="form-row-3">
-                <div class="form-group">
-                    <label>НПВ (Max):</label>
-                    <input type="text" id="eqCapacity" placeholder="60 тонн">
-                </div>
-                <div class="form-group">
-                    <label>НмПВ (Min):</label>
-                    <input type="text" id="eqMinCapacity" placeholder="400 кг">
-                </div>
-                <div class="form-group">
-                    <label>Дискретность:</label>
-                    <input type="text" id="eqDiscrete" placeholder="20 кг">
-                </div>
-            </div>
-
-            <div class="form-row-3">
-                <div class="form-group">
-                    <label>Терминал / ПО:</label>
-                    <input type="text" id="eqAdcType" placeholder="Тензо-М ТВ-011">
-                </div>
-                <div class="form-group">
-                    <label>Датчики:</label>
-                    <input type="text" id="eqSensorType" placeholder="Zemic HM9B">
-                </div>
-                <div class="form-group">
-                    <label>Платформа:</label>
-                    <input type="text" id="eqPlatformCount" placeholder="18х3 м">
-                </div>
-            </div>
-
-            <div class="form-row-3">
-                <div class="form-group">
-                    <label>Режим:</label>
-                    <input type="text" id="eqWeighingMode" placeholder="Статический">
-                </div>
-                <div class="form-group">
-                    <label>Ввод в экспл.:</label>
-                    <input type="date" id="eqInstallationDate">
-                </div>
-                <div class="form-group">
-                    <label>Посл. поверка:</label>
-                    <input type="date" id="eqLastVer">
-                </div>
-            </div>
-
-            <div class="form-row-3">
-                <div class="form-group">
-                    <label>След. поверка:</label>
-                    <input type="date" id="eqNextVer">
-                </div>
-                <div class="form-group">
-                    <label>№ Аттестата:</label>
-                    <input type="text" id="eqCertNumber" placeholder="№ 0014589">
-                </div>
-                <div class="form-group">
-                    <label>Статус:</label>
-                    <select id="eqStatus">
-                        <option value="В эксплуатации">🟢 В эксплуатации</option>
-                        <option value="Требует поверки">🟡 Требует поверки</option>
-                        <option value="В ремонте">🔴 В ремонте</option>
-                        <option value="Выведены из эксплуатации">⚫ Выведены</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Телефон:</label>
-                    <input type="text" id="eqPhone" placeholder="+7 777 000-0000">
-                </div>
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" id="eqEmail" placeholder="info@company.kz">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Примечания:</label>
-                <textarea id="eqNotes" style="height: 50px;" placeholder="Примечания..."></textarea>
             </div>
         </div>
+        <div class="modal-buttons"><button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewEquipmentModal()">Закрыть</button></div>
+    </div>
+</div>
 
+<div class="modal-backdrop" id="equipmentModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeEquipmentModal()">✕</button>
+        <h3 id="eqModalTitle">➕ Оборудование</h3>
+        <div class="modal-body-scroll">
+            <div class="form-group"><label>Наименование:*</label><input type="text" id="eqName" placeholder="Весы"></div>
+        </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeEquipmentModal()">Отмена</button>
             <button class="btn btn-success" type="button" onclick="saveEquipment(event)">Сохранить</button>
@@ -753,20 +466,14 @@
     </div>
 </div>
 
-<!-- Модальное окно заметки -->
+<!-- Модальное окно создания новой заметки -->
 <div class="modal-backdrop" id="noteModal">
     <div class="modal-box">
-        <button class="modal-close-btn" type="button" onclick="closeModals()" title="Закрыть">✕</button>
-        <h3 id="modalTitle" style="padding-right: 30px;">📝 Заметка</h3>
+        <button class="modal-close-btn" type="button" onclick="closeModals()">✕</button>
+        <h3 id="modalTitle">📝 Новая заметка</h3>
         <div class="modal-body-scroll">
-            <div class="form-group">
-                <label>Название:</label>
-                <input type="text" id="noteNameInput" placeholder="Название...">
-            </div>
-            <div class="form-group">
-                <label>Текст:</label>
-                <textarea id="noteContentInput" style="height: 130px;" placeholder="Текст заметки..."></textarea>
-            </div>
+            <div class="form-group"><label>Название:</label><input type="text" id="noteNameInput" placeholder="Название..."></div>
+            <div class="form-group"><label>Текст:</label><textarea id="noteContentInput" style="height: 130px;" placeholder="Текст заметки..."></textarea></div>
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeModals()">Отмена</button>
@@ -776,7 +483,6 @@
 </div>
 
 <script>
-    // СКРИПТ АВТОРИЗАЦИИ
     document.getElementById('authForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('authLogin').value;
@@ -789,7 +495,6 @@
                 body: JSON.stringify({ username, password })
             });
             const data = await res.json();
-
             if (data.success) {
                 localStorage.setItem('isLoggedIn', 'true');
                 document.getElementById('authOverlay').style.display = 'none';
@@ -797,9 +502,7 @@
             } else {
                 document.getElementById('authError').style.display = 'block';
             }
-        } catch(err) {
-            alert('Ошибка соединения с сервером');
-        }
+        } catch(err) { alert('Ошибка соединения'); }
     });
 
     function logoutSystem() {
@@ -811,69 +514,11 @@
         document.getElementById('authOverlay').style.display = 'none';
     }
 
-    // ВАШ ИСХОДНЫЙ СКРИПТ РЕЕСТРА
     let db = { folders: [], items: [] };
     let equipmentList = [];
     let activeTab = null;
     let currentFolderId = null;
-    let editingItemId = null;
-    let editingEqId = null;
-    let viewingEqId = null;
-
-    let sortColumn = 'id';
-    let sortAsc = false;
-    let verificationFilter = 'all';
-
-    function toggleMobileSearch() {
-        const container = document.getElementById('searchBoxContainer');
-        const input = document.getElementById('searchInput');
-        container.classList.toggle('search-active');
-        if (container.classList.contains('search-active')) {
-            input.focus();
-        }
-    }
-
-    function onSearchInput() {
-        render();
-    }
-
-    function parseHash() {
-        try {
-            const rawHash = window.location.hash || '';
-            const hash = rawHash.replace('#', '').trim();
-            if (!hash) {
-                activeTab = null;
-                currentFolderId = null;
-                return;
-            }
-            const parts = hash.split('/');
-            activeTab = parts[0] || null;
-            currentFolderId = parts[1] || null;
-        } catch(e) {
-            activeTab = null;
-            currentFolderId = null;
-        }
-    }
-
-    function updateHash() {
-        try {
-            if (!activeTab) {
-                if (window.location.hash) {
-                    history.replaceState("", document.title, window.location.pathname + window.location.search);
-                }
-            } else if (currentFolderId) {
-                window.location.hash = `${activeTab}/${currentFolderId}`;
-            } else {
-                window.location.hash = `${activeTab}`;
-            }
-        } catch(e) {}
-    }
-
-    window.addEventListener('hashchange', () => {
-        parseHash();
-        updateNavUI();
-        render();
-    });
+    let viewingNoteId = null;
 
     async function loadDB() {
         if (localStorage.getItem('isLoggedIn') !== 'true') return;
@@ -884,590 +529,138 @@
             parseHash();
             updateNavUI();
             render();
-        } catch (e) {
-            console.error('Ошибка загрузки:', e);
-        }
+        } catch (e) { console.error('Ошибка БД:', e); }
     }
 
     async function loadEquipment() {
         try {
             const res = await fetch('/api/equipment');
             equipmentList = await res.json();
-            updateFilterDropdowns();
-            checkVerificationStatus();
             renderEquipmentTable();
-            if (viewingEqId) {
-                viewEquipment(viewingEqId);
-            }
-        } catch (e) {
-            console.error('Ошибка весов:', e);
-        }
+        } catch (e) {}
     }
 
-    function checkVerificationStatus() {
-        const banner = document.getElementById('verificationAlertBanner');
-        if (!banner) return;
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        let expiredCount = 0;
-        let soonCount = 0;
-
-        equipmentList.forEach(eq => {
-            if (eq.nextVerification) {
-                const nextDate = new Date(eq.nextVerification);
-                if (!isNaN(nextDate.getTime())) {
-                    const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0) expiredCount++;
-                    else if (diffDays <= 30) soonCount++;
-                }
-            }
-        });
-
-        if (expiredCount > 0 || soonCount > 0) {
-            banner.style.display = 'flex';
-            banner.className = 'alert-banner alert-banner-danger';
-            let msg = '🚨 Внимание: ';
-            if (expiredCount > 0) msg += `просрочено: ${expiredCount}. `;
-            if (soonCount > 0) msg += `истекает: ${soonCount}.`;
-            document.getElementById('alertBannerText').textContent = msg;
-        } else if (equipmentList.length > 0) {
-            banner.style.display = 'flex';
-            banner.className = 'alert-banner alert-banner-success';
-            document.getElementById('alertBannerText').textContent = '✅ Все весы поверены.';
-        } else {
-            banner.style.display = 'none';
-        }
+    function parseHash() {
+        const hash = (window.location.hash || '').replace('#', '').trim();
+        if (!hash) { activeTab = null; currentFolderId = null; return; }
+        const parts = hash.split('/');
+        activeTab = parts[0] || null;
+        currentFolderId = parts[1] || null;
     }
 
-    function updateFilterDropdowns() {
-        const selOwner = document.getElementById('selectOwnerFilter');
-        const selLocation = document.getElementById('selectLocationFilter');
-        if (!selOwner || !selLocation) return;
-
-        const currentOwner = selOwner.value;
-        const currentLocation = selLocation.value;
-
-        const owners = [...new Set(equipmentList.map(e => e.ownerName).filter(Boolean))].sort();
-        const locations = [...new Set(equipmentList.map(e => e.location).filter(Boolean))].sort();
-
-        selOwner.innerHTML = '<option value="">👤 Все владельцы</option>' + 
-            owners.map(o => `<option value="${o}">${o}</option>`).join('');
-
-        selLocation.innerHTML = '<option value="">📍 Все объекты</option>' + 
-            locations.map(l => `<option value="${l}">${l}</option>`).join('');
-
-        selOwner.value = currentOwner;
-        selLocation.value = currentLocation;
+    function updateHash() {
+        if (!activeTab) history.replaceState("", document.title, window.location.pathname + window.location.search);
+        else if (currentFolderId) window.location.hash = `${activeTab}/${currentFolderId}`;
+        else window.location.hash = `${activeTab}`;
     }
 
-    async function loadAdminStats() {
-        try {
-            const res = await fetch('/api/system/stats');
-            const data = await res.json();
-            document.getElementById('admDbSize').textContent = `${data.dbSizeKB} KB`;
-            document.getElementById('admEqCount').textContent = data.eqCount;
-            document.getElementById('admItemsCount').textContent = data.itemsCount;
-            document.getElementById('admUploadsSize').textContent = `${data.uploadsSizeMB} MB`;
-        } catch (e) {
-            console.error('Статистика:', e);
-        }
-    }
+    window.addEventListener('hashchange', () => { parseHash(); updateNavUI(); render(); });
 
-    async function backupDatabase() {
-        try {
-            if (!window.showDirectoryPicker) {
-                const res = await fetch('/api/backup');
-                const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `archive_backup_${new Date().toISOString().slice(0, 10)}.db`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                alert('Бэкап скачан!');
-                return;
-            }
+    function renderItems() {
+        const filesContainer = document.getElementById('filesContainer');
+        let currentItems = db.items.filter(i => i.type === activeTab && !i.equipmentId);
+        if (currentFolderId) currentItems = currentItems.filter(i => i.folderId === currentFolderId);
+        else currentItems = currentItems.filter(i => !i.folderId);
 
-            const dirHandle = await window.showDirectoryPicker();
-            const res = await fetch('/api/backup');
-            if (!res.ok) throw new Error('Ошибка');
-            const blob = await res.blob();
-            const fileName = `archive_backup_${new Date().toISOString().slice(0, 10)}.db`;
-
-            const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(blob);
-            await writable.close();
-
-            alert(`Сохранено: ${fileName}`);
-        } catch (err) {
-            if (err.name !== 'AbortError') alert('Ошибка: ' + err.message);
-        }
-    }
-
-    async function restoreDatabase(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        if (!confirm('⚠️ Заменить текущую базу данных?')) {
-            input.value = '';
+        if (currentItems.length === 0) {
+            filesContainer.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">Элементов нет.</div>`;
             return;
         }
 
-        const formData = new FormData();
-        formData.append('backupFile', file);
-
-        try {
-            const res = await fetch('/api/restore', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (data.success) {
-                alert('Восстановлено! Перезагрузка.');
-                window.location.reload();
-            } else {
-                alert('Ошибка: ' + data.error);
-            }
-        } catch (e) {
-            alert('Ошибка сервера');
-        } finally {
-            input.value = '';
-        }
-    }
-
-    function normalizeStatus(status) {
-        if (!status) return 'В эксплуатации';
-        if (status === 'Исправен') return 'В эксплуатации';
-        if (status === 'Выведены с эксплуатации' || status === 'Выведен с эксплуатации') return 'Выведены из эксплуатации';
-        return status;
-    }
-
-    function sortTable(column) {
-        if (sortColumn === column) sortAsc = !sortAsc;
-        else { sortColumn = column; sortAsc = true; }
-        renderEquipmentTable();
-    }
-
-    function setVerificationFilter(filter) {
-        verificationFilter = filter;
-        ['all', 'expired', 'soon'].forEach(f => {
-            const chip = document.getElementById(`filter_${f}`);
-            if (chip) {
-                if (f === filter) chip.classList.add('active');
-                else chip.classList.remove('active');
-            }
-        });
-        renderEquipmentTable();
-    }
-
-    function renderEquipmentTable() {
-        const tbody = document.getElementById('equipmentTableBody');
-        const mobileList = document.getElementById('mobileEquipmentList');
-        if (!tbody || !mobileList) return;
-
-        ['name', 'serialNumber', 'ownerName', 'location', 'nextVerification', 'status'].forEach(col => {
-            const span = document.getElementById(`sort_${col}`);
-            if (span) span.textContent = (sortColumn === col) ? (sortAsc ? ' ▲' : ' ▼') : '';
-        });
-
-        if (!equipmentList || equipmentList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Реестр пуст.</td></tr>`;
-            mobileList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Реестр пуст.</div>`;
-            return;
-        }
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const ownerFilter = document.getElementById('selectOwnerFilter') ? document.getElementById('selectOwnerFilter').value : '';
-        const locationFilter = document.getElementById('selectLocationFilter') ? document.getElementById('selectLocationFilter').value : '';
-
-        let filteredList = equipmentList.filter(eq => {
-            if (ownerFilter && eq.ownerName !== ownerFilter) return false;
-            if (locationFilter && eq.location !== locationFilter) return false;
-            if (verificationFilter === 'all') return true;
-            if (!eq.nextVerification) return false;
-
-            const nextVerDate = new Date(eq.nextVerification);
-            if (isNaN(nextVerDate.getTime())) return false;
-            const diffDays = Math.ceil((nextVerDate - today) / (1000 * 60 * 60 * 24));
-
-            if (verificationFilter === 'expired') return diffDays < 0;
-            if (verificationFilter === 'soon') return diffDays >= 0 && diffDays <= 30;
-            return true;
-        });
-
-        if (sortColumn) {
-            filteredList.sort((a, b) => {
-                let valA = (a[sortColumn] || '').toString().toLowerCase();
-                let valB = (b[sortColumn] || '').toString().toLowerCase();
-                if (valA < valB) return sortAsc ? -1 : 1;
-                if (valA > valB) return sortAsc ? 1 : -1;
-                return 0;
-            });
-        }
-
-        if (filteredList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Ничего не найдено.</td></tr>`;
-            mobileList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Ничего не найдено.</div>`;
-            return;
-        }
-
-        tbody.innerHTML = filteredList.map(eq => {
-            const status = normalizeStatus(eq.status);
-            let statusClass = 'status-ok';
-            if (status === 'Требует поверки') statusClass = 'status-warn';
-            if (status === 'В ремонте') statusClass = 'status-err';
-            if (status === 'Выведены из эксплуатации') statusClass = 'status-off';
-
-            let verDateStr = eq.nextVerification || '-';
-            let verBadge = verDateStr;
-
-            if (eq.nextVerification) {
-                const nextVerDate = new Date(eq.nextVerification);
-                if (!isNaN(nextVerDate.getTime())) {
-                    const diffDays = Math.ceil((nextVerDate - today) / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0) verBadge = `<span class="badge-status status-err">🚨 ${verDateStr}</span>`;
-                    else if (diffDays <= 30) verBadge = `<span class="badge-status status-warn">⏳ ${verDateStr}</span>`;
-                }
-            }
-
-            return `
-                <tr onclick="viewEquipment('${eq.id}')">
-                    <td><b>${eq.name || '-'}</b></td>
-                    <td>${eq.serialNumber || '-'}</td>
-                    <td>${eq.ownerName || '-'}</td>
-                    <td>${eq.location || '-'}</td>
-                    <td>${verBadge}</td>
-                    <td><span class="badge-status ${statusClass}">${status}</span></td>
-                    <td style="text-align: right;" onclick="event.stopPropagation()">
-                        <div class="table-actions">
-                            <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; min-width: auto;" onclick="editEquipment('${eq.id}')">✏️</button>
-                            <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; min-width: auto; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️</button>
+        if (activeTab === 'note') {
+            filesContainer.innerHTML = `
+                <div class="files-list">
+                    ${currentItems.map(item => `
+                        <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
+                                <div style="display: flex; gap: 4px;" onclick="event.stopPropagation()">
+                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; min-width: auto;" onclick="openNoteModalView('${item.id}')">✏️</button>
+                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="deleteItem('${item.id}')">🗑️</button>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; white-space: pre-wrap; color: var(--text-main); background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border); max-height: 80px; overflow: hidden; text-overflow: ellipsis;">${item.content || ''}</div>
+                            <div style="font-size: 10px; color: var(--text-muted); text-align: right;">Создано: ${item.date || ''}</div>
                         </div>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        mobileList.innerHTML = filteredList.map(eq => {
-            const status = normalizeStatus(eq.status);
-            let statusClass = 'status-ok';
-            if (status === 'Требует поверки') statusClass = 'status-warn';
-            if (status === 'В ремонте') statusClass = 'status-err';
-            if (status === 'Выведены из эксплуатации') statusClass = 'status-off';
-
-            return `
-                <div class="mobile-eq-card" onclick="viewEquipment('${eq.id}')">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 6px;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">${eq.name || '-'}</div>
-                        <span class="badge-status ${statusClass}">${status}</span>
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 2px;">
-                        <div><b>Зав. №:</b> ${eq.serialNumber || '-'}</div>
-                        <div><b>Поверка:</b> ${eq.nextVerification || '-'}</div>
-                        <div style="grid-column: 1/-1;"><b>Владелец:</b> ${eq.ownerName || '-'} (${eq.location || '-'})</div>
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 6px;" onclick="event.stopPropagation()">
-                        <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; min-width: auto;" onclick="editEquipment('${eq.id}')">✏️ Изменить</button>
-                        <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; min-width: auto; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️ Удалить</button>
-                    </div>
+                    `).join('')}
                 </div>
             `;
-        }).join('');
-    }
-
-    function exportEquipmentCSV() {
-        if (!equipmentList || equipmentList.length === 0) {
-            alert('Реестр пуст.');
-            return;
-        }
-        let csvContent = "\uFEFFНаименование;Зав. номер;Владелец;Место;Статус;Поверка\n";
-        equipmentList.forEach(eq => {
-            csvContent += `"${eq.name || ''}";"${eq.serialNumber || ''}";"${eq.ownerName || ''}";"${eq.location || ''}";"${eq.status || ''}";"${eq.nextVerification || ''}"\n`;
-        });
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Registry_${new Date().toISOString().slice(0, 10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-
-    function viewEquipment(id) {
-        const eq = equipmentList.find(e => e.id === id);
-        if (!eq) return;
-
-        viewingEqId = id;
-        const status = normalizeStatus(eq.status);
-        let statusClass = 'status-ok';
-        if (status === 'Требует поверки') statusClass = 'status-warn';
-        if (status === 'В ремонте') statusClass = 'status-err';
-        if (status === 'Выведены из эксплуатации') statusClass = 'status-off';
-
-        document.getElementById('viewEqBadge').innerHTML = `<span class="badge-status ${statusClass}">${status}</span>`;
-        document.getElementById('viewEqName').textContent = eq.name || '-';
-        document.getElementById('viewEqSerial').textContent = eq.serialNumber || '-';
-        document.getElementById('viewEqGsiNumber').textContent = eq.gsiNumber || '-';
-        document.getElementById('viewEqOwnerName').textContent = eq.ownerName || '-';
-        document.getElementById('viewEqLocation').textContent = eq.location || '-';
-        document.getElementById('viewEqInstallationDate').textContent = eq.installationDate || '-';
-        
-        document.getElementById('viewEqCapacity').textContent = eq.capacity || '-';
-        document.getElementById('viewEqMinCapacity').textContent = eq.minCapacity || '-';
-        document.getElementById('viewEqDiscrete').textContent = eq.discrete || '-';
-        
-        document.getElementById('viewEqAdcType').textContent = eq.adcType || '-';
-        document.getElementById('viewEqSensorType').textContent = eq.sensorType || '-';
-        document.getElementById('viewEqPlatformCount').textContent = eq.platformCount || '-';
-        document.getElementById('viewEqWeighingMode').textContent = eq.weighingMode || '-';
-        
-        document.getElementById('viewEqLastVer').textContent = eq.lastVerification || '-';
-        document.getElementById('viewEqNextVer').textContent = eq.nextVerification || '-';
-        document.getElementById('viewEqCertNumber').textContent = eq.certNumber || '-';
-
-        document.getElementById('viewEqPhone').innerHTML = eq.phone ? `<a href="tel:${eq.phone}">${eq.phone}</a>` : '-';
-        document.getElementById('viewEqEmail').innerHTML = eq.email ? `<a href="mailto:${eq.email}">${eq.email}</a>` : '-';
-        document.getElementById('viewEqNotes').textContent = eq.notes || '-';
-
-        document.getElementById('maintDate').value = new Date().toISOString().slice(0, 10);
-        document.getElementById('maintDesc').value = '';
-        document.getElementById('maintBy').value = '';
-
-        loadMaintenanceLogs(eq.id);
-        renderEquipmentFiles(eq);
-
-        document.getElementById('btnEditFromView').onclick = function() {
-            closeViewEquipmentModal();
-            editEquipment(eq.id);
-        };
-
-        document.getElementById('viewEquipmentModal').style.display = 'flex';
-    }
-
-    async function loadMaintenanceLogs(equipmentId) {
-        const container = document.getElementById('maintenanceLogsContainer');
-        if (!container) return;
-
-        try {
-            const res = await fetch(`/api/maintenance/${equipmentId}`);
-            const logs = await res.json();
-
-            if (logs.length === 0) {
-                container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">Записей нет.</div>`;
-                return;
-            }
-
-            container.innerHTML = logs.map(log => `
-                <div class="maint-row">
-                    <div>
-                        <span class="maint-tag">${log.workType || 'ТО'}</span>
-                        <div style="font-size: 12px; font-weight: 600; color: var(--primary); margin-top: 2px;">${log.description}</div>
-                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">📅 ${log.date || ''} ${log.performedBy ? `• ${log.performedBy}` : ''}</div>
-                    </div>
-                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 10px; background: var(--danger); min-width: auto; align-self: flex-end;" onclick="deleteMaintenanceLog('${log.id}')">🗑️</button>
-                </div>
-            `).join('');
-        } catch (e) {
-            console.error('Ошибка логов:', e);
+        } else if (activeTab === 'image') {
+            filesContainer.innerHTML = `<div class="gallery-grid">${currentItems.map(item => `<div class="photo-card"><div class="photo-preview" onclick="window.open('${item.filePath}', '_blank')"><img src="${item.filePath}" alt="${item.name}"></div><div class="photo-content"><div style="font-weight: 600; font-size: 12px;">${item.name}</div></div><div class="photo-footer"><span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span><button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteItem('${item.id}')">🗑️</button></div></div>`).join('')}</div>`;
+        } else if (activeTab === 'doc') {
+            filesContainer.innerHTML = `<div class="files-list">${currentItems.map(item => `<div class="file-row"><div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span style="font-size: 18px;">📄</span><div style="overflow: hidden;"><div class="file-name">${item.name}</div><div class="file-info-sub">${item.size || ''} • ${item.date || ''}</div></div></div><div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button><button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button></div></div>`).join('')}</div>`;
         }
     }
 
-    async function addMaintenanceLog() {
-        if (!viewingEqId) return;
-        const desc = document.getElementById('maintDesc').value.trim();
-        if (!desc) { alert('Введите описание'); return; }
+    // Открытие существующей заметки для просмотра/редактирования
+    function openNoteModalView(id) {
+        const item = db.items.find(i => i.id === id);
+        if (!item) return;
+        viewingNoteId = id;
+        document.getElementById('viewNoteNameInput').value = item.name || '';
+        document.getElementById('viewNoteContentInput').value = item.content || '';
+        document.getElementById('viewNoteDate').textContent = `Создано: ${item.date || ''}`;
+        document.getElementById('viewNoteModal').style.display = 'flex';
+    }
 
-        const payload = {
-            equipmentId: viewingEqId,
-            workType: document.getElementById('maintWorkType').value,
-            date: document.getElementById('maintDate').value,
-            description: desc,
-            performedBy: document.getElementById('maintBy').value.trim()
-        };
+    function closeViewNoteModal() {
+        document.getElementById('viewNoteModal').style.display = 'none';
+        viewingNoteId = null;
+    }
+
+    async function updateExistingNote() {
+        if (!viewingNoteId) return;
+        const name = document.getElementById('viewNoteNameInput').value.trim();
+        const content = document.getElementById('viewNoteContentInput').value.trim();
+        if (!name) { alert('Введите название'); return; }
 
         try {
-            const res = await fetch('/api/maintenance', {
+            const res = await fetch('/api/notes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ id: viewingNoteId, name, content })
             });
-            const data = await res.json();
-            if (data.success) {
-                document.getElementById('maintDesc').value = '';
-                loadMaintenanceLogs(viewingEqId);
+            if ((await res.json()).success) {
+                closeViewNoteModal();
+                loadDB();
             }
-        } catch (e) {
-            console.error('Ошибка сохранения:', e);
-        }
+        } catch (e) { alert('Ошибка сохранения'); }
     }
 
-    async function deleteMaintenanceLog(id) {
-        if (!confirm('Удалить запись?')) return;
-        try {
-            const res = await fetch(`/api/maintenance/${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success) loadMaintenanceLogs(viewingEqId);
-        } catch (e) {
-            console.error('Ошибка удаления:', e);
-        }
+    function openNoteModal() {
+        document.getElementById('noteNameInput').value = '';
+        document.getElementById('noteContentInput').value = '';
+        document.getElementById('noteModal').style.display = 'flex';
     }
 
-    function renderEquipmentFiles(eq) {
-        const container = document.getElementById('equipmentFilesContainer');
-        if (!container) return;
-        const attachedFiles = (db.items || []).filter(i => i.equipmentId === eq.id);
-
-        if (attachedFiles.length === 0) {
-            container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">Файлов нет.</div>`;
-            return;
-        }
-
-        container.innerHTML = attachedFiles.map(file => `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); gap: 6px;">
-                <div style="display: flex; align-items: center; gap: 6px; cursor: pointer; flex-grow: 1; overflow: hidden;" onclick="window.open('${file.filePath}', '_blank')">
-                    <span style="font-size: 15px;">${file.type === 'image' ? '🖼️' : '📄'}</span>
-                    <div style="overflow: hidden;">
-                        <div style="font-size: 11px; font-weight: 600; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
-                        <div style="font-size: 10px; color: var(--text-muted);">${file.date || ''}</div>
-                    </div>
-                </div>
-                <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="deleteEquipmentFile('${file.id}')">🗑️</button>
-            </div>
-        `).join('');
-    }
-
-    async function uploadEquipmentFile(files) {
-        if (!files || files.length === 0 || !viewingEqId) return;
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
-        formData.append('equipmentId', viewingEqId);
-
-        try {
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (data.success) await loadDB();
-        } catch (e) {
-            alert('Ошибка загрузки');
-        }
-    }
-
-    async function deleteEquipmentFile(itemId) {
-        if (!confirm('Удалить файл?')) return;
-        try {
-            const res = await fetch(`/api/items/${itemId}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success) await loadDB();
-        } catch (e) {}
-    }
-
-    function closeViewEquipmentModal() {
-        document.getElementById('viewEquipmentModal').style.display = 'none';
-        viewingEqId = null;
-    }
-
-    function openEquipmentModal() {
-        editingEqId = null;
-        document.getElementById('eqModalTitle').textContent = '➕ Добавить весы';
-        ['eqName', 'eqSerial', 'eqGsiNumber', 'eqOwnerName', 'eqLocation', 'eqCapacity', 'eqMinCapacity', 'eqDiscrete', 'eqAdcType', 'eqSensorType', 'eqPlatformCount', 'eqWeighingMode', 'eqInstallationDate', 'eqLastVer', 'eqNextVer', 'eqCertNumber', 'eqPhone', 'eqEmail', 'eqNotes'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-        });
-        document.getElementById('eqStatus').value = 'В эксплуатации';
-        document.getElementById('equipmentModal').style.display = 'flex';
-    }
-
-    function editEquipment(id) {
-        const eq = equipmentList.find(e => e.id === id);
-        if (!eq) return;
-
-        editingEqId = id;
-        document.getElementById('eqModalTitle').textContent = '✏️ Изменить паспорт';
-        document.getElementById('eqName').value = eq.name || '';
-        document.getElementById('eqSerial').value = eq.serialNumber || '';
-        document.getElementById('eqGsiNumber').value = eq.gsiNumber || '';
-        document.getElementById('eqOwnerName').value = eq.ownerName || '';
-        document.getElementById('eqLocation').value = eq.location || '';
-        document.getElementById('eqCapacity').value = eq.capacity || '';
-        document.getElementById('eqMinCapacity').value = eq.minCapacity || '';
-        document.getElementById('eqDiscrete').value = eq.discrete || '';
-        document.getElementById('eqAdcType').value = eq.adcType || '';
-        document.getElementById('eqSensorType').value = eq.sensorType || '';
-        document.getElementById('eqPlatformCount').value = eq.platformCount || '';
-        document.getElementById('eqWeighingMode').value = eq.weighingMode || '';
-        document.getElementById('eqInstallationDate').value = eq.installationDate || '';
-        document.getElementById('eqLastVer').value = eq.lastVerification || '';
-        document.getElementById('eqNextVer').value = eq.nextVerification || '';
-        document.getElementById('eqCertNumber').value = eq.certNumber || '';
-        document.getElementById('eqPhone').value = eq.phone || '';
-        document.getElementById('eqEmail').value = eq.email || '';
-        document.getElementById('eqStatus').value = normalizeStatus(eq.status);
-        document.getElementById('eqNotes').value = eq.notes || '';
-        document.getElementById('equipmentModal').style.display = 'flex';
-    }
-
-    function closeEquipmentModal() {
-        document.getElementById('equipmentModal').style.display = 'none';
-        editingEqId = null;
-    }
-
-    async function saveEquipment(e) {
+    async function saveNote(e) {
         e.preventDefault();
-        const name = document.getElementById('eqName').value.trim();
-        if (!name) { alert('Введите наименование!'); return; }
-
-        const payload = {
-            id: editingEqId || '',
-            name: name,
-            serialNumber: document.getElementById('eqSerial').value.trim(),
-            gsiNumber: document.getElementById('eqGsiNumber').value.trim(),
-            ownerName: document.getElementById('eqOwnerName').value.trim(),
-            location: document.getElementById('eqLocation').value.trim(),
-            capacity: document.getElementById('eqCapacity').value.trim(),
-            minCapacity: document.getElementById('eqMinCapacity').value.trim(),
-            discrete: document.getElementById('eqDiscrete').value.trim(),
-            adcType: document.getElementById('eqAdcType').value.trim(),
-            sensorType: document.getElementById('eqSensorType').value.trim(),
-            platformCount: document.getElementById('eqPlatformCount').value.trim(),
-            weighingMode: document.getElementById('eqWeighingMode').value.trim(),
-            installationDate: document.getElementById('eqInstallationDate').value,
-            lastVerification: document.getElementById('eqLastVer').value,
-            nextVerification: document.getElementById('eqNextVer').value,
-            certNumber: document.getElementById('eqCertNumber').value.trim(),
-            phone: document.getElementById('eqPhone').value.trim(),
-            email: document.getElementById('eqEmail').value.trim(),
-            status: document.getElementById('eqStatus').value,
-            notes: document.getElementById('eqNotes').value.trim()
-        };
-
+        const name = document.getElementById('noteNameInput').value.trim();
+        const content = document.getElementById('noteContentInput').value.trim();
+        if (!name) { alert('Введите название'); return; }
         try {
-            const res = await fetch('/api/equipment', {
+            const res = await fetch('/api/notes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ name, content, folderId: currentFolderId || null })
             });
-            const data = await res.json();
-            if (data.success) {
-                closeEquipmentModal();
-                loadEquipment();
-            } else {
-                alert('Ошибка: ' + data.error);
+            if ((await res.json()).success) {
+                closeModals();
+                loadDB();
             }
-        } catch (err) {
-            alert('Ошибка сервера');
-        }
+        } catch (e) {}
     }
 
-    async function deleteEquipment(id) {
-        if (!confirm('Удалить этот паспорт весов?')) return;
+    async function deleteItem(id) {
+        if (!confirm('Удалить элемент?')) return;
         try {
-            const res = await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success) loadEquipment();
+            const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
+            if ((await res.json()).success) loadDB();
         } catch (e) {}
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
     }
 
     function selectTab(tab) {
@@ -1482,7 +675,6 @@
         activeTab = null;
         currentFolderId = null;
         document.getElementById('searchInput').value = '';
-        document.getElementById('searchBoxContainer').classList.remove('search-active');
         updateHash();
         updateNavUI();
         render();
@@ -1497,16 +689,11 @@
             }
         });
 
-        const query = (document.getElementById('searchInput').value || '').trim();
         const welcome = document.getElementById('welcomeScreen');
         const content = document.getElementById('contentSection');
         const adminSec = document.getElementById('adminSection');
 
-        if (query) {
-            if (welcome) welcome.style.display = 'none';
-            if (content) content.style.display = 'flex';
-            if (adminSec) adminSec.style.display = 'none';
-        } else if (!activeTab) {
+        if (!activeTab) {
             if (welcome) welcome.style.display = 'flex';
             if (content) content.style.display = 'none';
             if (adminSec) adminSec.style.display = 'none';
@@ -1514,308 +701,26 @@
             if (welcome) welcome.style.display = 'none';
             if (content) content.style.display = 'none';
             if (adminSec) adminSec.style.display = 'flex';
-            loadAdminStats();
         } else {
             if (welcome) welcome.style.display = 'none';
             if (content) content.style.display = 'flex';
             if (adminSec) adminSec.style.display = 'none';
         }
 
-        const btnFolder = document.getElementById('btnCreateFolder');
-        const btnNote = document.getElementById('btnNewNote');
-        const btnPhoto = document.getElementById('btnUploadPhoto');
-        const btnDoc = document.getElementById('btnUploadDoc');
-        const dropZone = document.getElementById('dropZone');
-
-        if (activeTab === 'admin' || !activeTab) {
-            if (btnFolder) btnFolder.style.display = 'none';
-            if (btnNote) btnNote.style.display = 'none';
-            if (btnPhoto) btnPhoto.style.display = 'none';
-            if (btnDoc) btnDoc.style.display = 'none';
-            if (dropZone) dropZone.style.display = 'none';
-        } else {
-            if (btnFolder) btnFolder.style.display = 'inline-flex';
-            if (btnNote) btnNote.style.display = 'inline-flex';
-
-            if (activeTab === 'image' && !query) {
-                if (btnPhoto) btnPhoto.style.display = 'inline-flex';
-                if (btnDoc) btnDoc.style.display = 'none';
-                if (dropZone && currentFolderId) dropZone.style.display = 'block';
-                else if (dropZone) dropZone.style.display = 'none';
-            } else if (activeTab === 'doc' && !query) {
-                if (btnPhoto) btnPhoto.style.display = 'none';
-                if (btnDoc) btnDoc.style.display = 'inline-flex';
-                if (dropZone && currentFolderId) dropZone.style.display = 'block';
-                else if (dropZone) dropZone.style.display = 'none';
-            } else {
-                if (btnPhoto) btnPhoto.style.display = 'none';
-                if (btnDoc) btnDoc.style.display = 'none';
-                if (dropZone) dropZone.style.display = 'none';
-            }
-        }
-
         const counts = { doc: 0, image: 0, note: 0 };
-        db.items.forEach(item => {
-            if (counts[item.type] !== undefined) counts[item.type]++;
-        });
+        db.items.forEach(item => { if (counts[item.type] !== undefined) counts[item.type]++; });
         document.getElementById('countDoc').textContent = counts.doc;
         document.getElementById('countImage').textContent = counts.image;
         document.getElementById('countNote').textContent = counts.note;
     }
 
     function render() {
-        const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
-        const foldersContainer = document.getElementById('foldersContainer');
-        const filesContainer = document.getElementById('filesContainer');
-        const sectionTitle = document.getElementById('sectionTitle');
-        const folderBanner = document.getElementById('folderBanner');
-
         updateNavUI();
-
-        if (query) {
-            renderGlobalSearch(query);
-            return;
-        }
-
         if (!activeTab || activeTab === 'admin') return;
-
+        const sectionTitle = document.getElementById('sectionTitle');
         const tabNames = { doc: '📄 Документы', image: '🖼️ Фото', note: '📝 Заметки' };
         sectionTitle.textContent = tabNames[activeTab] || 'Элементы';
-
-        if (currentFolderId) {
-            const folder = db.folders.find(f => f.id === currentFolderId);
-            if (folder) {
-                folderBanner.style.display = 'flex';
-                document.getElementById('folderBannerTitle').textContent = `📁 ${folder.name}`;
-            }
-            foldersContainer.style.display = 'none';
-        } else {
-            folderBanner.style.display = 'none';
-            foldersContainer.style.display = 'grid';
-            renderFolders();
-        }
-
         renderItems();
-    }
-
-    function renderFolders() {
-        const foldersContainer = document.getElementById('foldersContainer');
-        const currentFolders = db.folders.filter(f => f.type === activeTab);
-
-        if (currentFolders.length === 0) {
-            foldersContainer.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px;">Папок нет.</div>`;
-            return;
-        }
-
-        foldersContainer.innerHTML = currentFolders.map(f => {
-            const count = db.items.filter(i => i.folderId === f.id).length;
-            return `
-                <div class="folder-item" onclick="openFolder('${f.id}')">
-                    <div class="folder-info">
-                        <span style="font-size: 18px;">📁</span>
-                        <div>
-                            <div class="folder-title">${f.name}</div>
-                            <div style="font-size: 10px; color: var(--text-muted);">${count} файл.</div>
-                        </div>
-                    </div>
-                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function renderItems() {
-        const filesContainer = document.getElementById('filesContainer');
-        let currentItems = db.items.filter(i => i.type === activeTab && !i.equipmentId);
-
-        if (currentFolderId) currentItems = currentItems.filter(i => i.folderId === currentFolderId);
-        else currentItems = currentItems.filter(i => !i.folderId);
-
-        if (currentItems.length === 0) {
-            filesContainer.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">Элементов нет.</div>`;
-            return;
-        }
-
-        if (activeTab === 'image') {
-            filesContainer.innerHTML = `
-                <div class="gallery-grid">
-                    ${currentItems.map(item => `
-                        <div class="photo-card">
-                            <div class="photo-preview" onclick="window.open('${item.filePath}', '_blank')">
-                                <img src="${item.filePath}" alt="${item.name}">
-                            </div>
-                            <div class="photo-content">
-                                <div style="font-weight: 600; font-size: 12px; word-break: break-word;">${item.name}</div>
-                                <div style="font-size: 10px; color: var(--text-muted);">${item.size || ''}</div>
-                            </div>
-                            <div class="photo-footer">
-                                <span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span>
-                                <div style="display: flex; gap: 4px;">
-                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; min-width: auto;" onclick="window.open('${item.filePath}', '_blank')">👁️</button>
-                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="deleteItem('${item.id}')">🗑️</button>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        } else if (activeTab === 'doc') {
-            filesContainer.innerHTML = `
-                <div class="files-list">
-                    ${currentItems.map(item => `
-                        <div class="file-row">
-                            <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')">
-                                <span style="font-size: 18px;">📄</span>
-                                <div style="overflow: hidden;">
-                                    <div class="file-name">${item.name}</div>
-                                    <div class="file-info-sub">${item.size || ''} • ${item.date || ''}</div>
-                                </div>
-                            </div>
-                            <div class="file-actions">
-                                <button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button>
-                                <button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        } else if (activeTab === 'note') {
-            filesContainer.innerHTML = `
-                <div class="files-list">
-                    ${currentItems.map(item => `
-                        <div class="file-row" style="gap: 6px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
-                                <div style="display: flex; gap: 4px;">
-                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; min-width: auto;" onclick="editNote('${item.id}')">✏️</button>
-                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="deleteItem('${item.id}')">🗑️</button>
-                                </div>
-                            </div>
-                            <div style="font-size: 12px; white-space: pre-wrap; color: var(--text-main); background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">${item.content || ''}</div>
-                            <div style="font-size: 10px; color: var(--text-muted); text-align: right;">Создано: ${item.date || ''}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-    }
-
-    function goToSearchFolder(type, folderId) {
-        document.getElementById('searchInput').value = '';
-        selectTab(type);
-        openFolder(folderId);
-    }
-
-    function renderGlobalSearch(query) {
-        const filesContainer = document.getElementById('filesContainer');
-        const sectionTitle = document.getElementById('sectionTitle');
-        const folderBanner = document.getElementById('folderBanner');
-        const foldersContainer = document.getElementById('foldersContainer');
-
-        if (folderBanner) folderBanner.style.display = 'none';
-        if (foldersContainer) foldersContainer.style.display = 'none';
-        if (sectionTitle) sectionTitle.textContent = `🔍 Поиск: "${query}"`;
-
-        const q = (query || '').toLowerCase().trim();
-        const foundEq = (equipmentList || []).filter(eq => [eq.name, eq.serialNumber, eq.ownerName, eq.location].some(val => val && String(val).toLowerCase().includes(q)));
-        const foundFolders = (db.folders || []).filter(folder => folder && folder.name && String(folder.name).toLowerCase().includes(q));
-        const foundItems = (db.items || []).filter(item => item && [item.name, item.content].some(val => val && String(val).toLowerCase().includes(q)));
-
-        let html = '';
-        if (foundEq.length > 0) {
-            html += `<div class="search-results-box"><div class="search-group-title">⚖️ Весы (${foundEq.length})</div><div class="table-responsive"><table class="eq-table"><thead><tr><th>Модель</th><th>Зав. №</th><th>Владелец</th></tr></thead><tbody>${foundEq.map(eq => `<tr onclick="viewEquipment('${eq.id}')"><td><b>${eq.name}</b></td><td>${eq.serialNumber || '-'}</td><td>${eq.ownerName || '-'}</td></tr>`).join('')}</tbody></table></div></div>`;
-        }
-        if (foundFolders.length > 0) {
-            html += `<div class="search-results-box" style="margin-top: 14px;"><div class="search-group-title">📁 Папки (${foundFolders.length})</div><div class="folders-container" style="display: grid;">${foundFolders.map(f => `<div class="folder-item" onclick="goToSearchFolder('${f.type}', '${f.id}')"><div class="folder-info"><span>📁</span><div class="folder-title">${f.name}</div></div></div>`).join('')}</div></div>`;
-        }
-        if (foundItems.length > 0) {
-            html += `<div class="search-results-box" style="margin-top: 14px;"><div class="search-group-title">📄 Файлы (${foundItems.length})</div><div class="files-list">${foundItems.map(item => `<div class="file-row"><div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${item.name}</div></div></div>`).join('')}</div></div>`;
-        }
-        if (!foundEq.length && !foundFolders.length && !foundItems.length) {
-            html = `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено.</div>`;
-        }
-        if (filesContainer) filesContainer.innerHTML = html;
-    }
-
-    function openFolder(id) { currentFolderId = id; updateHash(); updateNavUI(); render(); }
-    function exitFolder() { currentFolderId = null; updateHash(); updateNavUI(); render(); }
-
-    async function promptCreateFolder() {
-        if (!activeTab || activeTab === 'admin') { alert('Выберите категорию.'); return; }
-        const name = prompt('Название папки:');
-        if (!name || !name.trim()) return;
-        try {
-            const res = await fetch('/api/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'folder_' + Date.now(), type: activeTab, name: name.trim() }) });
-            if ((await res.json()).success) loadDB();
-        } catch (e) {}
-    }
-
-    async function deleteFolder(id) {
-        if (!confirm('Удалить папку?')) return;
-        try {
-            const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
-            if ((await res.json()).success) { if (currentFolderId === id) currentFolderId = null; updateHash(); loadDB(); }
-        } catch (e) {}
-    }
-
-    async function uploadFiles(files, type) {
-        if (!files || files.length === 0) return;
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
-        if (currentFolderId) formData.append('folderId', currentFolderId);
-        try {
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            if ((await res.json()).success) loadDB();
-        } catch (e) {}
-    }
-
-    function openNoteModal() {
-        editingItemId = null;
-        document.getElementById('modalTitle').textContent = '📝 Заметка';
-        document.getElementById('noteNameInput').value = '';
-        document.getElementById('noteContentInput').value = '';
-        document.getElementById('noteModal').style.display = 'flex';
-    }
-
-    function editNote(id) {
-        const item = db.items.find(i => i.id === id);
-        if (!item) return;
-        editingItemId = id;
-        document.getElementById('modalTitle').textContent = '✏️ Изменить заметку';
-        document.getElementById('noteNameInput').value = item.name || '';
-        document.getElementById('noteContentInput').value = item.content || '';
-        document.getElementById('noteModal').style.display = 'flex';
-    }
-
-    async function saveNote(e) {
-        e.preventDefault();
-        const name = document.getElementById('noteNameInput').value.trim();
-        const content = document.getElementById('noteContentInput').value.trim();
-        if (!name) { alert('Введите название'); return; }
-        try {
-            const res = await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingItemId, name, content, folderId: currentFolderId || null }) });
-            if ((await res.json()).success) { closeModals(); loadDB(); }
-        } catch (e) {}
-    }
-
-    async function deleteItem(id) {
-        if (!confirm('Удалить?')) return;
-        try {
-            const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
-            if ((await res.json()).success) loadDB();
-        } catch (e) {}
-    }
-
-    function closeModals() {
-        document.querySelectorAll('.modal-backdrop').forEach(m => { m.style.display = 'none'; });
-        editingItemId = null;
-    }
-
-    function handleDragOver(e) { e.preventDefault(); e.stopPropagation(); }
-    function handleDragLeave(e) { e.preventDefault(); e.stopPropagation(); }
-    function handleDrop(e) {
-        e.preventDefault(); e.stopPropagation();
-        if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files, activeTab);
     }
 
     if (localStorage.getItem('isLoggedIn') === 'true') {
