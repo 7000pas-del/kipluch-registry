@@ -18,31 +18,26 @@ const db = new sqlite3.Database('./archive.db', (err) => {
   else console.log('Подключено к базе данных SQLite.');
 });
 
-// Создание таблиц со всеми необходимыми полями для паспорта весов
+// Создание таблиц
 db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS equipment (
-    id TEXT PRIMARY KEY, 
-    name TEXT, 
-    serialNumber TEXT, 
-    gsiNumber TEXT, 
-    ownerName TEXT, 
-    location TEXT, 
-    installationDate TEXT, 
-    capacity TEXT, 
-    minCapacity TEXT, 
-    discrete TEXT, 
-    adcType TEXT, 
-    sensorType TEXT, 
-    platformCount TEXT, 
-    weighingMode TEXT, 
-    lastVerification TEXT, 
-    nextVerification TEXT, 
-    certNumber TEXT, 
-    phone TEXT, 
-    email TEXT, 
-    status TEXT, 
-    notes TEXT
-  )`);
+  db.run(`CREATE TABLE IF NOT EXISTS equipment (id TEXT PRIMARY KEY)`);
+  
+  // Автоматическое добавление недостающих колонок в существующую табличку
+  const columns = [
+    "name TEXT", "serialNumber TEXT", "gsiNumber TEXT", "ownerName TEXT", 
+    "location TEXT", "installationDate TEXT", "capacity TEXT", "minCapacity TEXT", 
+    "discrete TEXT", "adcType TEXT", "sensorType TEXT", "platformCount TEXT", 
+    "weighingMode TEXT", "lastVerification TEXT", "nextVerification TEXT", 
+    "certNumber TEXT", "phone TEXT", "email TEXT", "status TEXT", "notes TEXT"
+  ];
+  
+  columns.forEach(col => {
+    const colName = col.split(' ')[0];
+    db.run(`ALTER TABLE equipment ADD COLUMN ${col}รุ่น`, (err) => {}); // Игнорируем ошибку, если колонка уже есть
+    // Обычный синтаксис для SQLite:
+    db.run(`ALTER TABLE equipment ADD COLUMN ${col}`, () => {});
+  });
+
   db.run(`CREATE TABLE IF NOT EXISTS folders (id TEXT PRIMARY KEY, type TEXT, name TEXT)`);
   db.run(`CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, type TEXT, name TEXT, filePath TEXT, size TEXT, date TEXT, folderId TEXT, equipmentId TEXT, content TEXT)`);
   db.run(`CREATE TABLE IF NOT EXISTS maintenance (id TEXT PRIMARY KEY, equipmentId TEXT, workType TEXT, date TEXT, description TEXT, performedBy TEXT)`);
@@ -58,7 +53,7 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// Получение данных архива (папки и файлы)
+// Получение данных архива
 app.get('/api/db', (req, res) => {
   db.all("SELECT * FROM folders", [], (err, folders) => {
     db.all("SELECT * FROM items", [], (err2, items) => {
@@ -67,7 +62,7 @@ app.get('/api/db', (req, res) => {
   });
 });
 
-// Управление оборудованием (весами)
+// Оборудование
 app.get('/api/equipment', (req, res) => {
   db.all("SELECT * FROM equipment", [], (err, rows) => {
     res.json(rows || []);
@@ -80,7 +75,7 @@ app.post('/api/equipment', (req, res) => {
     db.run(`UPDATE equipment SET name=?, serialNumber=?, gsiNumber=?, ownerName=?, location=?, installationDate=?, capacity=?, minCapacity=?, discrete=?, adcType=?, sensorType=?, platformCount=?, weighingMode=?, lastVerification=?, nextVerification=?, certNumber=?, phone=?, email=?, status=?, notes=? WHERE id=?`,
       [eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes, eq.id],
       function(err) { 
-        if (err) console.error('Ошибка обновления весов:', err.message);
+        if (err) console.error('Ошибка обновления:', err.message);
         res.json({ success: !err, error: err ? err.message : null }); 
       }
     );
@@ -89,7 +84,7 @@ app.post('/api/equipment', (req, res) => {
     db.run(`INSERT INTO equipment (id, name, serialNumber, gsiNumber, ownerName, location, installationDate, capacity, minCapacity, discrete, adcType, sensorType, platformCount, weighingMode, lastVerification, nextVerification, certNumber, phone, email, status, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [newId, eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes],
       function(err) { 
-        if (err) console.error('Ошибка добавления весов:', err.message);
+        if (err) console.error('Ошибка добавления:', err.message);
         res.json({ success: !err, error: err ? err.message : null }); 
       }
     );
@@ -102,7 +97,7 @@ app.delete('/api/equipment/:id', (req, res) => {
   });
 });
 
-// Управление папками
+// Папки
 app.post('/api/folders', (req, res) => {
   const { id, type, name } = req.body;
   db.run("INSERT INTO folders (id, type, name) VALUES (?,?,?)", [id, type, name], function(err) {
@@ -131,9 +126,7 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
   files.forEach(file => {
     const ext = path.extname(file.originalname).toLowerCase();
     let type = 'doc';
-    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
-      type = 'image';
-    }
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) type = 'image';
 
     const newPath = 'uploads/' + file.filename + ext;
     fs.renameSync(file.path, newPath);
@@ -146,22 +139,17 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
       [itemId, type, file.originalname, '/' + newPath, sizeKB, dateStr, folderId, equipmentId],
       () => {
         completed++;
-        if (completed === files.length) {
-          res.json({ success: true });
-        }
+        if (completed === files.length) res.json({ success: true });
       }
     );
   });
 });
 
-// Удаление файлов/элементов
 app.delete('/api/items/:id', (req, res) => {
   const itemId = req.params.id;
   db.get("SELECT filePath FROM items WHERE id = ?", [itemId], (err, row) => {
     if (row && row.filePath) {
-      try {
-        fs.unlinkSync('.' + row.filePath);
-      } catch (e) {}
+      try { fs.unlinkSync('.' + row.filePath); } catch (e) {}
     }
     db.run("DELETE FROM items WHERE id = ?", [itemId], function(err2) {
       res.json({ success: !err2 });
@@ -187,7 +175,7 @@ app.post('/api/notes', (req, res) => {
   }
 });
 
-// Журнал обслуживания
+// Обслуживание
 app.get('/api/maintenance/:id', (req, res) => {
   db.all("SELECT * FROM maintenance WHERE equipmentId = ?", [req.params.id], (err, rows) => {
     res.json(rows || []);
