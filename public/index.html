@@ -174,17 +174,19 @@
         .modal-buttons { display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); background: var(--surface); margin-top: auto; }
         .modal-buttons .btn { flex: 1; padding: 8px; font-size: 12px; min-width: auto; }
 
-        /* СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ КРАСИВОЙ ПЕЧАТИ ПАСПОРТА ВЕСОВ */
+        /* ИДЕАЛЬНАЯ ПЕЧАТЬ НА ОДНОЙ СТРАНИЦЕ БЕЗ ЛИШНЕГО ТЕКСТА СВЕРХУ */
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 5mm;
+            }
             body * { visibility: hidden; }
             #viewEquipmentModal, #viewEquipmentModal * { visibility: visible; }
             #viewEquipmentModal {
                 position: absolute !important;
                 inset: 0 !important;
                 background: white !important;
-                display: flex !important;
-                justify-content: flex-start !important;
-                align-items: center !important;
+                display: block !important;
                 padding: 0 !important;
                 margin: 0 !important;
                 backdrop-filter: none !important;
@@ -192,30 +194,44 @@
             #viewEquipmentModal .modal-box {
                 box-shadow: none !important;
                 border: none !important;
+                height: auto !important;
                 max-height: 100% !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                padding: 10px !important;
-                margin: 0 auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
                 background: white !important;
                 overflow: visible !important;
             }
             #viewEquipmentModal .modal-close-btn,
             #viewEquipmentModal .modal-buttons,
             #viewEquipmentModal .detail-card:last-child {
-                display: none !important; /* Скрываем кнопки, крестик и журнал обслуживания при печати */
+                display: none !important;
             }
             .modal-body-scroll {
                 overflow: visible !important;
                 max-height: none !important;
+                display: flex !important;
+                gap: 4px !important;
             }
             .detail-card {
                 background: white !important;
                 border: 1px solid #cbd5e1 !important;
-                page-break-inside: avoid;
+                padding: 6px !important;
+                gap: 4px !important;
+            }
+            .detail-grid {
+                gap: 4px !important;
             }
             .detail-item {
+                padding: 4px 6px !important;
                 border: 1px solid #e2e8f0 !important;
+            }
+            .detail-label {
+                font-size: 9px !important;
+            }
+            .detail-value {
+                font-size: 11px !important;
             }
         }
 
@@ -468,7 +484,7 @@
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewEquipmentModal()">Закрыть</button>
-            <button class="btn btn-folder" type="button" onclick="window.print()">🖨️ Печать</button>
+            <button class="btn btn-folder" type="button" onclick="printPassport()">🖨️ Печать</button>
             <button class="btn" type="button" id="btnEditFromView">✏️ Изменить</button>
         </div>
     </div>
@@ -567,6 +583,15 @@
 </div>
 
 <script>
+    function printPassport() {
+        const oldTitle = document.title;
+        document.title = ""; 
+        window.print();
+        setTimeout(() => {
+            document.title = oldTitle;
+        }, 1000);
+    }
+
     document.getElementById('authForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('authLogin').value;
