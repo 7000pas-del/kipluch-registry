@@ -112,24 +112,12 @@
         .eq-header-actions { display: flex; gap: 6px; align-items: center; width: 100%; flex-wrap: wrap; }
         .eq-header-actions .btn { flex: 1; padding: 8px 12px; font-size: 12px; min-width: auto; }
 
-        .alert-banner { padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 12px; display: flex; align-items: center; word-break: break-word; }
-        .alert-banner-success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
-
-        .filter-bar { display: flex; flex-direction: column; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid var(--border); width: 100%; }
-        .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
-        .chip { background: #fff; border: 1px solid var(--border); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all 0.2s; flex: 1; text-align: center; white-space: nowrap; }
-        .chip:hover { background: #e2e8f0; color: var(--text-main); }
-        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-        .select-filter { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; outline: none; background: #fff; font-weight: 600; color: var(--text-main); width: 100%; }
-
         .mobile-eq-list { display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 100%; overflow: hidden; }
         .mobile-eq-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 100%; max-width: 100%; word-break: break-word; overflow: hidden; }
 
         .table-responsive { width: 100%; overflow-x: auto; }
         .eq-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
         .eq-table th { background: #f1f5f9; padding: 10px 12px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid var(--border); user-select: none; }
-        .eq-table th.sortable { cursor: pointer; }
         .eq-table td { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; vertical-align: middle; }
         .eq-table tr:hover { background: #f8fafc; }
 
@@ -161,7 +149,6 @@
         .file-row:hover { background: #f8fafc; }
         .file-meta { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; overflow: hidden; }
         .file-name { font-weight: 600; font-size: 13px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .file-info-sub { font-size: 11px; color: var(--text-muted); }
         .file-actions { display: flex; gap: 6px; width: 100%; }
         .file-actions .btn { flex: 1; padding: 6px; font-size: 11px; min-width: auto; }
 
@@ -171,8 +158,6 @@
         .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
         .photo-content { padding: 10px; display: flex; flex-direction: column; gap: 4px; word-break: break-word; }
         .photo-footer { padding: 8px 10px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-
-        .drop-zone-area { border: 2px dashed var(--accent); border-radius: var(--radius); padding: 14px; text-align: center; background: rgba(37, 99, 235, 0.02); color: var(--accent); font-weight: 600; margin-bottom: 14px; font-size: 12px; }
 
         .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-end; z-index: 100; padding: 0; }
         .modal-box { position: relative; background: var(--surface); border-radius: 20px 20px 0 0; padding: 14px 14px 20px; width: 100%; max-width: 820px; display: flex; flex-direction: column; gap: 10px; max-height: 92vh; overflow: hidden; box-shadow: 0 -10px 25px rgba(0,0,0,0.15); }
@@ -188,6 +173,51 @@
         
         .modal-buttons { display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); background: var(--surface); margin-top: auto; }
         .modal-buttons .btn { flex: 1; padding: 8px; font-size: 12px; min-width: auto; }
+
+        /* СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ КРАСИВОЙ ПЕЧАТИ ПАСПОРТА ВЕСОВ */
+        @media print {
+            body * { visibility: hidden; }
+            #viewEquipmentModal, #viewEquipmentModal * { visibility: visible; }
+            #viewEquipmentModal {
+                position: absolute !important;
+                inset: 0 !important;
+                background: white !important;
+                display: flex !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                backdrop-filter: none !important;
+            }
+            #viewEquipmentModal .modal-box {
+                box-shadow: none !important;
+                border: none !important;
+                max-height: 100% !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 10px !important;
+                margin: 0 auto !important;
+                background: white !important;
+                overflow: visible !important;
+            }
+            #viewEquipmentModal .modal-close-btn,
+            #viewEquipmentModal .modal-buttons,
+            #viewEquipmentModal .detail-card:last-child {
+                display: none !important; /* Скрываем кнопки, крестик и журнал обслуживания при печати */
+            }
+            .modal-body-scroll {
+                overflow: visible !important;
+                max-height: none !important;
+            }
+            .detail-card {
+                background: white !important;
+                border: 1px solid #cbd5e1 !important;
+                page-break-inside: avoid;
+            }
+            .detail-item {
+                border: 1px solid #e2e8f0 !important;
+            }
+        }
 
         @media (min-width: 768px) {
             body { padding: 32px 16px; }
