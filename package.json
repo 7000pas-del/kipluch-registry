@@ -1,14 +1,14 @@
 {
-  "name": "kip-luch",
+  "name": "kipluch-registry",
   "version": "1.0.0",
+  "description": "",
   "main": "server.js",
-  "type": "commonjs",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.1.8",
-    "multer": "^2.4.0",
-    "@vscode/sqlite3": "^5.1.8"
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "sqlite3": "^5.1.7"
   }
 }
