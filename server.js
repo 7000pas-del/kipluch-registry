@@ -18,13 +18,30 @@ const db = new sqlite3.Database('./archive.db', (err) => {
   else console.log('Подключено к базе данных SQLite.');
 });
 
-// Создание таблиц, если их нет
+// Создание таблиц со всеми необходимыми полями для паспорта весов
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS equipment (
-    id TEXT PRIMARY KEY, name TEXT, serialNumber TEXT, gsiNumber TEXT, 
-    ownerName TEXT, location TEXT, installationDate TEXT, capacity TEXT, minCapacity TEXT, 
-    discrete TEXT, adcType TEXT, sensorType TEXT, platformCount TEXT, 
-    weighingMode TEXT, lastVerification TEXT, nextVerification TEXT, certNumber TEXT, phone TEXT, email TEXT, status TEXT, notes TEXT
+    id TEXT PRIMARY KEY, 
+    name TEXT, 
+    serialNumber TEXT, 
+    gsiNumber TEXT, 
+    ownerName TEXT, 
+    location TEXT, 
+    installationDate TEXT, 
+    capacity TEXT, 
+    minCapacity TEXT, 
+    discrete TEXT, 
+    adcType TEXT, 
+    sensorType TEXT, 
+    platformCount TEXT, 
+    weighingMode TEXT, 
+    lastVerification TEXT, 
+    nextVerification TEXT, 
+    certNumber TEXT, 
+    phone TEXT, 
+    email TEXT, 
+    status TEXT, 
+    notes TEXT
   )`);
   db.run(`CREATE TABLE IF NOT EXISTS folders (id TEXT PRIMARY KEY, type TEXT, name TEXT)`);
   db.run(`CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, type TEXT, name TEXT, filePath TEXT, size TEXT, date TEXT, folderId TEXT, equipmentId TEXT, content TEXT)`);
@@ -62,13 +79,19 @@ app.post('/api/equipment', (req, res) => {
   if (eq.id) {
     db.run(`UPDATE equipment SET name=?, serialNumber=?, gsiNumber=?, ownerName=?, location=?, installationDate=?, capacity=?, minCapacity=?, discrete=?, adcType=?, sensorType=?, platformCount=?, weighingMode=?, lastVerification=?, nextVerification=?, certNumber=?, phone=?, email=?, status=?, notes=? WHERE id=?`,
       [eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes, eq.id],
-      function(err) { res.json({ success: !err, error: err ? err.message : null }); }
+      function(err) { 
+        if (err) console.error('Ошибка обновления весов:', err.message);
+        res.json({ success: !err, error: err ? err.message : null }); 
+      }
     );
   } else {
     const newId = 'eq_' + Date.now();
     db.run(`INSERT INTO equipment (id, name, serialNumber, gsiNumber, ownerName, location, installationDate, capacity, minCapacity, discrete, adcType, sensorType, platformCount, weighingMode, lastVerification, nextVerification, certNumber, phone, email, status, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [newId, eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes],
-      function(err) { res.json({ success: !err, error: err ? err.message : null }); }
+      function(err) { 
+        if (err) console.error('Ошибка добавления весов:', err.message);
+        res.json({ success: !err, error: err ? err.message : null }); 
+      }
     );
   }
 });
