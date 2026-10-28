@@ -9,7 +9,6 @@
   "dependencies": {
     "express": "^4.1.8",
     "multer": "^2.4.0",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "@vscode/sqlite3": "^5.1.8"
   }
 }
