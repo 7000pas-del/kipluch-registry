@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТОО «КИП «Луч» — Реестр весоизмерительных систем и архив</title>
+
+    <!-- Иконки -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><text x='50' y='68' font-size='60' text-anchor='middle'>⚖️</text></svg>">
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%230f172a'/><text x='90' y='122' font-size='100' text-anchor='middle'>⚖️</text></svg>">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --radius: 14px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; padding: 16px 8px; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 16px; overflow-x: hidden; }
+
+        /* СОВРЕМЕННАЯ ПРЕЗЕНТАБЕЛЬНАЯ ШАПКА БЕЗ ИКОНКИ */
+        header { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+            color: white; 
+            padding: 24px 20px; 
+            border-radius: var(--radius); 
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2); 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            text-align: center;
+            gap: 6px; 
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        header h1 { 
+            font-size: 22px; 
+            font-weight: 800; 
+            line-height: 1.2; 
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
+
+        header h1 span.company-highlight {
+            background: linear-gradient(90deg, #60a5fa, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header h1 .subtitle {
+            display: block;
+            margin-top: 6px;
+            font-size: 11px; 
+            font-weight: 500; 
+            color: #94a3b8;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .toolbar { background: var(--surface); padding: 14px; border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; }
+        
+        /* ВЕРНУЛИ ПОИСК НАПРАВО */
+        .toolbar-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex: 1; }
+
+        .btn { background: var(--accent); color: white; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 12px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; text-decoration: none; min-width: auto; }
+        .btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-success { background: var(--success); } .btn-success:hover { background: #059669; }
+        .btn-folder { background: var(--warning); } .btn-folder:hover { background: #d97706; }
+        .btn-home { background: #475569; color: #fff; } .btn-home:hover { background: #334155; }
+        .btn-secondary { background: #64748b; color: #fff; } .btn-secondary:hover { background: #475569; }
+
+        input[type="file"] { display: none; }
+
+        /* МОБИЛЬНАЯ ЛУПА / СТРОКА ПОИСКА СПРАВА */
+        .search-box { position: relative; display: flex; align-items: center; }
+        .search-input { padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; width: 220px; outline: none; background: #f8fafc; transition: all 0.3s ease; }
+        .search-input:focus { background: #fff; border-color: var(--accent); width: 280px; }
+        .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; pointer-events: none; }
+        
+        /* Кнопка-лупа для мобильных */
+        .mobile-search-toggle { display: none; background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; width: 36px; height: 36px; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--text-main); }
+
+        /* СЕТКА НАВИГАЦИИ (2x2 на смартфонах) */
+        .nav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
+        .nav-card { background: #f8fafc; border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; overflow: hidden; }
+        .nav-card:hover { border-color: var(--accent); background: #fff; }
+        .nav-card.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .nav-left { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .nav-count { background: #e2e8f0; color: var(--text-muted); padding: 2px 6px; border-radius: 20px; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+        .nav-card.active .nav-count { background: rgba(255, 255, 255, 0.2); color: white; }
+
+        .welcome-screen { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; display: flex; flex-direction: column; gap: 14px; width: 100%; overflow: hidden; }
+        
+        .eq-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .eq-title { font-size: 15px; font-weight: 700; color: var(--primary); }
+        .eq-header-actions { display: flex; gap: 6px; align-items: center; width: 100%; flex-wrap: wrap; }
+        .eq-header-actions .btn { flex: 1; padding: 8px 12px; font-size: 12px; min-width: auto; }
+
+        .alert-banner { padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 12px; display: flex; align-items: center; word-break: break-word; }
+        .alert-banner-danger { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+        .alert-banner-success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
+
+        .filter-bar { display: flex; flex-direction: column; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid var(--border); width: 100%; }
+        .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+        .chip { background: #fff; border: 1px solid var(--border); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all 0.2s; flex: 1; text-align: center; white-space: nowrap; }
+        .chip:hover { background: #e2e8f0; color: var(--text-main); }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .select-filter { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; outline: none; background: #fff; font-weight: 600; color: var(--text-main); width: 100%; }
+
+        /* МОБИЛЬНЫЕ КАРТОЧКИ ОБОРУДОВАНИЯ */
+        .mobile-eq-list { display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 100%; overflow: hidden; }
+        .mobile-eq-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 100%; max-width: 100%; word-break: break-word; overflow: hidden; }
+        .mobile-eq-card:active { background: #f8fafc; }
+
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .eq-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        .eq-table th { background: #f1f5f9; padding: 10px 12px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid var(--border); user-select: none; }
+        .eq-table th.sortable { cursor: pointer; }
+        .eq-table td { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; vertical-align: middle; }
+        .eq-table tr:hover { background: #f8fafc; }
+
+        .badge-status { 
+            padding: 4px 8px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .status-ok { background: #d1fae5; color: #065f46; }
+        .status-warn { background: #fef3c7; color: #92400e; }
+        .status-err { background: #fee2e2; color: #991b1b; }
+        .status-off { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+        .admin-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+        .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .admin-card-title { font-size: 14px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .admin-card-body { font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px; }
+        .stat-row { display: flex; justify-content: space-between; font-weight: 600; color: var(--text-main); background: #f8fafc; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); }
+
+        .detail-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; width: 100%; overflow: hidden; }
+        .detail-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+        .detail-item { background: #fff; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); word-break: break-word; }
+        .detail-label { font-size: 10px; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
+        .detail-value { font-size: 12px; font-weight: 600; color: var(--primary); word-break: break-word; }
+
+        .maint-row { display: flex; flex-direction: column; background: #fff; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 6px; word-break: break-word; }
+        .maint-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #e2e8f0; color: var(--primary); display: inline-block; }
+
+        .folder-banner { background: #e0f2fe; border: 1px solid #93c5fd; color: #0369a1; padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 12px; }
+        .folders-container { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 14px; }
+        .folder-item { background: var(--surface); border: 2px dashed var(--border); border-radius: 10px; padding: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .folder-info { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+        .folder-title { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .files-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; width: 100%; }
+        .file-row { display: flex; flex-direction: column; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; width: 100%; overflow: hidden; }
+        .file-meta { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; overflow: hidden; }
+        .file-name { font-weight: 600; font-size: 13px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-info-sub { font-size: 11px; color: var(--text-muted); }
+        .file-actions { display: flex; gap: 6px; width: 100%; }
+        .file-actions .btn { flex: 1; padding: 6px; font-size: 11px; min-width: auto; }
+
+        .gallery-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .photo-card { background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); display: flex; flex-direction: column; }
+        .photo-preview { height: 160px; background: #e2e8f0; cursor: pointer; }
+        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-content { padding: 10px; display: flex; flex-direction: column; gap: 4px; word-break: break-word; }
+        .photo-footer { padding: 8px 10px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+
+        .drop-zone-area { border: 2px dashed var(--accent); border-radius: var(--radius); padding: 14px; text-align: center; background: rgba(37, 99, 235, 0.02); color: var(--accent); font-weight: 600; margin-bottom: 14px; font-size: 12px; }
+
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-end; z-index: 100; padding: 0; }
+        .modal-box { position: relative; background: var(--surface); border-radius: 20px 20px 0 0; padding: 14px 14px 20px; width: 100%; max-width: 820px; display: flex; flex-direction: column; gap: 10px; max-height: 92vh; overflow: hidden; box-shadow: 0 -10px 25px rgba(0,0,0,0.15); }
+        .modal-box h3 { font-size: 15px; color: var(--primary); }
+        .modal-body-scroll { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 2px; max-height: calc(92vh - 100px); width: 100%; overflow-x: hidden; }
+
+        .modal-close-btn { position: absolute; top: 10px; right: 12px; width: 26px; height: 26px; border-radius: 50%; background: #f1f5f9; border: 1px solid var(--border); color: var(--text-muted); font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+
+        .form-group { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        .form-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+        .form-group input, .form-group select, .modal-box textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+        .form-row, .form-row-3 { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        
+        .modal-buttons { display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); background: var(--surface); margin-top: auto; }
+        .modal-buttons .btn { flex: 1; padding: 8px; font-size: 12px; min-width: auto; }
+
+        .print-signature-block { display: none; margin-top: 25px; border-top: 1px solid #000; padding-top: 15px; }
+        .print-signature-grid { display: flex; flex-direction: column; gap: 20px; font-size: 11pt; }
+
+        /* Адаптив под планшеты и ПК (от 768px и выше) */
+        @media (min-width: 768px) {
+            body { padding: 32px 16px; }
+            header { padding: 28px 32px; }
+            header h1 { font-size: 24px; }
+            .actions .btn { flex: initial; min-width: auto; padding: 10px 16px; font-size: 13px; }
+            .search-input { width: 240px; padding: 10px 14px 10px 36px; font-size: 14px; }
+            .search-input:focus { width: 320px; }
+            .mobile-search-toggle { display: none !important; }
+            .search-box { display: flex !important; }
+            .nav-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+            .nav-card { padding: 14px 16px; }
+            .nav-left { font-size: 14px; }
+            .eq-header-actions { width: auto; flex: initial; }
+            .eq-header-actions .btn { flex: initial; padding: 6px 14px; font-size: 12px; min-width: auto; }
+            .admin-grid { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+            .detail-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+            .folders-container { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+            .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+            .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+            .file-row { flex-direction: row; align-items: center; padding: 14px 20px; }
+            .file-meta { width: auto; flex-grow: 1; }
+            .file-name { white-space: normal; }
+            .file-actions { width: auto; }
+            .file-actions .btn { flex: initial; padding: 6px 12px; font-size: 13px; }
+            .maint-row { flex-direction: row; align-items: flex-start; justify-content: space-between; padding: 10px 14px; }
+            .modal-backdrop { align-items: center; padding: 16px; }
+            .modal-box { border-radius: 20px; padding: 20px 24px; }
+            .print-signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+            .table-responsive { display: block; }
+            .mobile-eq-list { display: none !important; }
+        }
+
+        @media (max-width: 767px) {
+            .table-responsive { display: none !important; }
+            .mobile-eq-list { display: flex !important; }
+            
+            /* На мобилках поиск по умолчанию свернут в лупу, если в нем нет текста */
+            .search-box:not(.search-active) .search-input { display: none; }
+            .search-box.search-active { width: 100%; }
+            .search-box.search-active .search-input { display: block; width: 100%; }
+            .search-box.search-active .mobile-search-toggle { background: var(--accent); color: white; }
+            .mobile-search-toggle { display: flex; }
+        }
+
+        /* СТИЛЬ ПЕЧАТИ */
+        @media print {
+            header, .toolbar, .modal-buttons, .btn, .app-container, .modal-close-btn, #viewEqTitle, #viewEqBadge, #equipmentFilesContainer, #maintDesc, #maintWorkType, #maintDate, #maintBy, button {
+                display: none !important;
+            }
+
+            body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; margin: 0 !important; font-family: 'Times New Roman', Times, serif !important; text-align: left !important; }
+            .modal-backdrop#viewEquipmentModal { position: static !important; background: none !important; backdrop-filter: none !important; display: block !important; padding: 0 !important; }
+            .modal-backdrop#viewEquipmentModal .modal-box { max-width: 100% !important; width: 100% !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; border: none !important; max-height: none !important; overflow: visible !important; }
+            
+            .modal-box::before { content: "ТЕХНИЧЕСКИЙ ПАСПОРТ ОБОРУДОВАНИЯ"; display: block; text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            
+            .modal-body-scroll { max-height: none !important; overflow: visible !important; }
+            .detail-card { background: none !important; border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
+            .detail-grid { display: table !important; width: 100% !important; border-collapse: collapse !important; margin-bottom: 8px !important; }
+            .detail-item { display: table-cell !important; border: 1px solid #000 !important; padding: 6px 8px !important; border-radius: 0 !important; font-size: 10pt !important; }
+            .detail-label { color: #000 !important; font-size: 8pt !important; font-weight: bold !important; text-transform: uppercase !important; margin-bottom: 3px !important; }
+            .detail-value { color: #000 !important; font-size: 10pt !important; font-weight: normal !important; }
+            .maint-row { border: 1px solid #000 !important; border-radius: 0 !important; margin-bottom: -1px !important; padding: 6px 8px !important; }
+            .maint-tag { border: 1px solid #000 !important; background: none !important; color: #000 !important; }
+            .print-signature-block { display: block !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="brand-logo">
+            <h1>ТОО «<span class="company-highlight">КИП «Луч</span>»<br><span class="subtitle">Метрологический реестр и архив</span></h1>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <div class="toolbar-top">
+            <div class="actions">
+                <button class="btn btn-home" type="button" onclick="goHome()">🏠 Главная</button>
+                <button class="btn btn-folder" id="btnCreateFolder" type="button" onclick="promptCreateFolder()">📁 Папка</button>
+                <label class="btn btn-success" id="btnUploadPhoto" style="display: none; cursor: pointer;">
+                    📸 Фото
+                    <input type="file" accept="image/*" multiple onchange="uploadFiles(this.files, 'image')">
+                </label>
+                <label class="btn" id="btnUploadDoc" style="display: none; cursor: pointer;">
+                    📄 Документ
+                    <input type="file" multiple onchange="uploadFiles(this.files, 'doc')">
+                </label>
+                <button class="btn" id="btnNewNote" type="button" style="background: var(--primary);" onclick="openNoteModal()">📝 Заметка</button>
+            </div>
+
+            <!-- ПОИСК СПРАВА С АДАПТИВНОЙ ЛУПОЙ ДЛЯ МОБИЛОК -->
+            <div class="search-box" id="searchBoxContainer">
+                <button class="mobile-search-toggle" type="button" onclick="toggleMobileSearch()" title="Поиск">🔍</button>
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск..." oninput="onSearchInput()">
+            </div>
+        </div>
+
+        <div class="nav-grid">
+            <div class="nav-card" id="navDoc" onclick="selectTab('doc')">
+                <div class="nav-left"><span>📄</span> <span class="nav-text">Документы</span></div>
+                <span class="nav-count" id="countDoc">0</span>
+            </div>
+            <div class="nav-card" id="navImage" onclick="selectTab('image')">
+                <div class="nav-left"><span>🖼️</span> <span class="nav-text">Фото</span></div>
+                <span class="nav-count" id="countImage">0</span>
+            </div>
+            <div class="nav-card" id="navNote" onclick="selectTab('note')">
+                <div class="nav-left"><span>📝</span> <span class="nav-text">Заметки</span></div>
+                <span class="nav-count" id="countNote">0</span>
+            </div>
+            <div class="nav-card" id="navAdmin" onclick="selectTab('admin')">
+                <div class="nav-left"><span>⚙️</span> <span class="nav-text">Админ</span></div>
+                <span class="nav-count" style="background: var(--accent); color: #fff;">⚙️</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Главный экран -->
+    <div id="welcomeScreen" class="welcome-screen">
+        <div class="eq-header">
+            <div class="eq-title">📊 Реестр систем</div>
+            <div class="eq-header-actions">
+                <button class="btn btn-secondary" type="button" onclick="exportEquipmentCSV()">📥 CSV</button>
+                <button class="btn btn-success" type="button" onclick="openEquipmentModal()">➕ Добавить</button>
+            </div>
+        </div>
+
+        <div id="verificationAlertBanner" class="alert-banner alert-banner-success" style="display: none;">
+            <span id="alertBannerText">✅ Все весы находятся в зоне действующей поверки.</span>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-chips">
+                <div class="chip active" id="filter_all" onclick="setVerificationFilter('all')">Все</div>
+                <div class="chip" id="filter_expired" onclick="setVerificationFilter('expired')">🚨 Просрочено</div>
+                <div class="chip" id="filter_soon" onclick="setVerificationFilter('soon')">⏳ Скоро</div>
+            </div>
+
+            <div style="display: flex; gap: 6px; width: 100%; flex-wrap: wrap;">
+                <select id="selectOwnerFilter" class="select-filter" onchange="renderEquipmentTable()">
+                    <option value="">👤 Все владельцы</option>
+                </select>
+                <select id="selectLocationFilter" class="select-filter" onchange="renderEquipmentTable()">
+                    <option value="">📍 Все объекты</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Таблица для ПК -->
+        <div class="table-responsive">
+            <table class="eq-table">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable('name')">Модель / Наименование <span id="sort_name"></span></th>
+                        <th class="sortable" onclick="sortTable('serialNumber')">Зав. № <span id="sort_serialNumber"></span></th>
+                        <th class="sortable" onclick="sortTable('ownerName')">Владелец <span id="sort_ownerName"></span></th>
+                        <th class="sortable" onclick="sortTable('location')">Место установки <span id="sort_location"></span></th>
+                        <th class="sortable" onclick="sortTable('nextVerification')">След. поверка <span id="sort_nextVerification"></span></th>
+                        <th class="sortable" onclick="sortTable('status')">Статус <span id="sort_status"></span></th>
+                        <th style="text-align: right;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="equipmentTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Мобильные карточки для телефонов -->
+        <div class="mobile-eq-list" id="mobileEquipmentList"></div>
+    </div>
+
+    <!-- Администрирование -->
+    <div id="adminSection" style="display: none; flex-direction: column; gap: 14px;">
+        <div class="section-header">
+            <div class="section-title" style="font-weight: 700; font-size: 15px;">⚙️ Панель управления и обслуживания</div>
+        </div>
+
+        <div class="admin-grid">
+            <div class="admin-card">
+                <div class="admin-card-title">🗄️ Резервное копирование БД</div>
+                <div class="admin-card-body">
+                    Управление файлом базы данных (`archive.db`).
+                    <div class="stat-row">
+                        <span>Файл БД:</span> <span id="admDbFile">archive.db</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Размер:</span> <span id="admDbSize">- KB</span>
+                    </div>
+                    <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                        <button class="btn" type="button" style="background: #334155; padding: 6px 10px; font-size: 11px;" onclick="backupDatabase()">💾 Бэкап</button>
+                        <label class="btn" style="cursor: pointer; background: #7f1d1d; padding: 6px 10px; font-size: 11px;">
+                            📂 Восстановить
+                            <input type="file" accept=".db" onchange="restoreDatabase(this)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="admin-card-title">📊 Статистика и ресурсы</div>
+                <div class="admin-card-body">
+                    Информация о системе.
+                    <div class="stat-row">
+                        <span>Оборудование:</span> <span id="admEqCount">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Файлы:</span> <span id="admItemsCount">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Хранилище:</span> <span id="admUploadsSize">- MB</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Архив -->
+    <div id="contentSection" style="display: none; flex-direction: column; gap: 14px;">
+        <div id="folderBanner" class="folder-banner" style="display: none;">
+            <span id="folderBannerTitle">📁 Название папки</span>
+            <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; background: var(--primary); min-width: auto;" onclick="exitFolder()">← Назад</button>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title" id="sectionTitle" style="font-weight: 700; font-size: 15px;">Список элементов</div>
+        </div>
+
+        <div class="drop-zone-area" id="dropZone" style="display: none;" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            📥 Перетащите файлы сюда
+        </div>
+
+        <div class="folders-container" id="foldersContainer"></div>
+        <div id="filesContainer"></div>
+    </div>
+</div>
+
+<!-- Модальное окно ПАСПОРТА -->
+<div class="modal-backdrop" id="viewEquipmentModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()" title="Закрыть">✕</button>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 30px;">
+            <h3 id="viewEqTitle">🔍 Паспорт весов</h3>
+            <span id="viewEqBadge"></span>
+        </div>
+
+        <div class="modal-body-scroll">
+            <div class="detail-card">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Модель / Наименование:</div>
+                        <div class="detail-value" id="viewEqName">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Заводской номер:</div>
+                        <div class="detail-value" id="viewEqSerial">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">№ в Реестре ГСИ РК:</div>
+                        <div class="detail-value" id="viewEqGsiNumber">-</div>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">👤 Владелец / Организация:</div>
+                        <div class="detail-value" id="viewEqOwnerName">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Место установки / Объект:</div>
+                        <div class="detail-value" id="viewEqLocation">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">📅 Дата ввода в экспл.:</div>
+                        <div class="detail-value" id="viewEqInstallationDate">-</div>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">НПВ (Max):</div>
+                        <div class="detail-value" id="viewEqCapacity">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">НмПВ (Min):</div>
+                        <div class="detail-value" id="viewEqMinCapacity">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Дискретность (e=d):</div>
+                        <div class="detail-value" id="viewEqDiscrete">-</div>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Терминал / ПО:</div>
+                        <div class="detail-value" id="viewEqAdcType">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Датчики:</div>
+                        <div class="detail-value" id="viewEqSensorType">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Платформа / Размеры:</div>
+                        <div class="detail-value" id="viewEqPlatformCount">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Режим взвешивания:</div>
+                        <div class="detail-value" id="viewEqWeighingMode">-</div>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Дата последней поверки:</div>
+                        <div class="detail-value" id="viewEqLastVer">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Срок поверки (до):</div>
+                        <div class="detail-value" id="viewEqNextVer">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">№ Аттестата / Клейма:</div>
+                        <div class="detail-value" id="viewEqCertNumber">-</div>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">📞 Телефон ответственного:</div>
+                        <div class="detail-value" id="viewEqPhone">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">✉️ Email ответственного:</div>
+                        <div class="detail-value" id="viewEqEmail">-</div>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Примечания:</div>
+                    <div class="detail-value" id="viewEqNotes" style="font-weight: 400; white-space: pre-wrap;">-</div>
+                </div>
+            </div>
+
+            <!-- Журнал обслуживания -->
+            <div class="detail-card">
+                <div style="font-size: 13px; font-weight: 700; color: var(--primary);">🛠️ Журнал обслуживания</div>
+                
+                <div style="display: flex; flex-direction: column; gap: 6px; background: #fff; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+                    <div style="display: flex; gap: 6px;">
+                        <select id="maintWorkType" style="flex: 1; font-size: 11px; padding: 6px;">
+                            <option value="ТО">ТО</option>
+                            <option value="Поверка">Поверка</option>
+                            <option value="Калибровка">Калибровка</option>
+                            <option value="Ремонт">Ремонт</option>
+                        </select>
+                        <input type="date" id="maintDate" style="width: 115px; font-size: 11px; padding: 6px;">
+                    </div>
+                    <input type="text" id="maintDesc" placeholder="Что сделано?" style="font-size: 11px; padding: 6px;">
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="maintBy" placeholder="Исполнитель" style="flex: 1; font-size: 11px; padding: 6px;">
+                        <button class="btn btn-success" type="button" style="padding: 6px 10px; font-size: 11px; flex: initial; min-width: auto;" onclick="addMaintenanceLog()">➕ Добавить</button>
+                    </div>
+                </div>
+
+                <div id="maintenanceLogsContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;"></div>
+            </div>
+
+            <!-- Блок подписей для печати -->
+            <div class="print-signature-block">
+                <div class="print-signature-grid">
+                    <div>
+                        <b>Ответственный за метрологический контроль:</b><br><br>
+                        ___________________ / ___________________
+                    </div>
+                    <div>
+                        <b>Представитель сервисной службы:</b><br><br>
+                        ___________________ / ___________________
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-card" style="margin-top: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 13px; font-weight: 700; color: var(--primary);">📎 Файлы</div>
+                    <label class="btn btn-success" style="padding: 4px 8px; font-size: 11px; cursor: pointer; flex: initial; min-width: auto;">
+                        ➕ Загрузить
+                        <input type="file" multiple onchange="uploadEquipmentFile(this.files)">
+                    </label>
+                </div>
+                <div id="equipmentFilesContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;"></div>
+            </div>
+        </div>
+
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewEquipmentModal()">Закрыть</button>
+            <button class="btn btn-folder" type="button" onclick="window.print()">🖨️ Печать</button>
+            <button class="btn" type="button" id="btnEditFromView">✏️ Изменить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно РЕДАКТИРОВАНИЯ ВЕСОВ -->
+<div class="modal-backdrop" id="equipmentModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeEquipmentModal()" title="Закрыть">✕</button>
+        <h3 id="eqModalTitle" style="padding-right: 30px;">➕ Оборудование</h3>
+        
+        <div class="modal-body-scroll">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Наименование / Модель:*</label>
+                    <input type="text" id="eqName" placeholder="Автомобильные весы ВА-60">
+                </div>
+                <div class="form-group">
+                    <label>Заводской номер:</label>
+                    <input type="text" id="eqSerial" placeholder="№ 45892">
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>№ в Реестре ГСИ РК:</label>
+                    <input type="text" id="eqGsiNumber" placeholder="KZ.02.02.01823-2021">
+                </div>
+                <div class="form-group">
+                    <label>👤 Владелец:</label>
+                    <input type="text" id="eqOwnerName" placeholder="ТОО «ТрансЛогистик»">
+                </div>
+                <div class="form-group">
+                    <label>Место установки:</label>
+                    <input type="text" id="eqLocation" placeholder="КПП №1">
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>НПВ (Max):</label>
+                    <input type="text" id="eqCapacity" placeholder="60 тонн">
+                </div>
+                <div class="form-group">
+                    <label>НмПВ (Min):</label>
+                    <input type="text" id="eqMinCapacity" placeholder="400 кг">
+                </div>
+                <div class="form-group">
+                    <label>Дискретность:</label>
+                    <input type="text" id="eqDiscrete" placeholder="20 кг">
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Терминал / ПО:</label>
+                    <input type="text" id="eqAdcType" placeholder="Тензо-М ТВ-011">
+                </div>
+                <div class="form-group">
+                    <label>Датчики:</label>
+                    <input type="text" id="eqSensorType" placeholder="Zemic HM9B">
+                </div>
+                <div class="form-group">
+                    <label>Платформа:</label>
+                    <input type="text" id="eqPlatformCount" placeholder="18х3 м">
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Режим:</label>
+                    <input type="text" id="eqWeighingMode" placeholder="Статический">
+                </div>
+                <div class="form-group">
+                    <label>Ввод в экспл.:</label>
+                    <input type="date" id="eqInstallationDate">
+                </div>
+                <div class="form-group">
+                    <label>Посл. поверка:</label>
+                    <input type="date" id="eqLastVer">
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>След. поверка:</label>
+                    <input type="date" id="eqNextVer">
+                </div>
+                <div class="form-group">
+                    <label>№ Аттестата:</label>
+                    <input type="text" id="eqCertNumber" placeholder="№ 0014589">
+                </div>
+                <div class="form-group">
+                    <label>Статус:</label>
+                    <select id="eqStatus">
+                        <option value="В эксплуатации">🟢 В эксплуатации</option>
+                        <option value="Требует поверки">🟡 Требует поверки</option>
+                        <option value="В ремонте">🔴 В ремонте</option>
+                        <option value="Выведены из эксплуатации">⚫ Выведены</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Телефон:</label>
+                    <input type="text" id="eqPhone" placeholder="+7 777 000-0000">
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="eqEmail" placeholder="info@company.kz">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Примечания:</label>
+                <textarea id="eqNotes" style="height: 50px;" placeholder="Примечания..."></textarea>
+            </div>
+        </div>
+
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeEquipmentModal()">Отмена</button>
+            <button class="btn btn-success" type="button" onclick="saveEquipment(event)">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно заметки -->
+<div class="modal-backdrop" id="noteModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeModals()" title="Закрыть">✕</button>
+        <h3 id="modalTitle" style="padding-right: 30px;">📝 Заметка</h3>
+        <div class="modal-body-scroll">
+            <div class="form-group">
+                <label>Название:</label>
+                <input type="text" id="noteNameInput" placeholder="Название...">
+            </div>
+            <div class="form-group">
+                <label>Текст:</label>
+                <textarea id="noteContentInput" style="height: 130px;" placeholder="Текст заметки..."></textarea>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeModals()">Отмена</button>
+            <button class="btn btn-success" type="button" onclick="saveNote(event)">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db = { folders: [], items: [] };
+    let equipmentList = [];
+    let activeTab = null;
+    let currentFolderId = null;
+    let editingItemId = null;
+    let editingEqId = null;
+    let viewingEqId = null;
+
+    let sortColumn = 'id';
+    let sortAsc = false;
+    let verificationFilter = 'all';
+
+    function toggleMobileSearch() {
+        const container = document.getElementById('searchBoxContainer');
+        const input = document.getElementById('searchInput');
+        container.classList.toggle('search-active');
+        if (container.classList.contains('search-active')) {
+            input.focus();
+        }
+    }
+
+    function onSearchInput() {
+        render();
+    }
+
+    function parseHash() {
+        try {
+            const rawHash = window.location.hash || '';
+            const hash = rawHash.replace('#', '').trim();
+            if (!hash) {
+                activeTab = null;
+                currentFolderId = null;
+                return;
+            }
+            const parts = hash.split('/');
+            activeTab = parts[0] || null;
+            currentFolderId = parts[1] || null;
+        } catch(e) {
+            activeTab = null;
+            currentFolderId = null;
+        }
+    }
+
+    function updateHash() {
+        try {
+            if (!activeTab) {
+                if (window.location.hash) {
+                    history.replaceState("", document.title, window.location.pathname + window.location.search);
+                }
+            } else if (currentFolderId) {
+                window.location.hash = `${activeTab}/${currentFolderId}`;
+            } else {
+                window.location.hash = `${activeTab}`;
+            }
+        } catch(e) {}
+    }
+
+    window.addEventListener('hashchange', () => {
+        parseHash();
+        updateNavUI();
+        render();
+    });
+
+    async function loadDB() {
+        try {
+            const res = await fetch('/api/db');
+            db = await res.json();
+            await loadEquipment();
+            parseHash();
+            updateNavUI();
+            render();
+        } catch (e) {
+            console.error('Ошибка загрузки:', e);
+        }
+    }
+
+    async function loadEquipment() {
+        try {
+            const res = await fetch('/api/equipment');
+            equipmentList = await res.json();
+            updateFilterDropdowns();
+            checkVerificationStatus();
+            renderEquipmentTable();
+            if (viewingEqId) {
+                viewEquipment(viewingEqId);
+            }
+        } catch (e) {
+            console.error('Ошибка весов:', e);
+        }
+    }
+
+    function checkVerificationStatus() {
+        const banner = document.getElementById('verificationAlertBanner');
+        if (!banner) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let expiredCount = 0;
+        let soonCount = 0;
+
+        equipmentList.forEach(eq => {
+            if (eq.nextVerification) {
+                const nextDate = new Date(eq.nextVerification);
+                if (!isNaN(nextDate.getTime())) {
+                    const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays < 0) expiredCount++;
+                    else if (diffDays <= 30) soonCount++;
+                }
+            }
+        });
+
+        if (expiredCount > 0 || soonCount > 0) {
+            banner.style.display = 'flex';
+            banner.className = 'alert-banner alert-banner-danger';
+            let msg = '🚨 Внимание: ';
+            if (expiredCount > 0) msg += `просрочено: ${expiredCount}. `;
+            if (soonCount > 0) msg += `истекает: ${soonCount}.`;
+            document.getElementById('alertBannerText').textContent = msg;
+        } else if (equipmentList.length > 0) {
+            banner.style.display = 'flex';
+            banner.className = 'alert-banner alert-banner-success';
+            document.getElementById('alertBannerText').textContent = '✅ Все весы поверены.';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+
+    function updateFilterDropdowns() {
+        const selOwner = document.getElementById('selectOwnerFilter');
+        const selLocation = document.getElementById('selectLocationFilter');
+        if (!selOwner || !selLocation) return;
+
+        const currentOwner = selOwner.value;
+        const currentLocation = selLocation.value;
+
+        const owners = [...new Set(equipmentList.map(e => e.ownerName).filter(Boolean))].sort();
+        const locations = [...new Set(equipmentList.map(e => e.location).filter(Boolean))].sort();
+
+        selOwner.innerHTML = '<option value="">👤 Все владельцы</option>' + 
+            owners.map(o => `<option value="${o}">${o}</option>`).join('');
+
+        selLocation.innerHTML = '<option value="">📍 Все объекты</option>' + 
+            locations.map(l => `<option value="${l}">${l}</option>`).join('');
+
+        selOwner.value = currentOwner;
+        selLocation.value = currentLocation;
+    }
+
+    async function loadAdminStats() {
+        try {
+            const res = await fetch('/api/system/stats');
+            const data = await res.json();
+            document.getElementById('admDbSize').textContent = `${data.dbSizeKB} KB`;
+            document.getElementById('admEqCount').textContent = data.eqCount;
+            document.getElementById('admItemsCount').textContent = data.itemsCount;
+            document.getElementById('admUploadsSize').textContent = `${data.uploadsSizeMB} MB`;
+        } catch (e) {
+            console.error('Статистика:', e);
+        }
+    }
+
+    async function backupDatabase() {
+        try {
+            if (!window.showDirectoryPicker) {
+                const res = await fetch('/api/backup');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `archive_backup_${new Date().toISOString().slice(0, 10)}.db`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                alert('Бэкап скачан!');
+                return;
+            }
+
+            const dirHandle = await window.showDirectoryPicker();
+            const res = await fetch('/api/backup');
+            if (!res.ok) throw new Error('Ошибка');
+            const blob = await res.blob();
+            const fileName = `archive_backup_${new Date().toISOString().slice(0, 10)}.db`;
+
+            const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+
+            alert(`Сохранено: ${fileName}`);
+        } catch (err) {
+            if (err.name !== 'AbortError') alert('Ошибка: ' + err.message);
+        }
+    }
+
+    async function restoreDatabase(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        if (!confirm('⚠️ Заменить текущую базу данных?')) {
+            input.value = '';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('backupFile', file);
+
+        try {
+            const res = await fetch('/api/restore', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                alert('Восстановлено! Перезагрузка.');
+                window.location.reload();
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        } catch (e) {
+            alert('Ошибка сервера');
+        } finally {
+            input.value = '';
+        }
+    }
+
+    function normalizeStatus(status) {
+        if (!status) return 'В эксплуатации';
+        if (status === 'Исправен') return 'В эксплуатации';
+        if (status === 'Выведены с эксплуатации' || status === 'Выведен с эксплуатации') return 'Выведены из эксплуатации';
+        return status;
+    }
+
+    function sortTable(column) {
+        if (sortColumn === column) sortAsc = !sortAsc;
+        else { sortColumn = column; sortAsc = true; }
+        renderEquipmentTable();
+    }
+
+    function setVerificationFilter(filter) {
+        verificationFilter = filter;
+        ['all', 'expired', 'soon'].forEach(f => {
+            const chip = document.getElementById(`filter_${f}`);
+            if (chip) {
+                if (f === filter) chip.classList.add('active');
+                else chip.classList.remove('active');
+            }
+        });
+        renderEquipmentTable();
+    }
+
+    function renderEquipmentTable() {
+        const tbody = document.getElementById('equipmentTableBody');
+        const mobileList = document.getElementById('mobileEquipmentList');
+        if (!tbody || !mobileList) return;
+
+        ['name', 'serialNumber', 'ownerName', 'location', 'nextVerification', 'status'].forEach(col => {
+            const span = document.getElementById(`sort_${col}`);
+            if (span) span.textContent = (sortColumn === col) ? (sortAsc ? ' ▲' : ' ▼') : '';
+        });
+
+        if (!equipmentList || equipmentList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Реестр пуст.</td></tr>`;
+            mobileList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Реестр пуст.</div>`;
+            return;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const ownerFilter = document.getElementById('selectOwnerFilter') ? document.getElementById('selectOwnerFilter').value : '';
+        const locationFilter = document.getElementById('selectLocationFilter') ? document.getElementById('selectLocationFilter').value : '';
+
+        let filteredList = equipmentList.filter(eq => {
+            if (ownerFilter && eq.ownerName !== ownerFilter) return false;
+            if (locationFilter && eq.location !== locationFilter) return false;
+            if (verificationFilter === 'all') return true;
+            if (!eq.nextVerification) return false;
+
+            const nextVerDate = new Date(eq.nextVerification);
+            if (isNaN(nextVerDate.getTime())) return false;
+            const diffDays = Math.ceil((nextVerDate - today) / (1000 * 60 * 60 * 24));
+
+            if (verificationFilter === 'expired') return diffDays < 0;
+            if (verificationFilter === 'soon') return diffDays >= 0 && diffDays <= 30;
+            return true;
+        });
+
+        if (sortColumn) {
+            filteredList.sort((a, b) => {
+                let valA = (a[sortColumn] || '').toString().toLowerCase();
+                let valB = (b[sortColumn] || '').toString().toLowerCase();
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
+            });
+        }
+
+        if (filteredList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Ничего не найдено.</td></tr>`;
+            mobileList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Ничего не найдено.</div>`;
+            return;
+        }
+
+        tbody.innerHTML = filteredList.map(eq => {
+            const status = normalizeStatus(eq.status);
+            let statusClass = 'status-ok';
+            if (status === 'Требует поверки') statusClass = 'status-warn';
+            if (status === 'В ремонте') statusClass = 'status-err';
+            if (status === 'Выведены из эксплуатации') statusClass = 'status-off';
+
+            let verDateStr = eq.nextVerification || '-';
+            let verBadge = verDateStr;
+
+            if (eq.nextVerification) {
+                const nextVerDate = new Date(eq.nextVerification);
+                if (!isNaN(nextVerDate.getTime())) {
+                    const diffDays = Math.ceil((nextVerDate - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays < 0) verBadge = `<span class="badge-status status-err">🚨 ${verDateStr}</span>`;
+                    else if (diffDays <= 30) verBadge = `<span class="badge-status status-warn">⏳ ${verDateStr}</span>`;
+                }
+            }
+
+            return `
+                <tr onclick="viewEquipment('${eq.id}')">
+                    <td><b>${eq.name || '-'}</b></td>
+                    <td>${eq.serialNumber || '-'}</td>
+                    <td>${eq.ownerName || '-'}</td>
+                    <td>${eq.location || '-'}</td>
+                    <td>${verBadge}</td>
+                    <td><span class="badge-status ${statusClass}">${status}</span></td>
+                    <td style="text-align: right;" onclick="event.stopPropagation()">
+                        <div class="table-actions">
+                            <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; min-width: auto;" onclick="editEquipment('${eq.id}')">✏️</button>
+                            <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; min-width: auto; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        mobileList.innerHTML = filteredList.map(eq => {
+            const status = normalizeStatus(eq.status);
+            let statusClass = 'status-ok';
+            if (status === 'Требует поверки') statusClass = 'status-warn';
+            if (status === 'В ремонте') statusClass = 'status-err';
+            if (status === 'Выведены из эксплуатации') statusClass = 'status-off';
+
+            return `
+                <div class="mobile-eq-card" onclick="viewEquipment('${eq.id}')">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 6px;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">${eq.name || '-'}</div>
+                        <span class="badge-status ${statusClass}">${status}</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 2px;">
+                        <div><b>Зав. №:</b> ${eq.serialNumber || '-'}</div>
+                        <div><b>Поверка:</b> ${eq.nextVerification || '-'}</div>
+                        <div style="grid-column: 1/-1;"><b>Владелец:</b> ${eq.ownerName || '-'} (${eq.location || '-'})</div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 6px;" onclick="event.stopPropagation()">
+                        <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; min-width: auto;" onclick="editEquipment('${eq.id}')">✏️ Изменить</button>
+                        <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; min-width: auto; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️ Удалить</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function exportEquipmentCSV() {
+        if (!equipmentList || equipmentList.length === 0) {
+            alert('Реестр пуст.');
+            return;
+        }
+        let csvContent = "\uFEFFНаименование;Зав. номер;Владелец;Место;Статус;Поверка\n";
+        equipmentList.forEach(eq => {
+            csvContent += `"${eq.name || ''}";"${eq.serialNumber || ''}";"${eq.ownerName || ''}";"${eq.location || ''}";"${eq.status || ''}";"${eq.nextVerification || ''}"\n`;
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Registry_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function viewEquipment(id) {
+        const eq = equipmentList.find(e => e.id === id);
+        if (!eq) return;
+
+        viewingEqId = id;
+        const status = normalizeStatus(eq.status);
+        let statusClass = 'status-ok';
+        if (status === 'Требует поверки') statusClass = 'status-warn';
+        if (status === 'В ремонте') statusClass = 'status-err';
+        if (status === 'Выведены из эксплуатации') statusClass = 'status-off';
+
+        document.getElementById('viewEqBadge').innerHTML = `<span class="badge-status ${statusClass}">${status}</span>`;
+        document.getElementById('viewEqName').textContent = eq.name || '-';
+        document.getElementById('viewEqSerial').textContent = eq.serialNumber || '-';
+        document.getElementById('viewEqGsiNumber').textContent = eq.gsiNumber || '-';
+        document.getElementById('viewEqOwnerName').textContent = eq.ownerName || '-';
+        document.getElementById('viewEqLocation').textContent = eq.location || '-';
+        document.getElementById('viewEqInstallationDate').textContent = eq.installationDate || '-';
+        
+        document.getElementById('viewEqCapacity').textContent = eq.capacity || '-';
+        document.getElementById('viewEqMinCapacity').textContent = eq.minCapacity || '-';
+        document.getElementById('viewEqDiscrete').textContent = eq.discrete || '-';
+        
+        document.getElementById('viewEqAdcType').textContent = eq.adcType || '-';
+        document.getElementById('viewEqSensorType').textContent = eq.sensorType || '-';
+        document.getElementById('viewEqPlatformCount').textContent = eq.platformCount || '-';
+        document.getElementById('viewEqWeighingMode').textContent = eq.weighingMode || '-';
+        
+        document.getElementById('viewEqLastVer').textContent = eq.lastVerification || '-';
+        document.getElementById('viewEqNextVer').textContent = eq.nextVerification || '-';
+        document.getElementById('viewEqCertNumber').textContent = eq.certNumber || '-';
+
+        document.getElementById('viewEqPhone').innerHTML = eq.phone ? `<a href="tel:${eq.phone}">${eq.phone}</a>` : '-';
+        document.getElementById('viewEqEmail').innerHTML = eq.email ? `<a href="mailto:${eq.email}">${eq.email}</a>` : '-';
+        document.getElementById('viewEqNotes').textContent = eq.notes || '-';
+
+        document.getElementById('maintDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('maintDesc').value = '';
+        document.getElementById('maintBy').value = '';
+
+        loadMaintenanceLogs(eq.id);
+        renderEquipmentFiles(eq);
+
+        document.getElementById('btnEditFromView').onclick = function() {
+            closeViewEquipmentModal();
+            editEquipment(eq.id);
+        };
+
+        document.getElementById('viewEquipmentModal').style.display = 'flex';
+    }
+
+    async function loadMaintenanceLogs(equipmentId) {
+        const container = document.getElementById('maintenanceLogsContainer');
+        if (!container) return;
+
+        try {
+            const res = await fetch(`/api/maintenance/${equipmentId}`);
+            const logs = await res.json();
+
+            if (logs.length === 0) {
+                container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">Записей нет.</div>`;
+                return;
+            }
+
+            container.innerHTML = logs.map(log => `
+                <div class="maint-row">
+                    <div>
+                        <span class="maint-tag">${log.workType || 'ТО'}</span>
+                        <div style="font-size: 12px; font-weight: 600; color: var(--primary); margin-top: 2px;">${log.description}</div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">📅 ${log.date || ''} ${log.performedBy ? `• ${log.performedBy}` : ''}</div>
+                    </div>
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 10px; background: var(--danger); min-width: auto; align-self: flex-end;" onclick="deleteMaintenanceLog('${log.id}')">🗑️</button>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error('Ошибка логов:', e);
+        }
+    }
+
+    async function addMaintenanceLog() {
+        if (!viewingEqId) return;
+        const desc = document.getElementById('maintDesc').value.trim();
+        if (!desc) { alert('Введите описание'); return; }
+
+        const payload = {
+            equipmentId: viewingEqId,
+            workType: document.getElementById('maintWorkType').value,
+            date: document.getElementById('maintDate').value,
+            description: desc,
+            performedBy: document.getElementById('maintBy').value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/maintenance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('maintDesc').value = '';
+                loadMaintenanceLogs(viewingEqId);
+            }
+        } catch (e) {
+            console.error('Ошибка сохранения:', e);
+        }
+    }
+
+    async function deleteMaintenanceLog(id) {
+        if (!confirm('Удалить запись?')) return;
+        try {
+            const res = await fetch(`/api/maintenance/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) loadMaintenanceLogs(viewingEqId);
+        } catch (e) {
+            console.error('Ошибка удаления:', e);
+        }
+    }
+
+    function renderEquipmentFiles(eq) {
+        const container = document.getElementById('equipmentFilesContainer');
+        if (!container) return;
+        const attachedFiles = (db.items || []).filter(i => i.equipmentId === eq.id);
+
+        if (attachedFiles.length === 0) {
+            container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">Файлов нет.</div>`;
+            return;
+        }
+
+        container.innerHTML = attachedFiles.map(file => `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 6px; cursor: pointer; flex-grow: 1; overflow: hidden;" onclick="window.open('${file.filePath}', '_blank')">
+                    <span style="font-size: 15px;">${file.type === 'image' ? '🖼️' : '📄'}</span>
+                    <div style="overflow: hidden;">
+                        <div style="font-size: 11px; font-weight: 600; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                        <div style="font-size: 10px; color: var(--text-muted);">${file.date || ''}</div>
+                    </div>
+                </div>
+                <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="deleteEquipmentFile('${file.id}')">🗑️</button>
+            </div>
+        `).join('');
+    }
+
+    async function uploadEquipmentFile(files) {
+        if (!files || files.length === 0 || !viewingEqId) return;
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
+        formData.append('equipmentId', viewingEqId);
+
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) await loadDB();
+        } catch (e) {
+            alert('Ошибка загрузки');
+        }
+    }
+
+    async function deleteEquipmentFile(itemId) {
+        if (!confirm('Удалить файл?')) return;
+        try {
+            const res = await fetch(`/api/items/${itemId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) await loadDB();
+        } catch (e) {}
+    }
+
+    function closeViewEquipmentModal() {
+        document.getElementById('viewEquipmentModal').style.display = 'none';
+        viewingEqId = null;
+    }
+
+    function openEquipmentModal() {
+        editingEqId = null;
+        document.getElementById('eqModalTitle').textContent = '➕ Добавить весы';
+        ['eqName', 'eqSerial', 'eqGsiNumber', 'eqOwnerName', 'eqLocation', 'eqCapacity', 'eqMinCapacity', 'eqDiscrete', 'eqAdcType', 'eqSensorType', 'eqPlatformCount', 'eqWeighingMode', 'eqInstallationDate', 'eqLastVer', 'eqNextVer', 'eqCertNumber', 'eqPhone', 'eqEmail', 'eqNotes'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        document.getElementById('eqStatus').value = 'В эксплуатации';
+        document.getElementById('equipmentModal').style.display = 'flex';
+    }
+
+    function editEquipment(id) {
+        const eq = equipmentList.find(e => e.id === id);
+        if (!eq) return;
+
+        editingEqId = id;
+        document.getElementById('eqModalTitle').textContent = '✏️ Изменить паспорт';
+        document.getElementById('eqName').value = eq.name || '';
+        document.getElementById('eqSerial').value = eq.serialNumber || '';
+        document.getElementById('eqGsiNumber').value = eq.gsiNumber || '';
+        document.getElementById('eqOwnerName').value = eq.ownerName || '';
+        document.getElementById('eqLocation').value = eq.location || '';
+        document.getElementById('eqCapacity').value = eq.capacity || '';
+        document.getElementById('eqMinCapacity').value = eq.minCapacity || '';
+        document.getElementById('eqDiscrete').value = eq.discrete || '';
+        document.getElementById('eqAdcType').value = eq.adcType || '';
+        document.getElementById('eqSensorType').value = eq.sensorType || '';
+        document.getElementById('eqPlatformCount').value = eq.platformCount || '';
+        document.getElementById('eqWeighingMode').value = eq.weighingMode || '';
+        document.getElementById('eqInstallationDate').value = eq.installationDate || '';
+        document.getElementById('eqLastVer').value = eq.lastVerification || '';
+        document.getElementById('eqNextVer').value = eq.nextVerification || '';
+        document.getElementById('eqCertNumber').value = eq.certNumber || '';
+        document.getElementById('eqPhone').value = eq.phone || '';
+        document.getElementById('eqEmail').value = eq.email || '';
+        document.getElementById('eqStatus').value = normalizeStatus(eq.status);
+        document.getElementById('eqNotes').value = eq.notes || '';
+        document.getElementById('equipmentModal').style.display = 'flex';
+    }
+
+    function closeEquipmentModal() {
+        document.getElementById('equipmentModal').style.display = 'none';
+        editingEqId = null;
+    }
+
+    async function saveEquipment(e) {
+        e.preventDefault();
+        const name = document.getElementById('eqName').value.trim();
+        if (!name) { alert('Введите наименование!'); return; }
+
+        const payload = {
+            id: editingEqId || '',
+            name: name,
+            serialNumber: document.getElementById('eqSerial').value.trim(),
+            gsiNumber: document.getElementById('eqGsiNumber').value.trim(),
+            ownerName: document.getElementById('eqOwnerName').value.trim(),
+            location: document.getElementById('eqLocation').value.trim(),
+            capacity: document.getElementById('eqCapacity').value.trim(),
+            minCapacity: document.getElementById('eqMinCapacity').value.trim(),
+            discrete: document.getElementById('eqDiscrete').value.trim(),
+            adcType: document.getElementById('eqAdcType').value.trim(),
+            sensorType: document.getElementById('eqSensorType').value.trim(),
+            platformCount: document.getElementById('eqPlatformCount').value.trim(),
+            weighingMode: document.getElementById('eqWeighingMode').value.trim(),
+            installationDate: document.getElementById('eqInstallationDate').value,
+            lastVerification: document.getElementById('eqLastVer').value,
+            nextVerification: document.getElementById('eqNextVer').value,
+            certNumber: document.getElementById('eqCertNumber').value.trim(),
+            phone: document.getElementById('eqPhone').value.trim(),
+            email: document.getElementById('eqEmail').value.trim(),
+            status: document.getElementById('eqStatus').value,
+            notes: document.getElementById('eqNotes').value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/equipment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeEquipmentModal();
+                loadEquipment();
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        } catch (err) {
+            alert('Ошибка сервера');
+        }
+    }
+
+    async function deleteEquipment(id) {
+        if (!confirm('Удалить этот паспорт весов?')) return;
+        try {
+            const res = await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) loadEquipment();
+        } catch (e) {}
+    }
+
+    function selectTab(tab) {
+        activeTab = tab;
+        currentFolderId = null;
+        updateHash();
+        updateNavUI();
+        render();
+    }
+
+    function goHome() {
+        activeTab = null;
+        currentFolderId = null;
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchBoxContainer').classList.remove('search-active');
+        updateHash();
+        updateNavUI();
+        render();
+    }
+
+    function updateNavUI() {
+        ['doc', 'image', 'note', 'admin'].forEach(t => {
+            const card = document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}`);
+            if (card) {
+                if (activeTab === t) card.classList.add('active');
+                else card.classList.remove('active');
+            }
+        });
+
+        const query = (document.getElementById('searchInput').value || '').trim();
+        const welcome = document.getElementById('welcomeScreen');
+        const content = document.getElementById('contentSection');
+        const adminSec = document.getElementById('adminSection');
+
+        if (query) {
+            if (welcome) welcome.style.display = 'none';
+            if (content) content.style.display = 'flex';
+            if (adminSec) adminSec.style.display = 'none';
+        } else if (!activeTab) {
+            if (welcome) welcome.style.display = 'flex';
+            if (content) content.style.display = 'none';
+            if (adminSec) adminSec.style.display = 'none';
+        } else if (activeTab === 'admin') {
+            if (welcome) welcome.style.display = 'none';
+            if (content) content.style.display = 'none';
+            if (adminSec) adminSec.style.display = 'flex';
+            loadAdminStats();
+        } else {
+            if (welcome) welcome.style.display = 'none';
+            if (content) content.style.display = 'flex';
+            if (adminSec) adminSec.style.display = 'none';
+        }
+
+        const btnFolder = document.getElementById('btnCreateFolder');
+        const btnNote = document.getElementById('btnNewNote');
+        const btnPhoto = document.getElementById('btnUploadPhoto');
+        const btnDoc = document.getElementById('btnUploadDoc');
+        const dropZone = document.getElementById('dropZone');
+
+        if (activeTab === 'admin' || !activeTab) {
+            if (btnFolder) btnFolder.style.display = 'none';
+            if (btnNote) btnNote.style.display = 'none';
+            if (btnPhoto) btnPhoto.style.display = 'none';
+            if (btnDoc) btnDoc.style.display = 'none';
+            if (dropZone) dropZone.style.display = 'none';
+        } else {
+            if (btnFolder) btnFolder.style.display = 'inline-flex';
+            if (btnNote) btnNote.style.display = 'inline-flex';
+
+            if (activeTab === 'image' && !query) {
+                if (btnPhoto) btnPhoto.style.display = 'inline-flex';
+                if (btnDoc) btnDoc.style.display = 'none';
+                if (dropZone && currentFolderId) dropZone.style.display = 'block';
+                else if (dropZone) dropZone.style.display = 'none';
+            } else if (activeTab === 'doc' && !query) {
+                if (btnPhoto) btnPhoto.style.display = 'none';
+                if (btnDoc) btnDoc.style.display = 'inline-flex';
+                if (dropZone && currentFolderId) dropZone.style.display = 'block';
+                else if (dropZone) dropZone.style.display = 'none';
+            } else {
+                if (btnPhoto) btnPhoto.style.display = 'none';
+                if (btnDoc) btnDoc.style.display = 'none';
+                if (dropZone) dropZone.style.display = 'none';
+            }
+        }
+
+        const counts = { doc: 0, image: 0, note: 0 };
+        db.items.forEach(item => {
+            if (counts[item.type] !== undefined) counts[item.type]++;
+        });
+        document.getElementById('countDoc').textContent = counts.doc;
+        document.getElementById('countImage').textContent = counts.image;
+        document.getElementById('countNote').textContent = counts.note;
+    }
+
+    function render() {
+        const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+        const foldersContainer = document.getElementById('foldersContainer');
+        const filesContainer = document.getElementById('filesContainer');
+        const sectionTitle = document.getElementById('sectionTitle');
+        const folderBanner = document.getElementById('folderBanner');
+
+        updateNavUI();
+
+        if (query) {
+            renderGlobalSearch(query);
+            return;
+        }
+
+        if (!activeTab || activeTab === 'admin') return;
+
+        const tabNames = { doc: '📄 Документы', image: '🖼️ Фото', note: '📝 Заметки' };
+        sectionTitle.textContent = tabNames[activeTab] || 'Элементы';
+
+        if (currentFolderId) {
+            const folder = db.folders.find(f => f.id === currentFolderId);
+            if (folder) {
+                folderBanner.style.display = 'flex';
+                document.getElementById('folderBannerTitle').textContent = `📁 ${folder.name}`;
+            }
+            foldersContainer.style.display = 'none';
+        } else {
+            folderBanner.style.display = 'none';
+            foldersContainer.style.display = 'grid';
+            renderFolders();
+        }
+
+        renderItems();
+    }
+
+    function renderFolders() {
+        const foldersContainer = document.getElementById('foldersContainer');
+        const currentFolders = db.folders.filter(f => f.type === activeTab);
+
+        if (currentFolders.length === 0) {
+            foldersContainer.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px;">Папок нет.</div>`;
+            return;
+        }
+
+        foldersContainer.innerHTML = currentFolders.map(f => {
+            const count = db.items.filter(i => i.folderId === f.id).length;
+            return `
+                <div class="folder-item" onclick="openFolder('${f.id}')">
+                    <div class="folder-info">
+                        <span style="font-size: 18px;">📁</span>
+                        <div>
+                            <div class="folder-title">${f.name}</div>
+                            <div style="font-size: 10px; color: var(--text-muted);">${count} файл.</div>
+                        </div>
+                    </div>
+                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderItems() {
+        const filesContainer = document.getElementById('filesContainer');
+        let currentItems = db.items.filter(i => i.type === activeTab && !i.equipmentId);
+
+        if (currentFolderId) currentItems = currentItems.filter(i => i.folderId === currentFolderId);
+        else currentItems = currentItems.filter(i => !i.folderId);
+
+        if (currentItems.length === 0) {
+            filesContainer.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">Элементов нет.</div>`;
+            return;
+        }
+
+        if (activeTab === 'image') {
+            filesContainer.innerHTML = `
+                <div class="gallery-grid">
+                    ${currentItems.map(item => `
+                        <div class="photo-card">
+                            <div class="photo-preview" onclick="window.open('${item.filePath}', '_blank')">
+                                <img src="${item.filePath}" alt="${item.name}">
+                            </div>
+                            <div class="photo-content">
+                                <div style="font-weight: 600; font-size: 12px; word-break: break-word;">${item.name}</div>
+                                <div style="font-size: 10px; color: var(--text-muted);">${item.size || ''}</div>
+                            </div>
+                            <div class="photo-footer">
+                                <span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span>
+                                <div style="display: flex; gap: 4px;">
+                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; min-width: auto;" onclick="window.open('${item.filePath}', '_blank')">👁️</button>
+                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="deleteItem('${item.id}')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else if (activeTab === 'doc') {
+            filesContainer.innerHTML = `
+                <div class="files-list">
+                    ${currentItems.map(item => `
+                        <div class="file-row">
+                            <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')">
+                                <span style="font-size: 18px;">📄</span>
+                                <div style="overflow: hidden;">
+                                    <div class="file-name">${item.name}</div>
+                                    <div class="file-info-sub">${item.size || ''} • ${item.date || ''}</div>
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button>
+                                <button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else if (activeTab === 'note') {
+            filesContainer.innerHTML = `
+                <div class="files-list">
+                    ${currentItems.map(item => `
+                        <div class="file-row" style="gap: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
+                                <div style="display: flex; gap: 4px;">
+                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; min-width: auto;" onclick="editNote('${item.id}')">✏️</button>
+                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="deleteItem('${item.id}')">🗑️</button>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; white-space: pre-wrap; color: var(--text-main); background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">${item.content || ''}</div>
+                            <div style="font-size: 10px; color: var(--text-muted); text-align: right;">Создано: ${item.date || ''}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
+
+    function goToSearchFolder(type, folderId) {
+        document.getElementById('searchInput').value = '';
+        selectTab(type);
+        openFolder(folderId);
+    }
+
+    function renderGlobalSearch(query) {
+        const filesContainer = document.getElementById('filesContainer');
+        const sectionTitle = document.getElementById('sectionTitle');
+        const folderBanner = document.getElementById('folderBanner');
+        const foldersContainer = document.getElementById('foldersContainer');
+
+        if (folderBanner) folderBanner.style.display = 'none';
+        if (foldersContainer) foldersContainer.style.display = 'none';
+        if (sectionTitle) sectionTitle.textContent = `🔍 Поиск: "${query}"`;
+
+        const q = (query || '').toLowerCase().trim();
+        const foundEq = (equipmentList || []).filter(eq => [eq.name, eq.serialNumber, eq.ownerName, eq.location].some(val => val && String(val).toLowerCase().includes(q)));
+        const foundFolders = (db.folders || []).filter(folder => folder && folder.name && String(folder.name).toLowerCase().includes(q));
+        const foundItems = (db.items || []).filter(item => item && [item.name, item.content].some(val => val && String(val).toLowerCase().includes(q)));
+
+        let html = '';
+        if (foundEq.length > 0) {
+            html += `<div class="search-results-box"><div class="search-group-title">⚖️ Весы (${foundEq.length})</div><div class="table-responsive"><table class="eq-table"><thead><tr><th>Модель</th><th>Зав. №</th><th>Владелец</th></tr></thead><tbody>${foundEq.map(eq => `<tr onclick="viewEquipment('${eq.id}')"><td><b>${eq.name}</b></td><td>${eq.serialNumber || '-'}</td><td>${eq.ownerName || '-'}</td></tr>`).join('')}</tbody></table></div></div>`;
+        }
+        if (foundFolders.length > 0) {
+            html += `<div class="search-results-box" style="margin-top: 14px;"><div class="search-group-title">📁 Папки (${foundFolders.length})</div><div class="folders-container" style="display: grid;">${foundFolders.map(f => `<div class="folder-item" onclick="goToSearchFolder('${f.type}', '${f.id}')"><div class="folder-info"><span>📁</span><div class="folder-title">${f.name}</div></div></div>`).join('')}</div></div>`;
+        }
+        if (foundItems.length > 0) {
+            html += `<div class="search-results-box" style="margin-top: 14px;"><div class="search-group-title">📄 Файлы (${foundItems.length})</div><div class="files-list">${foundItems.map(item => `<div class="file-row"><div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${item.name}</div></div></div>`).join('')}</div></div>`;
+        }
+        if (!foundEq.length && !foundFolders.length && !foundItems.length) {
+            html = `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено.</div>`;
+        }
+        if (filesContainer) filesContainer.innerHTML = html;
+    }
+
+    function openFolder(id) { currentFolderId = id; updateHash(); updateNavUI(); render(); }
+    function exitFolder() { currentFolderId = null; updateHash(); updateNavUI(); render(); }
+
+    async function promptCreateFolder() {
+        if (!activeTab || activeTab === 'admin') { alert('Выберите категорию.'); return; }
+        const name = prompt('Название папки:');
+        if (!name || !name.trim()) return;
+        try {
+            const res = await fetch('/api/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'folder_' + Date.now(), type: activeTab, name: name.trim() }) });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
+
+    async function deleteFolder(id) {
+        if (!confirm('Удалить папку?')) return;
+        try {
+            const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
+            if ((await res.json()).success) { if (currentFolderId === id) currentFolderId = null; updateHash(); loadDB(); }
+        } catch (e) {}
+    }
+
+    async function uploadFiles(files, type) {
+        if (!files || files.length === 0) return;
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
+        if (currentFolderId) formData.append('folderId', currentFolderId);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
+
+    function openNoteModal() {
+        editingItemId = null;
+        document.getElementById('modalTitle').textContent = '📝 Заметка';
+        document.getElementById('noteNameInput').value = '';
+        document.getElementById('noteContentInput').value = '';
+        document.getElementById('noteModal').style.display = 'flex';
+    }
+
+    function editNote(id) {
+        const item = db.items.find(i => i.id === id);
+        if (!item) return;
+        editingItemId = id;
+        document.getElementById('modalTitle').textContent = '✏️ Изменить заметку';
+        document.getElementById('noteNameInput').value = item.name || '';
+        document.getElementById('noteContentInput').value = item.content || '';
+        document.getElementById('noteModal').style.display = 'flex';
+    }
+
+    async function saveNote(e) {
+        e.preventDefault();
+        const name = document.getElementById('noteNameInput').value.trim();
+        const content = document.getElementById('noteContentInput').value.trim();
+        if (!name) { alert('Введите название'); return; }
+        try {
+            const res = await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingItemId, name, content, folderId: currentFolderId || null }) });
+            if ((await res.json()).success) { closeModals(); loadDB(); }
+        } catch (e) {}
+    }
+
+    async function deleteItem(id) {
+        if (!confirm('Удалить?')) return;
+        try {
+            const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.modal-backdrop').forEach(m => { m.style.display = 'none'; });
+        editingItemId = null;
+    }
+
+    function handleDragOver(e) { e.preventDefault(); e.stopPropagation(); }
+    function handleDragLeave(e) { e.preventDefault(); e.stopPropagation(); }
+    function handleDrop(e) {
+        e.preventDefault(); e.stopPropagation();
+        if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files, activeTab);
+    }
+
+    loadDB();
+</script>
+</body>
+</html>
