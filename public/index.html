@@ -868,3 +868,254 @@
             lastVerification: document.getElementById('eqLastVer').value,
             nextVerification: document.getElementById('eqNextVer').value,
             certNumber: document.getElementById('eqCertNumber').value.trim(),
+            phone: document.getElementById('eqPhone').value.trim(),
+            email: document.getElementById('eqEmail').value.trim(),
+            status: document.getElementById('eqStatus').value,
+            notes: document.getElementById('eqNotes').value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/equipment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if ((await res.json()).success) { closeEquipmentModal(); loadEquipment(); }
+        } catch (err) { alert('Ошибка сервера'); }
+    }
+
+    async function deleteEquipment(id) {
+        if (!confirm('Удалить весы?')) return;
+        try {
+            await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
+            loadEquipment();
+        } catch (e) {}
+    }
+
+    function selectTab(tab) { activeTab = tab; currentFolderId = null; updateHash(); updateNavUI(); render(); }
+    function goHome() { activeTab = null; currentFolderId = null; document.getElementById('searchInput').value = ''; updateHash(); updateNavUI(); render(); }
+    function openFolder(id) { currentFolderId = id; updateHash(); updateNavUI(); render(); }
+    function exitFolder() { currentFolderId = null; updateHash(); updateNavUI(); render(); }
+
+    async function promptCreateFolder() {
+        if (!activeTab || activeTab === 'admin') return;
+        const name = prompt('Название папки:');
+        if (!name || !name.trim()) return;
+        try {
+            const res = await fetch('/api/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: 'folder_' + Date.now(), type: activeTab, name: name.trim() })
+            });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
+
+    async function deleteFolder(id) {
+        if (!confirm('Удалить папку?')) return;
+        try {
+            const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
+            if ((await res.json()).success) { if (currentFolderId === id) currentFolderId = null; updateHash(); loadDB(); }
+        } catch (e) {}
+    }
+
+    async function uploadFiles(files) {
+        if (!files || files.length === 0) return;
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
+        if (currentFolderId) formData.append('folderId', currentFolderId);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
+
+    function openNoteModal() {
+        document.getElementById('noteNameInput').value = '';
+        document.getElementById('noteContentInput').value = '';
+        document.getElementById('noteModal').style.display = 'flex';
+    }
+
+    function openNoteModalView(id) {
+        const item = db.items.find(i => i.id === id);
+        if (!item) return;
+        viewingNoteId = id;
+        document.getElementById('viewNoteNameInput').value = item.name || '';
+        document.getElementById('viewNoteContentInput').value = item.content || '';
+        document.getElementById('viewNoteDate').textContent = `Создано: ${item.date || ''}`;
+        document.getElementById('viewNoteModal').style.display = 'flex';
+    }
+
+    function closeViewNoteModal() { document.getElementById('viewNoteModal').style.display = 'none'; viewingNoteId = null; }
+
+    async function updateExistingNote() {
+        if (!viewingNoteId) return;
+        const name = document.getElementById('viewNoteNameInput').value.trim();
+        const content = document.getElementById('viewNoteContentInput').value.trim();
+        if (!name) { alert('Введите название'); return; }
+        try {
+            const res = await fetch('/api/notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: viewingNoteId, name, content })
+            });
+            if ((await res.json()).success) { closeViewNoteModal(); loadDB(); }
+        } catch (e) {}
+    }
+
+    async function saveNote(e) {
+        e.preventDefault();
+        const name = document.getElementById('noteNameInput').value.trim();
+        const content = document.getElementById('noteContentInput').value.trim();
+        if (!name) { alert('Введите название'); return; }
+        try {
+            const res = await fetch('/api/notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, content, folderId: currentFolderId || null })
+            });
+            if ((await res.json()).success) { closeModals(); loadDB(); }
+        } catch (e) {}
+    }
+
+    async function deleteItem(id) {
+        if (!confirm('Удалить элемент?')) return;
+        try {
+            const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
+
+    function closeModals() { document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none'); }
+
+    function updateNavUI() {
+        ['doc', 'image', 'note', 'admin'].forEach(t => {
+            const card = document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}`);
+            if (card) {
+                if (activeTab === t) card.classList.add('active');
+                else card.classList.remove('active');
+            }
+        });
+
+        const welcome = document.getElementById('welcomeScreen');
+        const content = document.getElementById('contentSection');
+        const adminSec = document.getElementById('adminSection');
+
+        if (!activeTab) {
+            if (welcome) welcome.style.display = 'flex';
+            if (content) content.style.display = 'none';
+            if (adminSec) adminSec.style.display = 'none';
+        } else if (activeTab === 'admin') {
+            if (welcome) welcome.style.display = 'none';
+            if (content) content.style.display = 'none';
+            if (adminSec) adminSec.style.display = 'flex';
+        } else {
+            if (welcome) welcome.style.display = 'none';
+            if (content) content.style.display = 'flex';
+            if (adminSec) adminSec.style.display = 'none';
+        }
+
+        const btnPhoto = document.getElementById('btnUploadPhoto');
+        const btnDoc = document.getElementById('btnUploadDoc');
+        if (activeTab === 'image') {
+            if (btnPhoto) btnPhoto.style.display = 'inline-flex';
+            if (btnDoc) btnDoc.style.display = 'none';
+        } else if (activeTab === 'doc') {
+            if (btnPhoto) btnPhoto.style.display = 'none';
+            if (btnDoc) btnDoc.style.display = 'inline-flex';
+        } else {
+            if (btnPhoto) btnPhoto.style.display = 'none';
+            if (btnDoc) btnDoc.style.display = 'none';
+        }
+
+        const counts = { doc: 0, image: 0, note: 0 };
+        db.items.forEach(item => { if (counts[item.type] !== undefined) counts[item.type]++; });
+        document.getElementById('countDoc').textContent = counts.doc;
+        document.getElementById('countImage').textContent = counts.image;
+        document.getElementById('countNote').textContent = counts.note;
+    }
+
+    function render() {
+        const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+        updateNavUI();
+        if (query) { renderGlobalSearch(query); return; }
+        if (!activeTab || activeTab === 'admin') return;
+
+        const sectionTitle = document.getElementById('sectionTitle');
+        const tabNames = { doc: '📄 Документы', image: '🖼️ Фото', note: '📝 Заметки' };
+        sectionTitle.textContent = tabNames[activeTab] || 'Элементы';
+
+        const folderBanner = document.getElementById('folderBanner');
+        const foldersContainer = document.getElementById('foldersContainer');
+        if (currentFolderId) {
+            folderBanner.style.display = 'flex';
+            const f = db.folders.find(x => x.id === currentFolderId);
+            if (f) document.getElementById('folderBannerTitle').textContent = `📁 ${f.name}`;
+            foldersContainer.style.display = 'none';
+        } else {
+            folderBanner.style.display = 'none';
+            foldersContainer.style.display = 'grid';
+            renderFolders();
+        }
+        renderItems();
+    }
+
+    function renderFolders() {
+        const container = document.getElementById('foldersContainer');
+        const list = db.folders.filter(f => f.type === activeTab);
+        if (list.length === 0) { container.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px;">Папок нет.</div>`; return; }
+        container.innerHTML = list.map(f => `
+            <div class="folder-item" onclick="openFolder('${f.id}')">
+                <div class="folder-info">
+                    <span>📁</span>
+                    <div class="folder-title">${f.name}</div>
+                </div>
+                <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>
+            </div>
+        `).join('');
+    }
+
+    function renderItems() {
+        const container = document.getElementById('filesContainer');
+        let list = db.items.filter(i => i.type === activeTab && !i.equipmentId);
+        if (currentFolderId) list = list.filter(i => i.folderId === currentFolderId);
+        else list = list.filter(i => !i.folderId);
+
+        if (list.length === 0) { container.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">Элементов нет.</div>`; return; }
+
+        if (activeTab === 'note') {
+            container.innerHTML = `<div class="files-list">${list.map(item => `
+                <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px; cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
+                        <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-main);">${item.content || ''}</div>
+                </div>`).join('')}</div>`;
+        } else if (activeTab === 'image') {
+            container.innerHTML = `<div class="gallery-grid">${list.map(item => `
+                <div class="photo-card">
+                    <div class="photo-preview" onclick="window.open('${item.filePath}', '_blank')"><img src="${item.filePath}" alt="${item.name}"></div>
+                    <div class="photo-content"><div style="font-weight: 600; font-size: 12px;">${item.name}</div></div>
+                    <div class="photo-footer"><span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span><button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteItem('${item.id}')">🗑️</button></div>
+                </div>`).join('')}</div>`;
+        } else if (activeTab === 'doc') {
+            container.innerHTML = `<div class="files-list">${list.map(item => `
+                <div class="file-row">
+                    <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${item.name}</div></div>
+                    <div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button><button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button></div>
+                </div>`).join('')}</div>`;
+        }
+    }
+
+    function renderGlobalSearch(q) {
+        const container = document.getElementById('filesContainer');
+        document.getElementById('sectionTitle').textContent = `🔍 Поиск: "${q}"`;
+        const found = db.items.filter(i => i.name.toLowerCase().includes(q));
+        container.innerHTML = found.length ? `<div class="files-list">${found.map(i => `<div class="file-row"><div class="file-meta" onclick="window.open('${i.filePath}', '_blank')"><span>📄</span><div class="file-name">${i.name}</div></div></div>`).join('')}</div>` : `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено.</div>`;
+    }
+
+    if (localStorage.getItem('isLoggedIn') === 'true') { loadDB(); }
+</script>
+</body>
+</html>
