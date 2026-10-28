@@ -1,5 +1,5 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const sqlite3 = require('@vscode/sqlite3').verbose();
 const multer = require('multer');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
