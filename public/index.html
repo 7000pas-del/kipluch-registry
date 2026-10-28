@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ТОО «КИП «Луч» — Реестр весоизмерительных систем и архив</title>
 
-    <!-- Иконки -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><text x='50' y='68' font-size='60' text-anchor='middle'>⚖️</text></svg>">
-    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%230f172a'/><text x='90' y='122' font-size='100' text-anchor='middle'>⚖️</text></svg>">
-
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -30,7 +27,7 @@
         body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; padding: 16px 8px; overflow-x: hidden; }
         .app-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 16px; overflow-x: hidden; }
 
-        /* ОКНО АВТОРИЗАЦИИ ПОВЕРХ САЙТА */
+        /* ОКНО АВТОРИЗАЦИИ */
         #authOverlay {
             position: fixed;
             inset: 0;
@@ -155,9 +152,6 @@
         .detail-label { font-size: 10px; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
         .detail-value { font-size: 12px; font-weight: 600; color: var(--primary); word-break: break-word; }
 
-        .maint-row { display: flex; flex-direction: column; background: #fff; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 6px; word-break: break-word; }
-        .maint-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #e2e8f0; color: var(--primary); display: inline-block; }
-
         .folder-banner { background: #e0f2fe; border: 1px solid #93c5fd; color: #0369a1; padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 12px; }
         .folders-container { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 14px; }
         .folder-item { background: var(--surface); border: 2px dashed var(--border); border-radius: 10px; padding: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
@@ -165,9 +159,9 @@
         .folder-title { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .files-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; width: 100%; }
-        .file-row { display: flex; flex-direction: column; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; width: 100%; overflow: hidden; cursor: pointer; }
+        .file-row { display: flex; flex-direction: column; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; width: 100%; overflow: hidden; }
         .file-row:hover { background: #f8fafc; }
-        .file-meta { display: flex; align-items: center; gap: 8px; width: 100%; overflow: hidden; }
+        .file-meta { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; overflow: hidden; }
         .file-name { font-weight: 600; font-size: 13px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .file-info-sub { font-size: 11px; color: var(--text-muted); }
         .file-actions { display: flex; gap: 6px; width: 100%; }
@@ -278,11 +272,11 @@
                 <button class="btn btn-folder" id="btnCreateFolder" type="button" onclick="promptCreateFolder()">📁 Папка</button>
                 <label class="btn btn-success" id="btnUploadPhoto" style="display: none; cursor: pointer;">
                     📸 Фото
-                    <input type="file" accept="image/*" multiple onchange="uploadFiles(this.files, 'image')">
+                    <input type="file" accept="image/*" multiple onchange="uploadFiles(this.files)">
                 </label>
                 <label class="btn" id="btnUploadDoc" style="display: none; cursor: pointer;">
                     📄 Документ
-                    <input type="file" multiple onchange="uploadFiles(this.files, 'doc')">
+                    <input type="file" multiple onchange="uploadFiles(this.files)">
                 </label>
                 <button class="btn" id="btnNewNote" type="button" style="background: var(--primary);" onclick="openNoteModal()">📝 Заметка</button>
             </div>
@@ -417,14 +411,8 @@
         <button class="modal-close-btn" type="button" onclick="closeViewNoteModal()">✕</button>
         <h3 id="viewNoteTitle">📝 Просмотр заметки</h3>
         <div class="modal-body-scroll">
-            <div class="form-group">
-                <label>Название:</label>
-                <input type="text" id="viewNoteNameInput" placeholder="Название...">
-            </div>
-            <div class="form-group">
-                <label>Текст:</label>
-                <textarea id="viewNoteContentInput" style="height: 150px;" placeholder="Текст заметки..."></textarea>
-            </div>
+            <div class="form-group"><label>Название:</label><input type="text" id="viewNoteNameInput" placeholder="Название..."></div>
+            <div class="form-group"><label>Текст:</label><textarea id="viewNoteContentInput" style="height: 150px;" placeholder="Текст заметки..."></textarea></div>
             <div style="font-size: 11px; color: var(--text-muted);" id="viewNoteDate"></div>
         </div>
         <div class="modal-buttons">
@@ -447,11 +435,21 @@
                 <div class="detail-grid">
                     <div class="detail-item"><div class="detail-label">Модель:</div><div class="detail-value" id="viewEqName">-</div></div>
                     <div class="detail-item"><div class="detail-label">Зав. номер:</div><div class="detail-value" id="viewEqSerial">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Владелец:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">№ в Реестре ГСИ РК:</div><div class="detail-value" id="viewEqGsiNumber">-</div></div>
                 </div>
+                <div class="detail-grid">
+                    <div class="detail-item"><div class="detail-label">👤 Владелец:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Объект:</div><div class="detail-value" id="viewEqLocation">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Поверка до:</div><div class="detail-value" id="viewEqNextVer">-</div></div>
+                </div>
+                <div class="detail-item"><div class="detail-label">Примечания:</div><div class="detail-value" id="viewEqNotes" style="font-weight: 400; white-space: pre-wrap;">-</div></div>
             </div>
         </div>
-        <div class="modal-buttons"><button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewEquipmentModal()">Закрыть</button></div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewEquipmentModal()">Закрыть</button>
+            <button class="btn btn-folder" type="button" onclick="window.print()">🖨️ Печать</button>
+            <button class="btn" type="button" id="btnEditFromView">✏️ Изменить</button>
+        </div>
     </div>
 </div>
 
@@ -466,27 +464,25 @@
                 <div class="form-group"><label>Заводской номер:</label><input type="text" id="eqSerial" placeholder="№ 45892"></div>
             </div>
             <div class="form-row-3">
-                <div class="form-group"><label>№ в Реестре ГСИ РК:</label><input type="text" id="eqGsiNumber" placeholder="KZ.02.02.01823"></div>
-                <div class="form-group"><label>👤 Владелец:</label><input type="text" id="eqOwnerName" placeholder="Владелец"></div>
-                <div class="form-group"><label>Место установки:</label><input type="text" id="eqLocation" placeholder="Объект"></div>
+                <div class="form-group"><label>№ в Реестре ГСИ РК:</label><input type="text" id="eqGsiNumber" placeholder="KZ.02.02.01823-2021"></div>
+                <div class="form-group"><label>👤 Владелец:</label><input type="text" id="eqOwnerName" placeholder="ТОО «ТрансЛогистик»"></div>
+                <div class="form-group"><label>Место установки:</label><input type="text" id="eqLocation" placeholder="КПП №1"></div>
             </div>
             <div class="form-row-3">
                 <div class="form-group"><label>НПВ (Max):</label><input type="text" id="eqCapacity" placeholder="60 тонн"></div>
-                <div class="form-group"><label>НмПВ (Min):</label><input type="text" id="eqMinCapacity" placeholder="400 кг"></div>
-                <div class="form-group"><label>Дискретность:</label><input type="text" id="eqDiscrete" placeholder="20 кг"></div>
-            </div>
-            <div class="form-row-3">
                 <div class="form-group"><label>Посл. поверка:</label><input type="date" id="eqLastVer"></div>
                 <div class="form-group"><label>След. поверка:</label><input type="date" id="eqNextVer"></div>
-                <div class="form-group"><label>Статус:</label>
-                    <select id="eqStatus">
-                        <option value="В эксплуатации">🟢 В эксплуатации</option>
-                        <option value="Требует поверки">🟡 Требует поверки</option>
-                        <option value="В ремонте">🔴 В ремонте</option>
-                        <option value="Выведены из эксплуатации">⚫ Выведены</option>
-                    </select>
-                </div>
             </div>
+            <div class="form-group">
+                <label>Статус:</label>
+                <select id="eqStatus">
+                    <option value="В эксплуатации">🟢 В эксплуатации</option>
+                    <option value="Требует поверки">🟡 Требует поверки</option>
+                    <option value="В ремонте">🔴 В ремонте</option>
+                    <option value="Выведены из эксплуатации">⚫ Выведены</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Примечания:</label><textarea id="eqNotes" style="height: 50px;" placeholder="Примечания..."></textarea></div>
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeEquipmentModal()">Отмена</button>
@@ -551,6 +547,10 @@
     let viewingEqId = null;
     let editingEqId = null;
 
+    let sortColumn = 'id';
+    let sortAsc = false;
+    let verificationFilter = 'all';
+
     function toggleMobileSearch() {
         const container = document.getElementById('searchBoxContainer');
         const input = document.getElementById('searchInput');
@@ -597,6 +597,7 @@
             const res = await fetch('/api/equipment');
             equipmentList = await res.json();
             renderEquipmentTable();
+            if (viewingEqId) viewEquipment(viewingEqId);
         } catch (e) {}
     }
 
@@ -630,10 +631,6 @@
             <div class="mobile-eq-card" onclick="viewEquipment('${eq.id}')">
                 <div style="font-weight: 700; font-size: 14px; color: var(--primary);">${eq.name || '-'}</div>
                 <div style="font-size: 11px; color: var(--text-muted);">Зав. №: ${eq.serialNumber || '-'} | Поверка: ${eq.nextVerification || '-'}</div>
-                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px;" onclick="event.stopPropagation()">
-                    <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px;" onclick="editEquipment('${eq.id}')">✏️</button>
-                    <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️</button>
-                </div>
             </div>
         `).join('');
     }
@@ -644,19 +641,25 @@
         viewingEqId = id;
         document.getElementById('viewEqName').textContent = eq.name || '-';
         document.getElementById('viewEqSerial').textContent = eq.serialNumber || '-';
+        document.getElementById('viewEqGsiNumber').textContent = eq.gsiNumber || '-';
         document.getElementById('viewEqOwnerName').textContent = eq.ownerName || '-';
+        document.getElementById('viewEqLocation').textContent = eq.location || '-';
+        document.getElementById('viewEqNextVer').textContent = eq.nextVerification || '-';
+        document.getElementById('viewEqNotes').textContent = eq.notes || '-';
+
+        document.getElementById('btnEditFromView').onclick = function() {
+            closeViewEquipmentModal();
+            editEquipment(eq.id);
+        };
         document.getElementById('viewEquipmentModal').style.display = 'flex';
     }
 
-    function closeViewEquipmentModal() {
-        document.getElementById('viewEquipmentModal').style.display = 'none';
-        viewingEqId = null;
-    }
+    function closeViewEquipmentModal() { document.getElementById('viewEquipmentModal').style.display = 'none'; viewingEqId = null; }
 
     function openEquipmentModal() {
         editingEqId = null;
         document.getElementById('eqModalTitle').textContent = '➕ Добавить весы';
-        ['eqName', 'eqSerial', 'eqGsiNumber', 'eqOwnerName', 'eqLocation', 'eqCapacity', 'eqMinCapacity', 'eqDiscrete', 'eqLastVer', 'eqNextVer'].forEach(id => {
+        ['eqName', 'eqSerial', 'eqGsiNumber', 'eqOwnerName', 'eqLocation', 'eqCapacity', 'eqLastVer', 'eqNextVer', 'eqNotes'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -674,18 +677,14 @@
         document.getElementById('eqOwnerName').value = eq.ownerName || '';
         document.getElementById('eqLocation').value = eq.location || '';
         document.getElementById('eqCapacity').value = eq.capacity || '';
-        document.getElementById('eqMinCapacity').value = eq.minCapacity || '';
-        document.getElementById('eqDiscrete').value = eq.discrete || '';
         document.getElementById('eqLastVer').value = eq.lastVerification || '';
         document.getElementById('eqNextVer').value = eq.nextVerification || '';
         document.getElementById('eqStatus').value = eq.status || 'В эксплуатации';
+        document.getElementById('eqNotes').value = eq.notes || '';
         document.getElementById('equipmentModal').style.display = 'flex';
     }
 
-    function closeEquipmentModal() {
-        document.getElementById('equipmentModal').style.display = 'none';
-        editingEqId = null;
-    }
+    function closeEquipmentModal() { document.getElementById('equipmentModal').style.display = 'none'; editingEqId = null; }
 
     async function saveEquipment(e) {
         e.preventDefault();
@@ -694,17 +693,16 @@
 
         const payload = {
             id: editingEqId || '',
-            name: name,
+            name,
             serialNumber: document.getElementById('eqSerial').value.trim(),
             gsiNumber: document.getElementById('eqGsiNumber').value.trim(),
             ownerName: document.getElementById('eqOwnerName').value.trim(),
             location: document.getElementById('eqLocation').value.trim(),
             capacity: document.getElementById('eqCapacity').value.trim(),
-            minCapacity: document.getElementById('eqMinCapacity').value.trim(),
-            discrete: document.getElementById('eqDiscrete').value.trim(),
             lastVerification: document.getElementById('eqLastVer').value,
             nextVerification: document.getElementById('eqNextVer').value,
-            status: document.getElementById('eqStatus').value
+            status: document.getElementById('eqStatus').value,
+            notes: document.getElementById('eqNotes').value.trim()
         };
 
         try {
@@ -713,12 +711,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const data = await res.json();
-            if (data.success) {
-                closeEquipmentModal();
-                loadEquipment();
-            }
-        } catch (err) { alert('Ошибка сохранения'); }
+            if ((await res.json()).success) { closeEquipmentModal(); loadEquipment(); }
+        } catch (err) { alert('Ошибка сервера'); }
     }
 
     async function deleteEquipment(id) {
@@ -729,40 +723,48 @@
         } catch (e) {}
     }
 
-    function renderItems() {
-        const filesContainer = document.getElementById('filesContainer');
-        let currentItems = db.items.filter(i => i.type === activeTab && !i.equipmentId);
-        if (currentFolderId) currentItems = currentItems.filter(i => i.folderId === currentFolderId);
-        else currentItems = currentItems.filter(i => !i.folderId);
+    function selectTab(tab) { activeTab = tab; currentFolderId = null; updateHash(); updateNavUI(); render(); }
+    function goHome() { activeTab = null; currentFolderId = null; document.getElementById('searchInput').value = ''; updateHash(); updateNavUI(); render(); }
+    function openFolder(id) { currentFolderId = id; updateHash(); updateNavUI(); render(); }
+    function exitFolder() { currentFolderId = null; updateHash(); updateNavUI(); render(); }
 
-        if (currentItems.length === 0) {
-            filesContainer.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">Элементов нет.</div>`;
-            return;
-        }
+    async function promptCreateFolder() {
+        if (!activeTab || activeTab === 'admin') return;
+        const name = prompt('Название папки:');
+        if (!name || !name.trim()) return;
+        try {
+            const res = await fetch('/api/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: 'folder_' + Date.now(), type: activeTab, name: name.trim() })
+            });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
 
-        if (activeTab === 'note') {
-            filesContainer.innerHTML = `
-                <div class="files-list">
-                    ${currentItems.map(item => `
-                        <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
-                                <div style="display: flex; gap: 4px;" onclick="event.stopPropagation()">
-                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; min-width: auto;" onclick="openNoteModalView('${item.id}')">✏️</button>
-                                    <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger); min-width: auto;" onclick="deleteItem('${item.id}')">🗑️</button>
-                                </div>
-                            </div>
-                            <div style="font-size: 12px; white-space: pre-wrap; color: var(--text-main); background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border); max-height: 80px; overflow: hidden; text-overflow: ellipsis;">${item.content || ''}</div>
-                            <div style="font-size: 10px; color: var(--text-muted); text-align: right;">Создано: ${item.date || ''}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        } else if (activeTab === 'image') {
-            filesContainer.innerHTML = `<div class="gallery-grid">${currentItems.map(item => `<div class="photo-card"><div class="photo-preview" onclick="window.open('${item.filePath}', '_blank')"><img src="${item.filePath}" alt="${item.name}"></div><div class="photo-content"><div style="font-weight: 600; font-size: 12px;">${item.name}</div></div><div class="photo-footer"><span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span><button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteItem('${item.id}')">🗑️</button></div></div>`).join('')}</div>`;
-        } else if (activeTab === 'doc') {
-            filesContainer.innerHTML = `<div class="files-list">${currentItems.map(item => `<div class="file-row"><div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span style="font-size: 18px;">📄</span><div style="overflow: hidden;"><div class="file-name">${item.name}</div><div class="file-info-sub">${item.size || ''} • ${item.date || ''}</div></div></div><div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button><button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button></div></div>`).join('')}</div>`;
-        }
+    async function deleteFolder(id) {
+        if (!confirm('Удалить папку?')) return;
+        try {
+            const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
+            if ((await res.json()).success) { if (currentFolderId === id) currentFolderId = null; updateHash(); loadDB(); }
+        } catch (e) {}
+    }
+
+    async function uploadFiles(files) {
+        if (!files || files.length === 0) return;
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
+        if (currentFolderId) formData.append('folderId', currentFolderId);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
+
+    function openNoteModal() {
+        document.getElementById('noteNameInput').value = '';
+        document.getElementById('noteContentInput').value = '';
+        document.getElementById('noteModal').style.display = 'flex';
     }
 
     function openNoteModalView(id) {
@@ -775,23 +777,176 @@
         document.getElementById('viewNoteModal').style.display = 'flex';
     }
 
-    function closeViewNoteModal() {
-        document.getElementById('viewNoteModal').style.display = 'none';
-        viewingNoteId = null;
-    }
+    function closeViewNoteModal() { document.getElementById('viewNoteModal').style.display = 'none'; viewingNoteId = null; }
 
     async function updateExistingNote() {
         if (!viewingNoteId) return;
         const name = document.getElementById('viewNoteNameInput').value.trim();
         const content = document.getElementById('viewNoteContentInput').value.trim();
         if (!name) { alert('Введите название'); return; }
-
         try {
             const res = await fetch('/api/notes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: viewingNoteId, name, content })
             });
-            if ((await res.json()).success) {
-                closeViewNoteModal();
-                loadDB();
+            if ((await res.json()).success) { closeViewNoteModal(); loadDB(); }
+        } catch (e) {}
+    }
+
+    async function saveNote(e) {
+        e.preventDefault();
+        const name = document.getElementById('noteNameInput').value.trim();
+        const content = document.getElementById('noteContentInput').value.trim();
+        if (!name) { alert('Введите название'); return; }
+        try {
+            const res = await fetch('/api/notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, content, folderId: currentFolderId || null })
+            });
+            if ((await res.json()).success) { closeModals(); loadDB(); }
+        } catch (e) {}
+    }
+
+    async function deleteItem(id) {
+        if (!confirm('Удалить элемент?')) return;
+        try {
+            const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
+            if ((await res.json()).success) loadDB();
+        } catch (e) {}
+    }
+
+    function closeModals() { document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none'); }
+
+    function updateNavUI() {
+        ['doc', 'image', 'note', 'admin'].forEach(t => {
+            const card = document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}`);
+            if (card) {
+                if (activeTab === t) card.classList.add('active');
+                else card.classList.remove('active');
+            }
+        });
+
+        const welcome = document.getElementById('welcomeScreen');
+        const content = document.getElementById('contentSection');
+        const adminSec = document.getElementById('adminSection');
+
+        if (!activeTab) {
+            if (welcome) welcome.style.display = 'flex';
+            if (content) content.style.display = 'none';
+            if (adminSec) adminSec.style.display = 'none';
+        } else if (activeTab === 'admin') {
+            if (welcome) welcome.style.display = 'none';
+            if (content) content.style.display = 'none';
+            if (adminSec) adminSec.style.display = 'flex';
+        } else {
+            if (welcome) welcome.style.display = 'none';
+            if (content) content.style.display = 'flex';
+            if (adminSec) adminSec.style.display = 'none';
+        }
+
+        const btnPhoto = document.getElementById('btnUploadPhoto');
+        const btnDoc = document.getElementById('btnUploadDoc');
+        if (activeTab === 'image') {
+            if (btnPhoto) btnPhoto.style.display = 'inline-flex';
+            if (btnDoc) btnDoc.style.display = 'none';
+        } else if (activeTab === 'doc') {
+            if (btnPhoto) btnPhoto.style.display = 'none';
+            if (btnDoc) btnDoc.style.display = 'inline-flex';
+        } else {
+            if (btnPhoto) btnPhoto.style.display = 'none';
+            if (btnDoc) btnDoc.style.display = 'none';
+        }
+
+        const counts = { doc: 0, image: 0, note: 0 };
+        db.items.forEach(item => { if (counts[item.type] !== undefined) counts[item.type]++; });
+        document.getElementById('countDoc').textContent = counts.doc;
+        document.getElementById('countImage').textContent = counts.image;
+        document.getElementById('countNote').textContent = counts.note;
+    }
+
+    function render() {
+        const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+        updateNavUI();
+        if (query) { renderGlobalSearch(query); return; }
+        if (!activeTab || activeTab === 'admin') return;
+
+        const sectionTitle = document.getElementById('sectionTitle');
+        const tabNames = { doc: '📄 Документы', image: '🖼️ Фото', note: '📝 Заметки' };
+        sectionTitle.textContent = tabNames[activeTab] || 'Элементы';
+
+        const folderBanner = document.getElementById('folderBanner');
+        const foldersContainer = document.getElementById('foldersContainer');
+        if (currentFolderId) {
+            folderBanner.style.display = 'flex';
+            const f = db.folders.find(x => x.id === currentFolderId);
+            if (f) document.getElementById('folderBannerTitle').textContent = `📁 ${f.name}`;
+            foldersContainer.style.display = 'none';
+        } else {
+            folderBanner.style.display = 'none';
+            foldersContainer.style.display = 'grid';
+            renderFolders();
+        }
+        renderItems();
+    }
+
+    function renderFolders() {
+        const container = document.getElementById('foldersContainer');
+        const list = db.folders.filter(f => f.type === activeTab);
+        if (list.length === 0) { container.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px;">Папок нет.</div>`; return; }
+        container.innerHTML = list.map(f => `
+            <div class="folder-item" onclick="openFolder('${f.id}')">
+                <div class="folder-info">
+                    <span>📁</span>
+                    <div class="folder-title">${f.name}</div>
+                </div>
+                <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>
+            </div>
+        `).join('');
+    }
+
+    function renderItems() {
+        const container = document.getElementById('filesContainer');
+        let list = db.items.filter(i => i.type === activeTab && !i.equipmentId);
+        if (currentFolderId) list = list.filter(i => i.folderId === currentFolderId);
+        else list = list.filter(i => !i.folderId);
+
+        if (list.length === 0) { container.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">Элементов нет.</div>`; return; }
+
+        if (activeTab === 'note') {
+            container.innerHTML = `<div class="files-list">${list.map(item => `
+                <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
+                        <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-main);">${item.content || ''}</div>
+                </div>`).join('')}</div>`;
+        } else if (activeTab === 'image') {
+            container.innerHTML = `<div class="gallery-grid">${list.map(item => `
+                <div class="photo-card">
+                    <div class="photo-preview" onclick="window.open('${item.filePath}', '_blank')"><img src="${item.filePath}" alt="${item.name}"></div>
+                    <div class="photo-content"><div style="font-weight: 600; font-size: 12px;">${item.name}</div></div>
+                    <div class="photo-footer"><span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span><button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteItem('${item.id}')">🗑️</button></div>
+                </div>`).join('')}</div>`;
+        } else if (activeTab === 'doc') {
+            container.innerHTML = `<div class="files-list">${list.map(item => `
+                <div class="file-row">
+                    <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${item.name}</div></div>
+                    <div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button><button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button></div>
+                </div>`).join('')}</div>`;
+        }
+    }
+
+    function renderGlobalSearch(q) {
+        const container = document.getElementById('filesContainer');
+        document.getElementById('sectionTitle').textContent = `🔍 Поиск: "${q}"`;
+        const found = db.items.filter(i => i.name.toLowerCase().includes(q));
+        container.innerHTML = found.length ? `<div class="files-list">${found.map(i => `<div class="file-row"><div class="file-meta" onclick="window.open('${i.filePath}', '_blank')"><span>📄</span><div class="file-name">${i.name}</div></div></div>`).join('')}</div>` : `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено.</div>`;
+    }
+
+    if (localStorage.getItem('isLoggedIn') === 'true') { loadDB(); }
+</script>
+</body>
+</html>
