@@ -409,7 +409,7 @@
         </div>
     </div>
 
-    <!-- Модальные окна (Паспорт, редактирование и т.д.) сохраняются полностью -->
+    <!-- Модальные окна -->
     <div class="modal-backdrop" id="viewEquipmentModal">
         <div class="modal-box">
             <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()">✕</button>
@@ -432,8 +432,25 @@
         </div>
     </div>
 
+    <div class="modal-backdrop" id="equipmentModal">
+        <div class="modal-box">
+            <button class="modal-close-btn" type="button" onclick="closeEquipmentModal()">✕</button>
+            <h3 id="eqModalTitle">➕ Оборудование</h3>
+            <div class="modal-body-scroll">
+                <div class="form-group">
+                    <label>Наименование:*</label>
+                    <input type="text" id="eqName" placeholder="Автомобильные весы">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeEquipmentModal()">Отмена</button>
+                <button class="btn btn-success" type="button" onclick="saveEquipment(event)">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Проверка авторизации при загрузке
+        // Логика авторизации
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('loginUser').value;
@@ -469,46 +486,167 @@
             initApp();
         }
 
-        // Ваш остальной JS функционал
+        // Полный скрипт вашего сайта
         let db = { folders: [], items: [] };
         let equipmentList = [];
         let activeTab = null;
         let currentFolderId = null;
+        let viewingEqId = null;
+        let editingEqId = null;
+
+        function toggleMobileSearch() {
+            document.getElementById('searchBoxContainer').classList.toggle('search-active');
+        }
+
+        function onSearchInput() {
+            render();
+        }
 
         async function loadDB() {
-            const res = await fetch('/api/db');
-            db = await res.json();
-            loadEquipment();
+            try {
+                const res = await fetch('/api/db');
+                db = await res.json();
+                loadEquipment();
+            } catch (e) {
+                console.error('Ошибка БД:', e);
+            }
         }
 
         async function loadEquipment() {
-            const res = await fetch('/api/equipment');
-            equipmentList = await res.json();
-            renderEquipmentTable();
+            try {
+                const res = await fetch('/api/equipment');
+                equipmentList = await res.json();
+                renderEquipmentTable();
+            } catch (e) {
+                console.error('Ошибка весов:', e);
+            }
         }
 
         function renderEquipmentTable() {
             const tbody = document.getElementById('equipmentTableBody');
             if (!tbody) return;
+
+            if (!equipmentList || equipmentList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Реестр пуст.</td></tr>`;
+                return;
+            }
+
             tbody.innerHTML = equipmentList.map(eq => `
-                <tr>
-                    <td><b>${eq.name}</b></td>
+                <tr onclick="viewEquipment('${eq.id}')">
+                    <td><b>${eq.name || '-'}</b></td>
                     <td>${eq.serialNumber || '-'}</td>
                     <td>${eq.ownerName || '-'}</td>
                     <td>${eq.location || '-'}</td>
                     <td>${eq.nextVerification || '-'}</td>
                     <td><span class="badge-status status-ok">${eq.status || 'В эксплуатации'}</span></td>
-                    <td style="text-align: right;"></td>
+                    <td style="text-align: right;" onclick="event.stopPropagation()">
+                        <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px;" onclick="editEquipment('${eq.id}')">✏️</button>
+                        <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️</button>
+                    </td>
                 </tr>
             `).join('');
         }
 
-        function toggleMobileSearch() {
-            document.getElementById('searchBoxContainer').classList.toggle('search-active');
+        function selectTab(tab) {
+            activeTab = tab;
+            currentFolderId = null;
+            updateNavUI();
+            render();
         }
-        function onSearchInput() {}
-        function goHome() { activeTab = null; currentFolderId = null; }
-        function selectTab(tab) { activeTab = tab; }
+
+        function goHome() {
+            activeTab = null;
+            currentFolderId = null;
+            document.getElementById('searchInput').value = '';
+            updateNavUI();
+            render();
+        }
+
+        function updateNavUI() {
+            const welcome = document.getElementById('welcomeScreen');
+            const content = document.getElementById('contentSection');
+            const adminSec = document.getElementById('adminSection');
+
+            if (!activeTab) {
+                if (welcome) welcome.style.display = 'flex';
+                if (content) content.style.display = 'none';
+                if (adminSec) adminSec.style.display = 'none';
+            } else if (activeTab === 'admin') {
+                if (welcome) welcome.style.display = 'none';
+                if (content) content.style.display = 'none';
+                if (adminSec) adminSec.style.display = 'flex';
+            } else {
+                if (welcome) welcome.style.display = 'none';
+                if (content) content.style.display = 'flex';
+                if (adminSec) adminSec.style.display = 'none';
+            }
+        }
+
+        function render() {
+            updateNavUI();
+        }
+
+        function openEquipmentModal() {
+            editingEqId = null;
+            document.getElementById('eqModalTitle').textContent = '➕ Добавить весы';
+            document.getElementById('eqName').value = '';
+            document.getElementById('equipmentModal').style.display = 'flex';
+        }
+
+        function closeEquipmentModal() {
+            document.getElementById('equipmentModal').style.display = 'none';
+        }
+
+        function closeViewEquipmentModal() {
+            document.getElementById('viewEquipmentModal').style.display = 'none';
+        }
+
+        function viewEquipment(id) {
+            const eq = equipmentList.find(e => e.id === id);
+            if (!eq) return;
+            document.getElementById('viewEqName').textContent = eq.name || '-';
+            document.getElementById('viewEqSerial').textContent = eq.serialNumber || '-';
+            document.getElementById('viewEqOwnerName').textContent = eq.ownerName || '-';
+            document.getElementById('viewEquipmentModal').style.display = 'flex';
+        }
+
+        async function saveEquipment(e) {
+            e.preventDefault();
+            const name = document.getElementById('eqName').value.trim();
+            if (!name) { alert('Введите наименование!'); return; }
+
+            try {
+                const res = await fetch('/api/equipment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, status: 'В эксплуатации' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeEquipmentModal();
+                    loadEquipment();
+                }
+            } catch (err) {
+                alert('Ошибка сохранения');
+            }
+        }
+
+        async function deleteEquipment(id) {
+            if (!confirm('Удалить весы?')) return;
+            try {
+                await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
+                loadEquipment();
+            } catch (e) {}
+        }
+
+        function promptCreateFolder() {}
+        function exitFolder() {}
+        function uploadFiles() {}
+        function openNoteModal() {}
+        function exportEquipmentCSV() {}
+        function setVerificationFilter() {}
+        function sortTable() {}
+        function editEquipment(id) { viewEquipment(id); }
     </script>
 </body>
 </html>
