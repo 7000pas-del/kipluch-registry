@@ -62,7 +62,21 @@ db.serialize(() => {
         email TEXT,
         status TEXT,
         notes TEXT
-    )`);
+    )`, () => {
+        // Автоматически добавляем колонки на случай, если таблица была создана ранее без них
+        db.run(`ALTER TABLE equipment ADD COLUMN gsiNumber TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN minCapacity TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN discrete TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN adcType TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN sensorType TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN platformCount TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN weighingMode TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN certNumber TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN phone TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN email TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN status TEXT`, () => {});
+        db.run(`ALTER TABLE equipment ADD COLUMN notes TEXT`, () => {});
+    });
 
     db.run(`CREATE TABLE IF NOT EXISTS maintenance (
         id TEXT PRIMARY KEY,
