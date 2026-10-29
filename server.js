@@ -63,7 +63,6 @@ db.serialize(() => {
         status TEXT,
         notes TEXT
     )`, () => {
-        // Автоматически добавляем колонки на случай, если таблица была создана ранее без них
         db.run(`ALTER TABLE equipment ADD COLUMN gsiNumber TEXT`, () => {});
         db.run(`ALTER TABLE equipment ADD COLUMN minCapacity TEXT`, () => {});
         db.run(`ALTER TABLE equipment ADD COLUMN discrete TEXT`, () => {});
@@ -86,6 +85,19 @@ db.serialize(() => {
         description TEXT,
         performedBy TEXT
     )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        username TEXT UNIQUE,
+        password TEXT,
+        role TEXT
+    )`, () => {
+        db.get(`SELECT * FROM users WHERE username = 'admin'`, (err, row) => {
+            if (!row) {
+                db.run(`INSERT INTO users (id, username, password, role) VALUES ('usr_admin', 'admin', 'admin123', 'admin')`);
+            }
+        });
+    });
 });
 
 const upload = multer({ dest: 'uploads/' });
@@ -94,11 +106,13 @@ const uploadBackup = multer({ dest: 'uploads/' });
 // API Авторизации
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    if (username === 'admin' && password === 'admin123') {
-        res.json({ success: true });
-    } else {
-        res.json({ success: false });
-    }
+    db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
+        if (row) {
+            res.json({ success: true, role: row.role });
+        } else {
+            res.json({ success: false });
+        }
+    });
 });
 
 // Бэкап: Скачивание базы данных
@@ -115,6 +129,45 @@ app.post('/api/backup/upload', uploadBackup.single('backup'), (req, res) => {
     try { fs.unlinkSync(req.file.path); } catch(e) {}
     res.json({ success: !err, error: err ? err.message : null });
   });
+});
+
+// Управление пользователями
+app.get('/api/users', (req, res) => {
+    db.all(`SELECT id, username, role FROM users`, [], (err, rows) => {
+        res.json(rows || []);
+    });
+});
+
+app.post('/api/users', (req, res) => {
+    const { id, username, password, role } = req.body;
+    if (!username) return res.json({ success: false, error: 'Укажите логин' });
+
+    const userId = id || ('usr_' + Date.now());
+    const userRole = role || 'user';
+
+    if (password && password.trim() !== '') {
+        const query = `INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET username=excluded.username, password=excluded.password, role=excluded.role`;
+        db.run(query, [userId, username, password, userRole], (err) => {
+            res.json({ success: !err, error: err ? err.message : null });
+        });
+    } else {
+        db.run(`UPDATE users SET username = ?, role = ? WHERE id = ?`, [username, userRole, userId], (err) => {
+            res.json({ success: !err, error: err ? err.message : null });
+        });
+    }
+});
+
+app.delete('/api/users/:id', (req, res) => {
+    const id = req.params.id;
+    db.get(`SELECT username FROM users WHERE id = ?`, [id], (err, row) => {
+        if (row && row.username === 'admin') {
+            return res.json({ success: false, error: 'Нельзя удалить главного администратора' });
+        }
+        db.run(`DELETE FROM users WHERE id = ?`, [id], (err) => {
+            res.json({ success: !err });
+        });
+    });
 });
 
 // Получение всей структуры БД
