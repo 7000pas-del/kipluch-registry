@@ -90,11 +90,15 @@ db.serialize(() => {
         id TEXT PRIMARY KEY,
         username TEXT UNIQUE,
         password TEXT,
-        role TEXT
+        role TEXT,
+        permissions TEXT
     )`, () => {
+        db.run(`ALTER TABLE users ADD COLUMN permissions TEXT`, () => {});
         db.get(`SELECT * FROM users WHERE username = 'admin'`, (err, row) => {
             if (!row) {
-                db.run(`INSERT INTO users (id, username, password, role) VALUES ('usr_admin', 'admin', 'admin123', 'admin')`);
+                db.run(`INSERT INTO users (id, username, password, role, permissions) VALUES ('usr_admin', 'admin', 'admin123', 'admin', 'all')`);
+            } else {
+                db.run(`UPDATE users SET permissions = 'all' WHERE username = 'admin'`);
             }
         });
     });
@@ -103,7 +107,7 @@ db.serialize(() => {
 const upload = multer({ dest: 'uploads/' });
 const uploadBackup = multer({ dest: 'uploads/' });
 
-// API Авторизации (поддерживает логины на русском и английском)
+// API Авторизации
 app.post('/api/login', (req, res) => {
     let { username, password } = req.body;
     if (username) username = username.trim();
@@ -111,20 +115,19 @@ app.post('/api/login', (req, res) => {
 
     db.get(`SELECT * FROM users WHERE LOWER(username) = LOWER(?) AND password = ?`, [username, password], (err, row) => {
         if (row) {
-            res.json({ success: true, role: row.role });
+            res.json({ success: true, role: row.role, permissions: row.permissions || '' });
         } else {
             res.json({ success: false });
         }
     });
 });
 
-// Бэкап: Скачивание базы данных
+// Бэкап
 app.get('/api/backup/download', (req, res) => {
   const file = path.join(__dirname, 'archive.db');
   res.download(file);
 });
 
-// Бэкап: Загрузка и восстановление базы данных
 app.post('/api/backup/upload', uploadBackup.single('backup'), (req, res) => {
   if (!req.file) return res.json({ success: false, error: 'Файл не выбран' });
   const targetPath = path.join(__dirname, 'archive.db');
@@ -134,30 +137,31 @@ app.post('/api/backup/upload', uploadBackup.single('backup'), (req, res) => {
   });
 });
 
-// Управление пользователями (поддерживает русские и английские логины/пароли)
+// Управление пользователями и правами
 app.get('/api/users', (req, res) => {
-    db.all(`SELECT id, username, role FROM users`, [], (err, rows) => {
+    db.all(`SELECT id, username, role, permissions FROM users`, [], (err, rows) => {
         res.json(rows || []);
     });
 });
 
 app.post('/api/users', (req, res) => {
-    let { id, username, password, role } = req.body;
+    let { id, username, password, role, permissions } = req.body;
     if (!username) return res.json({ success: false, error: 'Укажите логин' });
     username = username.trim();
 
     const userId = id || ('usr_' + Date.now());
     const userRole = role || 'user';
+    const userPerms = Array.isArray(permissions) ? permissions.join(',') : (permissions || '');
 
     if (password && password.trim() !== '') {
         const cleanPassword = password.trim();
-        const query = `INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET username=excluded.username, password=excluded.password, role=excluded.role`;
-        db.run(query, [userId, username, cleanPassword, userRole], (err) => {
+        const query = `INSERT INTO users (id, username, password, role, permissions) VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET username=excluded.username, password=excluded.password, role=excluded.role, permissions=excluded.permissions`;
+        db.run(query, [userId, username, cleanPassword, userRole, userPerms], (err) => {
             res.json({ success: !err, error: err ? err.message : null });
         });
     } else {
-        db.run(`UPDATE users SET username = ?, role = ? WHERE id = ?`, [username, userRole, userId], (err) => {
+        db.run(`UPDATE users SET username = ?, role = ?, permissions = ? WHERE id = ?`, [username, userRole, userPerms, userId], (err) => {
             res.json({ success: !err, error: err ? err.message : null });
         });
     }
@@ -184,7 +188,7 @@ app.get('/api/db', (req, res) => {
     });
 });
 
-// Оборудование (Весы)
+// Оборудование
 app.get('/api/equipment', (req, res) => {
     db.all(`SELECT * FROM equipment`, [], (err, rows) => {
         res.json(rows || []);
