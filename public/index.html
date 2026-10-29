@@ -97,7 +97,7 @@
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; pointer-events: none; }
         .mobile-search-toggle { display: none; background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; width: 36px; height: 36px; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--text-main); }
 
-        .nav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
+        .nav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
         .nav-card { background: #f8fafc; border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; overflow: hidden; }
         .nav-card:hover { border-color: var(--accent); background: #fff; }
         .nav-card.active { background: var(--primary); border-color: var(--primary); color: white; }
@@ -173,65 +173,23 @@
         .modal-buttons { display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); background: var(--surface); margin-top: auto; }
         .modal-buttons .btn { flex: 1; padding: 8px; font-size: 12px; min-width: auto; }
 
-        /* ИДЕАЛЬНАЯ ПЕЧАТЬ НА ОДНОЙ СТРАНИЦЕ БЕЗ ЛИШНЕГО ТЕКСТА СВЕРХУ */
         @media print {
-            @page {
-                size: A4 portrait;
-                margin: 5mm;
-            }
+            @page { size: A4 portrait; margin: 5mm; }
             body * { visibility: hidden; }
             #viewEquipmentModal, #viewEquipmentModal * { visibility: visible; }
             #viewEquipmentModal {
-                position: absolute !important;
-                inset: 0 !important;
-                background: white !important;
-                display: block !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                backdrop-filter: none !important;
+                position: absolute !important; inset: 0 !important; background: white !important; display: block !important; padding: 0 !important; margin: 0 !important; backdrop-filter: none !important;
             }
             #viewEquipmentModal .modal-box {
-                box-shadow: none !important;
-                border: none !important;
-                height: auto !important;
-                max-height: 100% !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                background: white !important;
-                overflow: visible !important;
+                box-shadow: none !important; border: none !important; height: auto !important; max-height: 100% !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; background: white !important; overflow: visible !important;
             }
-            #viewEquipmentModal .modal-close-btn,
-            #viewEquipmentModal .modal-buttons,
-            #viewEquipmentModal .detail-card:last-child {
-                display: none !important;
-            }
-            .modal-body-scroll {
-                overflow: visible !important;
-                max-height: none !important;
-                display: flex !important;
-                gap: 4px !important;
-            }
-            .detail-card {
-                background: white !important;
-                border: 1px solid #cbd5e1 !important;
-                padding: 6px !important;
-                gap: 4px !important;
-            }
-            .detail-grid {
-                gap: 4px !important;
-            }
-            .detail-item {
-                padding: 4px 6px !important;
-                border: 1px solid #e2e8f0 !important;
-            }
-            .detail-label {
-                font-size: 9px !important;
-            }
-            .detail-value {
-                font-size: 11px !important;
-            }
+            #viewEquipmentModal .modal-close-btn, #viewEquipmentModal .modal-buttons, #viewEquipmentModal .detail-card:last-child { display: none !important; }
+            .modal-body-scroll { overflow: visible !important; max-height: none !important; display: flex !important; gap: 4px !important; }
+            .detail-card { background: white !important; border: 1px solid #cbd5e1 !important; padding: 6px !important; gap: 4px !important; }
+            .detail-grid { gap: 4px !important; }
+            .detail-item { padding: 4px 6px !important; border: 1px solid #e2e8f0 !important; }
+            .detail-label { font-size: 9px !important; }
+            .detail-value { font-size: 11px !important; }
         }
 
         @media (min-width: 768px) {
@@ -301,7 +259,8 @@
 
 <div class="app-container">
     <header>
-        <div style="position: absolute; top: 16px; right: 16px;">
+        <div style="position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 10px;">
+            <span id="currentUserBadge" style="font-size: 12px; background: rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 20px; font-weight: 500;">👤 Пользователь</span>
             <button class="btn btn-logout-custom" type="button" onclick="logoutSystem()" style="padding: 6px 12px; font-size: 11px;">🚪 Выйти</button>
         </div>
         <div class="brand-logo">
@@ -314,7 +273,7 @@
             <div class="actions">
                 <button class="btn btn-home" type="button" onclick="goHome()">🏠 Главная</button>
                 <button class="btn btn-folder" id="btnCreateFolder" type="button" onclick="promptCreateFolder()">📁 Папка</button>
-                <button class="btn btn-backup" type="button" onclick="openBackupModal()">💾 Бэкап</button>
+                <button class="btn btn-backup" id="btnBackup" type="button" onclick="openBackupModal()">💾 Бэкап</button>
                 <label class="btn btn-success" id="btnUploadPhoto" style="display: none; cursor: pointer;">
                     📸 Фото
                     <input type="file" accept="image/*" multiple onchange="uploadFiles(this.files)">
@@ -333,7 +292,7 @@
             </div>
         </div>
 
-        <div class="nav-grid">
+        <div class="nav-grid" id="navGridContainer">
             <div class="nav-card" id="navDoc" onclick="selectTab('doc')">
                 <div class="nav-left"><span>📄</span> <span class="nav-text">Документы</span></div>
                 <span class="nav-count" id="countDoc">0</span>
@@ -358,7 +317,7 @@
         <div class="eq-header">
             <div class="eq-title">📊 Реестр систем</div>
             <div class="eq-header-actions">
-                <button class="btn btn-success" type="button" onclick="openEquipmentModal()">➕ Добавить</button>
+                <button class="btn btn-success" id="btnAddEquipment" type="button" onclick="openEquipmentModal()">➕ Добавить</button>
             </div>
         </div>
 
@@ -372,7 +331,7 @@
                         <th>Место установки</th>
                         <th>След. поверка</th>
                         <th>Статус</th>
-                        <th style="text-align: right;">Действия</th>
+                        <th style="text-align: right;" id="eqTableActionHeader">Действия</th>
                     </tr>
                 </thead>
                 <tbody id="equipmentTableBody"></tbody>
@@ -382,14 +341,14 @@
         <div class="mobile-eq-list" id="mobileEquipmentList"></div>
     </div>
 
-    <!-- Администрирование (Управление пользователями) -->
+    <!-- Администрирование -->
     <div id="adminSection" style="display: none; flex-direction: column; gap: 14px;">
         <div class="admin-grid">
             <div class="admin-card">
-                <div class="admin-card-title">👥 Управление пользователями</div>
+                <div class="admin-card-title">👥 Управление пользователями и правами</div>
                 <div class="admin-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span>Список учетных записей системы:</span>
+                        <span>Список учетных записей и их доступов:</span>
                         <button class="btn btn-success" type="button" style="padding: 4px 10px; font-size: 11px;" onclick="openUserModal()">➕ Добавить пользователя</button>
                     </div>
                     <div class="table-responsive">
@@ -398,6 +357,7 @@
                                 <tr>
                                     <th>Логин</th>
                                     <th>Роль</th>
+                                    <th>Права доступа</th>
                                     <th style="text-align: right;">Действия</th>
                                 </tr>
                             </thead>
@@ -416,8 +376,9 @@
             <button class="btn" type="button" style="padding: 4px 10px; font-size: 11px; background: var(--primary);" onclick="exitFolder()">← Назад</button>
         </div>
 
-        <div class="section-header">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
             <div class="section-title" id="sectionTitle" style="font-weight: 700; font-size: 15px;">Список элементов</div>
+            <button class="btn btn-folder" id="btnCreateFolderInArchive" type="button" style="padding: 4px 10px; font-size: 11px;" onclick="promptCreateFolder()">📁 Создать папку</button>
         </div>
 
         <div class="folders-container" id="foldersContainer"></div>
@@ -448,9 +409,9 @@
     </div>
 </div>
 
-<!-- Модальное окно ПОЛЬЗОВАТЕЛЯ -->
+<!-- Модальное окно ПОЛЬЗОВАТЕЛЯ С ПРАВАМИ -->
 <div class="modal-backdrop" id="userModal">
-    <div class="modal-box" style="max-width: 400px;">
+    <div class="modal-box" style="max-width: 450px;">
         <button class="modal-close-btn" type="button" onclick="closeUserModal()">✕</button>
         <h3 id="userModalTitle">➕ Новый пользователь</h3>
         <div class="modal-body-scroll" style="gap: 10px;">
@@ -458,11 +419,22 @@
             <div class="form-group"><label>Логин:*</label><input type="text" id="userLoginInput" placeholder="username"></div>
             <div class="form-group"><label>Пароль:*</label><input type="password" id="userPasswordInput" placeholder="••••••••"></div>
             <div class="form-group">
-                <label>Роль:</label>
-                <select id="userRoleInput">
+                <label>Роль в системе:</label>
+                <select id="userRoleInput" onchange="onRoleChangeSelect()">
                     <option value="user">Пользователь</option>
                     <option value="admin">Администратор</option>
                 </select>
+            </div>
+            <div class="form-group" id="permissionsGroup" style="margin-top: 6px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+                <label style="margin-bottom: 6px; display: block; font-weight: 700;">Права доступа (что разрешено делать):</label>
+                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="equipment"> 📊 Управление весами (добавление, правка, удаление)</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="maintenance"> 🛠️ Ведение журнала обслуживания весов</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="upload"> 📸 Загрузка документов и фотографий</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="notes"> 📝 Создание и редактирование заметок</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="folders"> 📁 Создание и удаление папок</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="backup"> 💾 Доступ к бэкапам системы</label>
+                </div>
             </div>
         </div>
         <div class="modal-buttons">
@@ -484,7 +456,7 @@
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewNoteModal()">Закрыть</button>
-            <button class="btn btn-success" type="button" onclick="updateExistingNote()">Сохранить изменения</button>
+            <button class="btn btn-success" id="btnSaveNoteChanges" type="button" onclick="updateExistingNote()">Сохранить изменения</button>
         </div>
     </div>
 </div>
@@ -538,7 +510,7 @@
             <div class="detail-card">
                 <div style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
                     <span>🛠️ Журнал обслуживания</span>
-                    <button class="btn btn-success" type="button" style="padding: 4px 8px; font-size: 11px;" onclick="openMaintenanceModal()">➕ Запись</button>
+                    <button class="btn btn-success" id="btnAddMaintenance" type="button" style="padding: 4px 8px; font-size: 11px;" onclick="openMaintenanceModal()">➕ Запись</button>
                 </div>
                 <div id="maintenanceListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;"></div>
             </div>
@@ -684,19 +656,23 @@
         const tbody = document.getElementById('usersTableBody');
         if (!tbody) return;
         if (!usersList.length) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Нет пользователей</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Нет пользователей</td></tr>`;
             return;
         }
-        tbody.innerHTML = usersList.map(u => `
-            <tr>
-                <td><b>${u.username}</b></td>
-                <td>${u.role === 'admin' ? '⚙️ Администратор' : '👤 Пользователь'}</td>
-                <td style="text-align: right;">
-                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px;" onclick="editUser('${u.id}')">✏️ Сменить пароль</button>
-                    ${u.username !== 'admin' ? `<button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: var(--danger);" onclick="deleteUser('${u.id}')">🗑️</button>` : ''}
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = usersList.map(u => {
+            let pText = u.permissions === 'all' ? '✨ Полные права (Админ)' : (u.permissions ? u.permissions.split(',').join(', ') : 'Нет прав');
+            return `
+                <tr>
+                    <td><b>${u.username}</b></td>
+                    <td>${u.role === 'admin' ? '⚙️ Администратор' : '👤 Пользователь'}</td>
+                    <td style="font-size: 11px; color: var(--text-muted);">${pText}</td>
+                    <td style="text-align: right;">
+                        <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px;" onclick="editUser('${u.id}')">✏️ Настроить</button>
+                        ${u.username.toLowerCase() !== 'admin' ? `<button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: var(--danger);" onclick="deleteUser('${u.id}')">🗑️</button>` : ''}
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function openUserModal() {
@@ -704,8 +680,20 @@
         document.getElementById('userLoginInput').value = '';
         document.getElementById('userPasswordInput').value = '';
         document.getElementById('userRoleInput').value = 'user';
+        document.querySelectorAll('.perm-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('permissionsGroup').style.display = 'block';
         document.getElementById('userModalTitle').textContent = '➕ Новый пользователь';
         document.getElementById('userModal').style.display = 'flex';
+    }
+
+    function onRoleChangeSelect() {
+        const role = document.getElementById('userRoleInput').value;
+        const group = document.getElementById('permissionsGroup');
+        if (role === 'admin') {
+            group.style.display = 'none';
+        } else {
+            group.style.display = 'block';
+        }
     }
 
     function editUser(id) {
@@ -715,7 +703,18 @@
         document.getElementById('userLoginInput').value = u.username;
         document.getElementById('userPasswordInput').value = '';
         document.getElementById('userRoleInput').value = u.role;
-        document.getElementById('userModalTitle').textContent = '✏️ Изменить данные / пароль';
+        
+        const group = document.getElementById('permissionsGroup');
+        if (u.role === 'admin') {
+            group.style.display = 'none';
+        } else {
+            group.style.display = 'block';
+            const perms = u.permissions ? u.permissions.split(',') : [];
+            document.querySelectorAll('.perm-checkbox').forEach(cb => {
+                cb.checked = perms.includes(cb.value);
+            });
+        }
+        document.getElementById('userModalTitle').textContent = '✏️ Изменить пользователя / права';
         document.getElementById('userModal').style.display = 'flex';
     }
 
@@ -727,6 +726,15 @@
         const username = document.getElementById('userLoginInput').value.trim();
         const password = document.getElementById('userPasswordInput').value.trim();
         const role = document.getElementById('userRoleInput').value;
+        
+        let permissions = [];
+        if (role === 'admin') {
+            permissions = ['all'];
+        } else {
+            document.querySelectorAll('.perm-checkbox:checked').forEach(cb => {
+                permissions.push(cb.value);
+            });
+        }
 
         if (!username) { alert('Введите логин'); return; }
         if (!id && !password) { alert('Введите пароль для нового пользователя'); return; }
@@ -735,7 +743,7 @@
             const res = await fetch('/api/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, username, password, role })
+                body: JSON.stringify({ id, username, password, role, permissions })
             });
             const data = await res.json();
             if (data.success) {
@@ -771,8 +779,8 @@
 
     document.getElementById('authForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const username = document.getElementById('authLogin').value;
-        const password = document.getElementById('authPassword').value;
+        const username = document.getElementById('authLogin').value.trim();
+        const password = document.getElementById('authPassword').value.trim();
 
         try {
             const res = await fetch('/api/login', {
@@ -783,7 +791,12 @@
             const data = await res.json();
             if (data.success) {
                 localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('currentUser', username);
+                localStorage.setItem('currentUserRole', data.role || 'user');
+                localStorage.setItem('currentUserPerms', data.permissions || '');
+                
                 document.getElementById('authOverlay').style.display = 'none';
+                applyUserRoleUI();
                 loadDB();
             } else {
                 document.getElementById('authError').style.display = 'block';
@@ -793,11 +806,59 @@
 
     function logoutSystem() {
         localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('currentUserRole');
+        localStorage.removeItem('currentUserPerms');
         location.reload();
+    }
+
+    function checkPermission(perm) {
+        const role = localStorage.getItem('currentUserRole');
+        const perms = localStorage.getItem('currentUserPerms') || '';
+        if (role === 'admin' || perms === 'all') return true;
+        return perms.split(',').includes(perm);
+    }
+
+    function applyUserRoleUI() {
+        const role = localStorage.getItem('currentUserRole') || 'user';
+        const username = localStorage.getItem('currentUser') || 'Пользователь';
+        
+        const badge = document.getElementById('currentUserBadge');
+        if (badge) {
+            badge.textContent = `👤 ${username} (${role === 'admin' ? 'Админ' : 'Пользователь'})`;
+        }
+
+        // Вкладка Админ
+        const navAdmin = document.getElementById('navAdmin');
+        const navGrid = document.getElementById('navGridContainer');
+        if (navAdmin && navGrid) {
+            if (role === 'admin') {
+                navAdmin.style.display = 'flex';
+                navGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            } else {
+                navAdmin.style.display = 'none';
+                navGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                if (activeTab === 'admin') selectTab(null);
+            }
+        }
+
+        // Права на элементы интерфейса
+        const btnAddEq = document.getElementById('btnAddEquipment');
+        if (btnAddEq) btnAddEq.style.display = checkPermission('equipment') ? 'inline-flex' : 'none';
+
+        const btnBackup = document.getElementById('btnBackup');
+        if (btnBackup) btnBackup.style.display = checkPermission('backup') ? 'inline-flex' : 'none';
+
+        const btnCreateFolderArchive = document.getElementById('btnCreateFolderInArchive');
+        if (btnCreateFolderArchive) btnCreateFolderArchive.style.display = checkPermission('folders') ? 'inline-flex' : 'none';
+
+        const btnNewNote = document.getElementById('btnNewNote');
+        if (btnNewNote) btnNewNote.style.display = checkPermission('notes') ? 'inline-flex' : 'none';
     }
 
     if (localStorage.getItem('isLoggedIn') === 'true') {
         document.getElementById('authOverlay').style.display = 'none';
+        applyUserRoleUI();
     }
 
     let db = { folders: [], items: [] };
@@ -863,6 +924,8 @@
         const mobileList = document.getElementById('mobileEquipmentList');
         if (!tbody || !mobileList) return;
 
+        const canEq = checkPermission('equipment');
+
         if (!equipmentList || equipmentList.length === 0) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Реестр пуст.</td></tr>`;
             mobileList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Реестр пуст.</div>`;
@@ -878,8 +941,8 @@
                 <td>${eq.nextVerification || '-'}</td>
                 <td><span class="badge-status status-ok">${eq.status || 'В эксплуатации'}</span></td>
                 <td style="text-align: right;" onclick="event.stopPropagation()">
-                    <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px;" onclick="editEquipment('${eq.id}')">✏️</button>
-                    <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️</button>
+                    ${canEq ? `<button class="btn" type="button" style="padding: 6px 10px; font-size: 12px;" onclick="editEquipment('${eq.id}')">✏️</button>
+                    <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️</button>` : '<span style="font-size:11px; color:var(--text-muted);">Просмотр</span>'}
                 </td>
             </tr>
         `).join('');
@@ -916,10 +979,14 @@
         document.getElementById('viewEqEmail').textContent = eq.email || '-';
         document.getElementById('viewEqNotes').textContent = eq.notes || '-';
 
-        document.getElementById('btnEditFromView').onclick = function() {
-            closeViewEquipmentModal();
-            editEquipment(eq.id);
-        };
+        const btnEditFromView = document.getElementById('btnEditFromView');
+        if (btnEditFromView) {
+            btnEditFromView.style.display = checkPermission('equipment') ? 'inline-flex' : 'none';
+            btnEditFromView.onclick = function() {
+                closeViewEquipmentModal();
+                editEquipment(eq.id);
+            };
+        }
         document.getElementById('viewEquipmentModal').style.display = 'flex';
         loadMaintenance(id);
     }
@@ -928,6 +995,10 @@
 
     async function loadMaintenance(eqId) {
         const container = document.getElementById('maintenanceListContainer');
+        const canMaint = checkPermission('maintenance');
+        const btnAddMaint = document.getElementById('btnAddMaintenance');
+        if (btnAddMaint) btnAddMaint.style.display = canMaint ? 'inline-flex' : 'none';
+
         try {
             const res = await fetch(`/api/maintenance/${eqId}`);
             const list = await res.json();
@@ -942,13 +1013,14 @@
                         <div style="font-size: 11px; color: var(--text-main); margin-top: 2px;">${m.description || ''}</div>
                         <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Исполнитель: ${m.performedBy || '-'}</div>
                     </div>
-                    <button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteMaintenance('${m.id}', '${eqId}')">🗑️</button>
+                    ${canMaint ? `<button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteMaintenance('${m.id}', '${eqId}')">🗑️</button>` : ''}
                 </div>
             `).join('');
         } catch(e) {}
     }
 
     function openMaintenanceModal() {
+        if (!checkPermission('maintenance')) { alert('У вас нет прав на обслуживание весов'); return; }
         document.getElementById('maintWorkType').value = '';
         document.getElementById('maintDate').value = new Date().toISOString().slice(0, 10);
         document.getElementById('maintDesc').value = '';
@@ -994,6 +1066,7 @@
     }
 
     function openEquipmentModal() {
+        if (!checkPermission('equipment')) { alert('У вас нет прав на добавление оборудования'); return; }
         editingEqId = null;
         document.getElementById('eqModalTitle').textContent = '➕ Добавить весы';
         ['eqName', 'eqSerial', 'eqGsiNumber', 'eqOwnerName', 'eqLocation', 'eqInstallationDate', 'eqCapacity', 'eqMinCapacity', 'eqDiscrete', 'eqAdcType', 'eqSensorType', 'eqPlatformCount', 'eqWeighingMode', 'eqLastVer', 'eqNextVer', 'eqCertNumber', 'eqPhone', 'eqEmail', 'eqNotes'].forEach(id => {
@@ -1004,6 +1077,7 @@
     }
 
     function editEquipment(id) {
+        if (!checkPermission('equipment')) { alert('У вас нет прав на редактирование оборудования'); return; }
         const eq = equipmentList.find(e => e.id === id);
         if (!eq) return;
         editingEqId = id;
@@ -1081,6 +1155,7 @@
     }
 
     async function deleteEquipment(id) {
+        if (!checkPermission('equipment')) { alert('У вас нет прав на удаление оборудования'); return; }
         if (!confirm('Удалить весы?')) return;
         try {
             await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
@@ -1089,6 +1164,7 @@
     }
 
     function selectTab(tab) {
+        if (tab === 'admin' && localStorage.getItem('currentUserRole') !== 'admin') return;
         activeTab = tab;
         currentFolderId = null;
         updateHash();
@@ -1102,6 +1178,7 @@
     function exitFolder() { currentFolderId = null; updateHash(); updateNavUI(); render(); }
 
     async function promptCreateFolder() {
+        if (!checkPermission('folders')) { alert('У вас нет прав на создание папок'); return; }
         if (!activeTab || activeTab === 'admin') return;
         const name = prompt('Название папки:');
         if (!name || !name.trim()) return;
@@ -1116,6 +1193,7 @@
     }
 
     async function deleteFolder(id) {
+        if (!checkPermission('folders')) { alert('У вас нет прав на удаление папок'); return; }
         if (!confirm('Удалить папку?')) return;
         try {
             const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
@@ -1124,6 +1202,7 @@
     }
 
     async function uploadFiles(files) {
+        if (!checkPermission('upload')) { alert('У вас нет прав на загрузку файлов'); return; }
         if (!files || files.length === 0) return;
         const formData = new FormData();
         for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
@@ -1135,6 +1214,7 @@
     }
 
     function openNoteModal() {
+        if (!checkPermission('notes')) { alert('У вас нет прав на создание заметок'); return; }
         document.getElementById('noteNameInput').value = '';
         document.getElementById('noteContentInput').value = '';
         document.getElementById('noteModal').style.display = 'flex';
@@ -1147,12 +1227,17 @@
         document.getElementById('viewNoteNameInput').value = item.name || '';
         document.getElementById('viewNoteContentInput').value = item.content || '';
         document.getElementById('viewNoteDate').textContent = `Создано: ${item.date || ''}`;
+        
+        const btnSave = document.getElementById('btnSaveNoteChanges');
+        if (btnSave) btnSave.style.display = checkPermission('notes') ? 'inline-flex' : 'none';
+
         document.getElementById('viewNoteModal').style.display = 'flex';
     }
 
     function closeViewNoteModal() { document.getElementById('viewNoteModal').style.display = 'none'; viewingNoteId = null; }
 
     async function updateExistingNote() {
+        if (!checkPermission('notes')) { alert('У вас нет прав на изменение заметок'); return; }
         if (!viewingNoteId) return;
         const name = document.getElementById('viewNoteNameInput').value.trim();
         const content = document.getElementById('viewNoteContentInput').value.trim();
@@ -1169,6 +1254,7 @@
 
     async function saveNote(e) {
         e.preventDefault();
+        if (!checkPermission('notes')) { alert('У вас нет прав на сохранение заметок'); return; }
         const name = document.getElementById('noteNameInput').value.trim();
         const content = document.getElementById('noteContentInput').value.trim();
         if (!name) { alert('Введите название'); return; }
@@ -1183,6 +1269,7 @@
     }
 
     async function deleteItem(id) {
+        if (!checkPermission('upload') && !checkPermission('notes')) { alert('У вас нет прав на удаление элементов'); return; }
         if (!confirm('Удалить элемент?')) return;
         try {
             const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
@@ -1210,6 +1297,10 @@
             if (content) content.style.display = 'none';
             if (adminSec) adminSec.style.display = 'none';
         } else if (activeTab === 'admin') {
+            if (localStorage.getItem('currentUserRole') !== 'admin') {
+                goHome();
+                return;
+            }
             if (welcome) welcome.style.display = 'none';
             if (content) content.style.display = 'none';
             if (adminSec) adminSec.style.display = 'flex';
@@ -1219,17 +1310,28 @@
             if (adminSec) adminSec.style.display = 'none';
         }
 
+        const canUpload = checkPermission('upload');
+        const canNotes = checkPermission('notes');
         const btnPhoto = document.getElementById('btnUploadPhoto');
         const btnDoc = document.getElementById('btnUploadDoc');
+        const btnNewNote = document.getElementById('btnNewNote');
+
         if (activeTab === 'image') {
-            if (btnPhoto) btnPhoto.style.display = 'inline-flex';
+            if (btnPhoto) btnPhoto.style.display = canUpload ? 'inline-flex' : 'none';
             if (btnDoc) btnDoc.style.display = 'none';
+            if (btnNewNote) btnNewNote.style.display = 'none';
         } else if (activeTab === 'doc') {
             if (btnPhoto) btnPhoto.style.display = 'none';
-            if (btnDoc) btnDoc.style.display = 'inline-flex';
+            if (btnDoc) btnDoc.style.display = canUpload ? 'inline-flex' : 'none';
+            if (btnNewNote) btnNewNote.style.display = 'none';
+        } else if (activeTab === 'note') {
+            if (btnPhoto) btnPhoto.style.display = 'none';
+            if (btnDoc) btnDoc.style.display = 'none';
+            if (btnNewNote) btnNewNote.style.display = canNotes ? 'inline-flex' : 'none';
         } else {
             if (btnPhoto) btnPhoto.style.display = 'none';
             if (btnDoc) btnDoc.style.display = 'none';
+            if (btnNewNote) btnNewNote.style.display = canNotes ? 'inline-flex' : 'none';
         }
 
         const counts = { doc: 0, image: 0, note: 0 };
@@ -1267,6 +1369,8 @@
     function renderFolders() {
         const container = document.getElementById('foldersContainer');
         const list = db.folders.filter(f => f.type === activeTab);
+        const canFolders = checkPermission('folders');
+
         if (list.length === 0) { container.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px;">Папок нет.</div>`; return; }
         container.innerHTML = list.map(f => `
             <div class="folder-item" onclick="openFolder('${f.id}')">
@@ -1274,7 +1378,7 @@
                     <span>📁</span>
                     <div class="folder-title">${f.name}</div>
                 </div>
-                <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>
+                ${canFolders ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>` : ''}
             </div>
         `).join('');
     }
@@ -1285,6 +1389,9 @@
         if (currentFolderId) list = list.filter(i => i.folderId === currentFolderId);
         else list = list.filter(i => !i.folderId);
 
+        const canUpload = checkPermission('upload');
+        const canNotes = checkPermission('notes');
+
         if (list.length === 0) { container.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">Элементов нет.</div>`; return; }
 
         if (activeTab === 'note') {
@@ -1292,7 +1399,7 @@
                 <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px; cursor: pointer;">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
-                        <button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>
+                        ${canNotes ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>` : ''}
                     </div>
                     <div style="font-size: 12px; color: var(--text-main);">${item.content || ''}</div>
                 </div>`).join('')}</div>`;
@@ -1301,13 +1408,13 @@
                 <div class="photo-card">
                     <div class="photo-preview" onclick="window.open('${item.filePath}', '_blank')"><img src="${item.filePath}" alt="${item.name}"></div>
                     <div class="photo-content"><div style="font-weight: 600; font-size: 12px;">${item.name}</div></div>
-                    <div class="photo-footer"><span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span><button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteItem('${item.id}')">🗑️</button></div>
+                    <div class="photo-footer"><span style="font-size: 10px; color: var(--text-muted);">${item.date || ''}</span>${canUpload ? `<button class="btn" type="button" style="background: var(--danger); padding: 4px 6px; font-size: 10px;" onclick="deleteItem('${item.id}')">🗑️</button>` : ''}</div>
                 </div>`).join('')}</div>`;
         } else if (activeTab === 'doc') {
             container.innerHTML = `<div class="files-list">${list.map(item => `
                 <div class="file-row">
                     <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${item.name}</div></div>
-                    <div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button><button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button></div>
+                    <div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button>${canUpload ? `<button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button>` : ''}</div>
                 </div>`).join('')}</div>`;
         }
     }
@@ -1321,6 +1428,7 @@
 
     if (localStorage.getItem('isLoggedIn') === 'true') { 
         loadDB(); 
+        applyUserRoleUI();
         if (activeTab === 'admin') loadUsers();
     }
 </script>
