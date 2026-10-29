@@ -103,10 +103,13 @@ db.serialize(() => {
 const upload = multer({ dest: 'uploads/' });
 const uploadBackup = multer({ dest: 'uploads/' });
 
-// API Авторизации
+// API Авторизации (поддерживает логины на русском и английском)
 app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
+    let { username, password } = req.body;
+    if (username) username = username.trim();
+    if (password) password = password.trim();
+
+    db.get(`SELECT * FROM users WHERE LOWER(username) = LOWER(?) AND password = ?`, [username, password], (err, row) => {
         if (row) {
             res.json({ success: true, role: row.role });
         } else {
@@ -131,7 +134,7 @@ app.post('/api/backup/upload', uploadBackup.single('backup'), (req, res) => {
   });
 });
 
-// Управление пользователями
+// Управление пользователями (поддерживает русские и английские логины/пароли)
 app.get('/api/users', (req, res) => {
     db.all(`SELECT id, username, role FROM users`, [], (err, rows) => {
         res.json(rows || []);
@@ -139,16 +142,18 @@ app.get('/api/users', (req, res) => {
 });
 
 app.post('/api/users', (req, res) => {
-    const { id, username, password, role } = req.body;
+    let { id, username, password, role } = req.body;
     if (!username) return res.json({ success: false, error: 'Укажите логин' });
+    username = username.trim();
 
     const userId = id || ('usr_' + Date.now());
     const userRole = role || 'user';
 
     if (password && password.trim() !== '') {
+        const cleanPassword = password.trim();
         const query = `INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET username=excluded.username, password=excluded.password, role=excluded.role`;
-        db.run(query, [userId, username, password, userRole], (err) => {
+        db.run(query, [userId, username, cleanPassword, userRole], (err) => {
             res.json({ success: !err, error: err ? err.message : null });
         });
     } else {
@@ -161,7 +166,7 @@ app.post('/api/users', (req, res) => {
 app.delete('/api/users/:id', (req, res) => {
     const id = req.params.id;
     db.get(`SELECT username FROM users WHERE id = ?`, [id], (err, row) => {
-        if (row && row.username === 'admin') {
+        if (row && row.username.toLowerCase() === 'admin') {
             return res.json({ success: false, error: 'Нельзя удалить главного администратора' });
         }
         db.run(`DELETE FROM users WHERE id = ?`, [id], (err) => {
