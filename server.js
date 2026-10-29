@@ -6,42 +6,41 @@ const fs = require('fs');
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
+const dbUpload = multer({ dest: 'temp/' });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
-// База данных SQLite
-const db = new sqlite3.Database('./archive.db', (err) => {
+const dbPath = './archive.db';
+let db = new sqlite3.Database(dbPath, (err) => {
   if (err) console.error('Ошибка БД:', err.message);
   else console.log('Подключено к базе данных SQLite.');
 });
 
-// Создание таблиц
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS equipment (id TEXT PRIMARY KEY)`);
-  
-  // Автоматическое добавление недостающих колонок в существующую табличку
-  const columns = [
-    "name TEXT", "serialNumber TEXT", "gsiNumber TEXT", "ownerName TEXT", 
-    "location TEXT", "installationDate TEXT", "capacity TEXT", "minCapacity TEXT", 
-    "discrete TEXT", "adcType TEXT", "sensorType TEXT", "platformCount TEXT", 
-    "weighingMode TEXT", "lastVerification TEXT", "nextVerification TEXT", 
-    "certNumber TEXT", "phone TEXT", "email TEXT", "status TEXT", "notes TEXT"
-  ];
-  
-  columns.forEach(col => {
-    const colName = col.split(' ')[0];
-    db.run(`ALTER TABLE equipment ADD COLUMN ${col}รุ่น`, (err) => {}); // Игнорируем ошибку, если колонка уже есть
-    // Обычный синтаксис для SQLite:
-    db.run(`ALTER TABLE equipment ADD COLUMN ${col}`, () => {});
-  });
+function initDb() {
+  db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS equipment (id TEXT PRIMARY KEY)`);
+    
+    const columns = [
+      "name TEXT", "serialNumber TEXT", "gsiNumber TEXT", "ownerName TEXT", 
+      "location TEXT", "installationDate TEXT", "capacity TEXT", "minCapacity TEXT", 
+      "discrete TEXT", "adcType TEXT", "sensorType TEXT", "platformCount TEXT", 
+      "weighingMode TEXT", "lastVerification TEXT", "nextVerification TEXT", 
+      "certNumber TEXT", "phone TEXT", "email TEXT", "status TEXT", "notes TEXT"
+    ];
+    
+    columns.forEach(col => {
+      db.run(`ALTER TABLE equipment ADD COLUMN ${col}`, () => {});
+    });
 
-  db.run(`CREATE TABLE IF NOT EXISTS folders (id TEXT PRIMARY KEY, type TEXT, name TEXT)`);
-  db.run(`CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, type TEXT, name TEXT, filePath TEXT, size TEXT, date TEXT, folderId TEXT, equipmentId TEXT, content TEXT)`);
-  db.run(`CREATE TABLE IF NOT EXISTS maintenance (id TEXT PRIMARY KEY, equipmentId TEXT, workType TEXT, date TEXT, description TEXT, performedBy TEXT)`);
-});
+    db.run(`CREATE TABLE IF NOT EXISTS folders (id TEXT PRIMARY KEY, type TEXT, name TEXT)`);
+    db.run(`CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, type TEXT, name TEXT, filePath TEXT, size TEXT, date TEXT, folderId TEXT, equipmentId TEXT, content TEXT)`);
+    db.run(`CREATE TABLE IF NOT EXISTS maintenance (id TEXT PRIMARY KEY, equipmentId TEXT, workType TEXT, date TEXT, description TEXT, performedBy TEXT)`);
+  });
+}
+initDb();
 
 // Авторизация
 app.post('/api/login', (req, res) => {
@@ -51,6 +50,50 @@ app.post('/api/login', (req, res) => {
   } else {
     res.json({ success: false, message: 'Неверный логин или пароль' });
   }
+});
+
+// Скачивание бэкапа archive.db
+app.get('/api/admin/backup', (req, res) => {
+  if (fs.existsSync(dbPath)) {
+    res.download(dbPath, `archive_backup_${Date.now()}.db`);
+  } else {
+    res.status(404).json({ error: 'Файл базы данных не найден' });
+  }
+});
+
+// Загрузка/восстановление бэкапа archive.db
+app.post('/api/admin/restore', dbUpload.single('dbfile'), (req, res) => {
+  if (!req.file) {
+    return res.json({ success: false, error: 'Файл не выбран' });
+  }
+
+  const uploadedPath = req.file.path;
+
+  // Закрываем подключение к текущей БД перед заменой файла
+  db.close((err) => {
+    if (err) {
+      console.error('Ошибка при закрытии БД:', err.message);
+      return res.json({ success: false, error: 'Не удалось закрыть текущую БД' });
+    }
+
+    try {
+      fs.copyFileSync(uploadedPath, dbPath);
+      fs.unlinkSync(uploadedPath);
+
+      // Переподключаемся к обновленной БД
+      db = new sqlite3.Database(dbPath, (err2) => {
+        if (err2) {
+          console.error('Ошибка при переподключении БД:', err2.message);
+          return res.json({ success: false, error: 'Ошибка подключение к восстановленной БД' });
+        }
+        initDb();
+        res.json({ success: true });
+      });
+    } catch (e) {
+      console.error('Ошибка при замене файла БД:', e);
+      res.json({ success: false, error: 'Ошибка сохранения файла БД' });
+    }
+  });
 });
 
 // Получение данных архива
@@ -75,7 +118,6 @@ app.post('/api/equipment', (req, res) => {
     db.run(`UPDATE equipment SET name=?, serialNumber=?, gsiNumber=?, ownerName=?, location=?, installationDate=?, capacity=?, minCapacity=?, discrete=?, adcType=?, sensorType=?, platformCount=?, weighingMode=?, lastVerification=?, nextVerification=?, certNumber=?, phone=?, email=?, status=?, notes=? WHERE id=?`,
       [eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes, eq.id],
       function(err) { 
-        if (err) console.error('Ошибка обновления:', err.message);
         res.json({ success: !err, error: err ? err.message : null }); 
       }
     );
@@ -84,7 +126,6 @@ app.post('/api/equipment', (req, res) => {
     db.run(`INSERT INTO equipment (id, name, serialNumber, gsiNumber, ownerName, location, installationDate, capacity, minCapacity, discrete, adcType, sensorType, platformCount, weighingMode, lastVerification, nextVerification, certNumber, phone, email, status, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [newId, eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate, eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount, eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes],
       function(err) { 
-        if (err) console.error('Ошибка добавления:', err.message);
         res.json({ success: !err, error: err ? err.message : null }); 
       }
     );
