@@ -382,13 +382,28 @@
         <div class="mobile-eq-list" id="mobileEquipmentList"></div>
     </div>
 
-    <!-- Администрирование -->
+    <!-- Администрирование (Управление пользователями) -->
     <div id="adminSection" style="display: none; flex-direction: column; gap: 14px;">
         <div class="admin-grid">
             <div class="admin-card">
                 <div class="admin-card-title">👥 Управление пользователями</div>
                 <div class="admin-card-body">
-                    Раздел находится в разработке.
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span>Список учетных записей системы:</span>
+                        <button class="btn btn-success" type="button" style="padding: 4px 10px; font-size: 11px;" onclick="openUserModal()">➕ Добавить пользователя</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="eq-table">
+                            <thead>
+                                <tr>
+                                    <th>Логин</th>
+                                    <th>Роль</th>
+                                    <th style="text-align: right;">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -429,6 +444,30 @@
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted); width: 100%;" onclick="closeBackupModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно ПОЛЬЗОВАТЕЛЯ -->
+<div class="modal-backdrop" id="userModal">
+    <div class="modal-box" style="max-width: 400px;">
+        <button class="modal-close-btn" type="button" onclick="closeUserModal()">✕</button>
+        <h3 id="userModalTitle">➕ Новый пользователь</h3>
+        <div class="modal-body-scroll" style="gap: 10px;">
+            <input type="hidden" id="userIdInput">
+            <div class="form-group"><label>Логин:*</label><input type="text" id="userLoginInput" placeholder="username"></div>
+            <div class="form-group"><label>Пароль:*</label><input type="password" id="userPasswordInput" placeholder="••••••••"></div>
+            <div class="form-group">
+                <label>Роль:</label>
+                <select id="userRoleInput">
+                    <option value="user">Пользователь</option>
+                    <option value="admin">Администратор</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeUserModal()">Отмена</button>
+            <button class="btn btn-success" type="button" onclick="saveUser(event)">Сохранить</button>
         </div>
     </div>
 </div>
@@ -629,6 +668,96 @@
         } catch(err) {
             alert('Ошибка соединения с сервером');
         }
+    }
+
+    let usersList = [];
+
+    async function loadUsers() {
+        try {
+            const res = await fetch('/api/users');
+            usersList = await res.json();
+            renderUsersTable();
+        } catch(e) {}
+    }
+
+    function renderUsersTable() {
+        const tbody = document.getElementById('usersTableBody');
+        if (!tbody) return;
+        if (!usersList.length) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Нет пользователей</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = usersList.map(u => `
+            <tr>
+                <td><b>${u.username}</b></td>
+                <td>${u.role === 'admin' ? '⚙️ Администратор' : '👤 Пользователь'}</td>
+                <td style="text-align: right;">
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px;" onclick="editUser('${u.id}')">✏️ Сменить пароль</button>
+                    ${u.username !== 'admin' ? `<button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: var(--danger);" onclick="deleteUser('${u.id}')">🗑️</button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function openUserModal() {
+        document.getElementById('userIdInput').value = '';
+        document.getElementById('userLoginInput').value = '';
+        document.getElementById('userPasswordInput').value = '';
+        document.getElementById('userRoleInput').value = 'user';
+        document.getElementById('userModalTitle').textContent = '➕ Новый пользователь';
+        document.getElementById('userModal').style.display = 'flex';
+    }
+
+    function editUser(id) {
+        const u = usersList.find(x => x.id === id);
+        if (!u) return;
+        document.getElementById('userIdInput').value = u.id;
+        document.getElementById('userLoginInput').value = u.username;
+        document.getElementById('userPasswordInput').value = '';
+        document.getElementById('userRoleInput').value = u.role;
+        document.getElementById('userModalTitle').textContent = '✏️ Изменить данные / пароль';
+        document.getElementById('userModal').style.display = 'flex';
+    }
+
+    function closeUserModal() { document.getElementById('userModal').style.display = 'none'; }
+
+    async function saveUser(e) {
+        e.preventDefault();
+        const id = document.getElementById('userIdInput').value;
+        const username = document.getElementById('userLoginInput').value.trim();
+        const password = document.getElementById('userPasswordInput').value.trim();
+        const role = document.getElementById('userRoleInput').value;
+
+        if (!username) { alert('Введите логин'); return; }
+        if (!id && !password) { alert('Введите пароль для нового пользователя'); return; }
+
+        try {
+            const res = await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, username, password, role })
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeUserModal();
+                loadUsers();
+            } else {
+                alert('Ошибка: ' + (data.error || 'не удалось сохранить'));
+            }
+        } catch(err) { alert('Ошибка соединения'); }
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Удалить этого пользователя?')) return;
+        try {
+            const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                loadUsers();
+            } else {
+                alert(data.error || 'Ошибка удаления');
+            }
+        } catch(e) {}
     }
 
     function printPassport() {
@@ -959,7 +1088,15 @@
         } catch (e) {}
     }
 
-    function selectTab(tab) { activeTab = tab; currentFolderId = null; updateHash(); updateNavUI(); render(); }
+    function selectTab(tab) {
+        activeTab = tab;
+        currentFolderId = null;
+        updateHash();
+        updateNavUI();
+        if (tab === 'admin') loadUsers();
+        render();
+    }
+
     function goHome() { activeTab = null; currentFolderId = null; document.getElementById('searchInput').value = ''; updateHash(); updateNavUI(); render(); }
     function openFolder(id) { currentFolderId = id; updateHash(); updateNavUI(); render(); }
     function exitFolder() { currentFolderId = null; updateHash(); updateNavUI(); render(); }
@@ -1182,7 +1319,10 @@
         container.innerHTML = found.length ? `<div class="files-list">${found.map(i => `<div class="file-row"><div class="file-meta" onclick="window.open('${i.filePath}', '_blank')"><span>📄</span><div class="file-name">${i.name}</div></div></div>`).join('')}</div>` : `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено.</div>`;
     }
 
-    if (localStorage.getItem('isLoggedIn') === 'true') { loadDB(); }
+    if (localStorage.getItem('isLoggedIn') === 'true') { 
+        loadDB(); 
+        if (activeTab === 'admin') loadUsers();
+    }
 </script>
 </body>
 </html>
