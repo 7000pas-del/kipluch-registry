@@ -75,6 +75,7 @@ db.serialize(() => {
 });
 
 const upload = multer({ dest: 'uploads/' });
+const uploadBackup = multer({ dest: 'uploads/' });
 
 // API Авторизации
 app.post('/api/login', (req, res) => {
@@ -84,6 +85,22 @@ app.post('/api/login', (req, res) => {
     } else {
         res.json({ success: false });
     }
+});
+
+// Бэкап: Скачивание базы данных
+app.get('/api/backup/download', (req, res) => {
+  const file = path.join(__dirname, 'archive.db');
+  res.download(file);
+});
+
+// Бэкап: Загрузка и восстановление базы данных
+app.post('/api/backup/upload', uploadBackup.single('backup'), (req, res) => {
+  if (!req.file) return res.json({ success: false, error: 'Файл не выбран' });
+  const targetPath = path.join(__dirname, 'archive.db');
+  fs.copyFile(req.file.path, targetPath, (err) => {
+    try { fs.unlinkSync(req.file.path); } catch(e) {}
+    res.json({ success: !err, error: err ? err.message : null });
+  });
 });
 
 // Получение всей структуры БД
