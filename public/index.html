@@ -77,6 +77,9 @@
 
         .badge-status { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; }
         .status-ok { background: #d1fae5; color: #065f46; }
+        .status-warning { background: #fef3c7; color: #92400e; }
+        .status-danger { background: #fee2e2; color: #991b1b; }
+        .status-muted { background: #e2e8f0; color: #475569; }
 
         .admin-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
         .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -572,6 +575,25 @@
 
     let usersList = [];
 
+    function esc(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function statusClass(status) {
+        switch (status) {
+            case 'В эксплуатации': return 'status-ok';
+            case 'Требует поверки': return 'status-warning';
+            case 'В ремонте': return 'status-danger';
+            case 'Выведены из эксплуатации': return 'status-muted';
+            default: return 'status-ok';
+        }
+    }
+
     async function loadUsers() {
         try {
             const res = await fetch('/api/users');
@@ -588,10 +610,10 @@
             return;
         }
         tbody.innerHTML = usersList.map(u => {
-            let pText = u.permissions === 'all' ? '✨ Полные права (Админ)' : (u.permissions ? u.permissions.split(',').join(', ') : 'Нет прав');
+            let pText = u.permissions === 'all' ? '✨ Полные права (Админ)' : (u.permissions ? esc(u.permissions.split(',').join(', ')) : 'Нет прав');
             return `
                 <tr>
-                    <td><b>${u.username}</b></td>
+                    <td><b>${esc(u.username)}</b></td>
                     <td>${u.role === 'admin' ? '⚙️ Администратор' : '👤 Пользователь'}</td>
                     <td style="font-size: 11px; color: var(--text-muted);">${pText}</td>
                     <td style="text-align: right;">
@@ -782,11 +804,6 @@
         if (btnNewNote) btnNewNote.style.display = checkPermission('notes') ? 'inline-flex' : 'none';
     }
 
-    if (localStorage.getItem('isLoggedIn') === 'true') {
-        document.getElementById('authOverlay').style.display = 'none';
-        applyUserRoleUI();
-    }
-
     let db = { folders: [], items: [] };
     let equipmentList = [];
     let activeTab = null;
@@ -859,24 +876,24 @@
         }
 
         tbody.innerHTML = equipmentList.map(eq => `
-            <tr onclick="viewEquipment('${eq.id}')">
-                <td><b>${eq.name || '-'}</b></td>
-                <td>${eq.serialNumber || '-'}</td>
-                <td>${eq.ownerName || '-'}</td>
-                <td>${eq.location || '-'}</td>
-                <td>${eq.nextVerification || '-'}</td>
-                <td><span class="badge-status status-ok">${eq.status || 'В эксплуатации'}</span></td>
+            <tr onclick="viewEquipment('${esc(eq.id)}')">
+                <td><b>${esc(eq.name) || '-'}</b></td>
+                <td>${esc(eq.serialNumber) || '-'}</td>
+                <td>${esc(eq.ownerName) || '-'}</td>
+                <td>${esc(eq.location) || '-'}</td>
+                <td>${esc(eq.nextVerification) || '-'}</td>
+                <td><span class="badge-status ${statusClass(eq.status)}">${esc(eq.status) || 'В эксплуатации'}</span></td>
                 <td style="text-align: right;" onclick="event.stopPropagation()">
-                    ${canEq ? `<button class="btn" type="button" style="padding: 6px 10px; font-size: 12px;" onclick="editEquipment('${eq.id}')">✏️</button>
-                    <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️</button>` : '<span style="font-size:11px; color:var(--text-muted);">Просмотр</span>'}
+                    ${canEq ? `<button class="btn" type="button" style="padding: 6px 10px; font-size: 12px;" onclick="editEquipment('${esc(eq.id)}')">✏️</button>
+                    <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; background: var(--danger);" onclick="deleteEquipment('${esc(eq.id)}')">🗑️</button>` : '<span style="font-size:11px; color:var(--text-muted);">Просмотр</span>'}
                 </td>
             </tr>
         `).join('');
 
         mobileList.innerHTML = equipmentList.map(eq => `
-            <div class="mobile-eq-card" onclick="viewEquipment('${eq.id}')">
-                <div style="font-weight: 700; font-size: 14px; color: var(--primary);">${eq.name || '-'}</div>
-                <div style="font-size: 11px; color: var(--text-muted);">Зав. №: ${eq.serialNumber || '-'} | Поверка: ${eq.nextVerification || '-'}</div>
+            <div class="mobile-eq-card" onclick="viewEquipment('${esc(eq.id)}')">
+                <div style="font-weight: 700; font-size: 14px; color: var(--primary);">${esc(eq.name) || '-'}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Зав. №: ${esc(eq.serialNumber) || '-'} | Поверка: ${esc(eq.nextVerification) || '-'}</div>
             </div>
         `).join('');
     }
@@ -1299,12 +1316,12 @@
 
         if (list.length === 0) { container.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px;">Папок нет.</div>`; return; }
         container.innerHTML = list.map(f => `
-            <div class="folder-item" onclick="openFolder('${f.id}')">
+            <div class="folder-item" onclick="openFolder('${esc(f.id)}')">
                 <div class="folder-info">
                     <span>📁</span>
-                    <div class="folder-title">${f.name}</div>
+                    <div class="folder-title">${esc(f.name)}</div>
                 </div>
-                ${canFolders ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>` : ''}
+                ${canFolders ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${esc(f.id)}')">🗑️</button>` : ''}
             </div>
         `).join('');
     }
@@ -1324,10 +1341,10 @@
             container.innerHTML = `<div class="files-list">${list.map(item => `
                 <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px; cursor: pointer;">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
-                        ${canNotes ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>` : ''}
+                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${esc(item.name)}</div>
+                        ${canNotes ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${esc(item.id)}')">🗑️</button>` : ''}
                     </div>
-                    <div style="font-size: 12px; color: var(--text-main);">${item.content || ''}</div>
+                    <div style="font-size: 12px; color: var(--text-main);">${esc(item.content)}</div>
                 </div>`).join('')}</div>`;
         } else if (activeTab === 'image') {
             container.innerHTML = `<div class="gallery-grid">${list.map(item => `
@@ -1339,7 +1356,7 @@
         } else if (activeTab === 'doc') {
             container.innerHTML = `<div class="files-list">${list.map(item => `
                 <div class="file-row">
-                    <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${item.name}</div></div>
+                    <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${esc(item.name)}</div></div>
                     <div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button>${canUpload ? `<button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button>` : ''}</div>
                 </div>`).join('')}</div>`;
         }
@@ -1355,7 +1372,7 @@
         if (contentSection) contentSection.style.display = 'flex';
 
         const sectionTitle = document.getElementById('sectionTitle');
-        sectionTitle.textContent = `🔍 Результаты поиска: "${q}"`;
+        sectionTitle.textContent = `🔍 Результаты поиска: "${esc(q)}"`;
 
         const folderBanner = document.getElementById('folderBanner');
         if (folderBanner) folderBanner.style.display = 'none';
@@ -1391,8 +1408,8 @@
                     <div class="file-meta">
                         <span>⚖️</span>
                         <div>
-                            <div class="file-name">${eq.name || '-'} (Зав. №: ${eq.serialNumber || '-'})</div>
-                            <div style="font-size: 11px; color: var(--text-muted);">Владелец: ${eq.ownerName || '-'} | Место: ${eq.location || '-'}</div>
+                            <div class="file-name">${esc(eq.name) || '-'} (Зав. №: ${esc(eq.serialNumber) || '-'})</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Владелец: ${esc(eq.ownerName) || '-'} | Место: ${esc(eq.location) || '-'}</div>
                         </div>
                     </div>
                 </div>
@@ -1407,7 +1424,7 @@
                 <div class="folder-item" onclick="selectTab('${f.type}'); setTimeout(() => openFolder('${f.id}'), 50);">
                     <div class="folder-info">
                         <span>📁</span>
-                        <div class="folder-title">${f.name} <span style="font-size: 10px; color: var(--text-muted);">(${f.type === 'doc' ? 'Документы' : f.type === 'image' ? 'Фото' : 'Заметки'})</span></div>
+                        <div class="folder-title">${esc(f.name)} <span style="font-size: 10px; color: var(--text-muted);">(${f.type === 'doc' ? 'Документы' : f.type === 'image' ? 'Фото' : 'Заметки'})</span></div>
                     </div>
                 </div>
             `).join('');
@@ -1424,7 +1441,7 @@
                     <div class="file-row" onclick="${clickAction}" style="cursor: pointer;">
                         <div class="file-meta">
                             <span>${icon}</span>
-                            <div class="file-name">${item.name}</div>
+                            <div class="file-name">${esc(item.name)}</div>
                         </div>
                         <div style="font-size: 11px; color: var(--text-muted);">${item.date || ''}</div>
                     </div>
@@ -1434,15 +1451,18 @@
         }
 
         if (foundEq.length === 0 && foundFolders.length === 0 && foundItems.length === 0) {
-            container.innerHTML = `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено по запросу "${q}".</div>`;
+            container.innerHTML = `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено по запросу "${esc(q)}".</div>`;
         } else {
             container.innerHTML = html;
         }
     }
 
-    if (localStorage.getItem('isLoggedIn') === 'true') { 
-        loadDB(); 
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+        document.getElementById('authOverlay').style.display = 'none';
+        parseHash();
         applyUserRoleUI();
+        loadDB();
+
         if (activeTab === 'admin') loadUsers();
     }
 </script>
