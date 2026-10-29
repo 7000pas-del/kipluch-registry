@@ -87,7 +87,7 @@
         .btn-success { background: var(--success); } .btn-success:hover { background: #059669; }
         .btn-folder { background: var(--warning); } .btn-folder:hover { background: #d97706; }
         .btn-home { background: #475569; color: #fff; } .btn-home:hover { background: #334155; }
-        .btn-secondary { background: #64748b; color: #fff; } .btn-secondary:hover { background: #475569; }
+        .btn-backup { background: #8b5cf6; color: #fff; } .btn-backup:hover { background: #7c3aed; }
 
         input[type="file"] { display: none; }
 
@@ -314,6 +314,7 @@
             <div class="actions">
                 <button class="btn btn-home" type="button" onclick="goHome()">🏠 Главная</button>
                 <button class="btn btn-folder" id="btnCreateFolder" type="button" onclick="promptCreateFolder()">📁 Папка</button>
+                <button class="btn btn-backup" type="button" onclick="openBackupModal()">💾 Бэкап</button>
                 <label class="btn btn-success" id="btnUploadPhoto" style="display: none; cursor: pointer;">
                     📸 Фото
                     <input type="file" accept="image/*" multiple onchange="uploadFiles(this.files)">
@@ -385,10 +386,9 @@
     <div id="adminSection" style="display: none; flex-direction: column; gap: 14px;">
         <div class="admin-grid">
             <div class="admin-card">
-                <div class="admin-card-title">🗄️ Резервное копирование БД</div>
+                <div class="admin-card-title">👥 Управление пользователями</div>
                 <div class="admin-card-body">
-                    Управление файлом базы данных (`archive.db`).
-                    <div class="stat-row"><span>Файл БД:</span> <span id="admDbFile">archive.db</span></div>
+                    Раздел находится в разработке.
                 </div>
             </div>
         </div>
@@ -407,6 +407,29 @@
 
         <div class="folders-container" id="foldersContainer"></div>
         <div id="filesContainer"></div>
+    </div>
+</div>
+
+<!-- Модальное окно РЕЗЕРВНОГО КОПИРОВАНИЯ (БЭКАП) -->
+<div class="modal-backdrop" id="backupModal">
+    <div class="modal-box" style="max-width: 450px;">
+        <button class="modal-close-btn" type="button" onclick="closeBackupModal()">✕</button>
+        <h3>💾 Резервное копирование БД</h3>
+        <div class="modal-body-scroll" style="gap: 14px; padding-top: 10px;">
+            <div style="font-size: 12px; color: var(--text-muted);">
+                Вы можете скачать текущую копию базы данных (`archive.db`) на свой компьютер или восстановить систему из ранее сохраненного файла бэкапа.
+            </div>
+            <a href="/api/backup/download" class="btn btn-backup" style="width: 100%; justify-content: center; padding: 12px;" download>📥 Скачать бэкап (archive.db)</a>
+            
+            <div class="form-group" style="margin-top: 10px;">
+                <label>Восстановить из файла бэкапа:</label>
+                <input type="file" id="backupFileInput" style="display: block; padding: 6px; background: #f8fafc;" accept=".db">
+            </div>
+            <button class="btn btn-success" type="button" style="width: 100%; justify-content: center; padding: 10px;" onclick="uploadBackupFile()">📤 Загрузить и восстановить</button>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted); width: 100%;" onclick="closeBackupModal()">Закрыть</button>
+        </div>
     </div>
 </div>
 
@@ -582,6 +605,32 @@
 </div>
 
 <script>
+    function openBackupModal() { document.getElementById('backupModal').style.display = 'flex'; }
+    function closeBackupModal() { document.getElementById('backupModal').style.display = 'none'; }
+
+    async function uploadBackupFile() {
+        const fileInput = document.getElementById('backupFileInput');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Выберите файл бэкапа (.db)');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('backup', fileInput.files[0]);
+
+        try {
+            const res = await fetch('/api/backup/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                alert('База данных успешно восстановлена!');
+                location.reload();
+            } else {
+                alert('Ошибка восстановления: ' + (data.error || 'неизвестно'));
+            }
+        } catch(err) {
+            alert('Ошибка соединения с сервером');
+        }
+    }
+
     function printPassport() {
         const oldTitle = document.title;
         document.title = ""; 
