@@ -176,11 +176,11 @@
         <form id="authForm">
             <div class="auth-input-group">
                 <label>Логин</label>
-                <input type="text" id="authLogin" required placeholder="admin">
+                <input type="text" id="authLogin" required autocomplete="username" placeholder="admin">
             </div>
             <div class="auth-input-group">
                 <label>Пароль</label>
-                <input type="password" id="authPassword" required placeholder="••••••••">
+                <input type="password" id="authPassword" required autocomplete="current-password" placeholder="••••••••">
             </div>
             <button type="submit" class="btn-auth">Войти в систему</button>
             <div id="authError" class="auth-error">Неверный логин или пароль</div>
@@ -217,7 +217,7 @@
             <div class="search-box" id="searchBoxContainer">
                 <button class="mobile-search-toggle" type="button" onclick="toggleMobileSearch()" title="Поиск">🔍</button>
                 <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" class="search-input" placeholder="Поиск по всему..." oninput="onSearchInput()">
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск по всему..." autocomplete="off" oninput="onSearchInput()">
             </div>
         </div>
 
