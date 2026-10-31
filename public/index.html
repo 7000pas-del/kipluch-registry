@@ -173,7 +173,11 @@
     <div class="auth-card">
         <h2>ТОО «КИП «Луч»</h2>
         <p>Введите данные для доступа к реестру</p>
-        <form id="authForm">
+        <form id="authForm" autocomplete="off">
+            <!-- Фальшивые скрытые поля, чтобы браузер вставлял учетные данные в них, а не в поиск сайта -->
+            <input type="text" style="display:none" name="fakeusernameremembered">
+            <input type="password" style="display:none" name="fakepasswordremembered">
+
             <div class="auth-input-group">
                 <label>Логин</label>
                 <input type="text" id="authLogin" required autocomplete="username" placeholder="admin">
@@ -217,7 +221,7 @@
             <div class="search-box" id="searchBoxContainer">
                 <button class="mobile-search-toggle" type="button" onclick="toggleMobileSearch()" title="Поиск">🔍</button>
                 <span class="search-icon">🔍</span>
-                <input type="search" id="searchInput" class="search-input" placeholder="Поиск по всему..." autocomplete="off" oninput="onSearchInput()">
+                <input type="search" id="searchInput" class="search-input" placeholder="Поиск по всему..." autocomplete="off" readonly onfocus="this.removeAttribute('readonly');" oninput="onSearchInput()">
             </div>
         </div>
 
@@ -719,7 +723,10 @@
                 
                 document.getElementById('authOverlay').style.display = 'none';
                 const sInput = document.getElementById('searchInput');
-                if (sInput) sInput.value = '';
+                if (sInput) {
+                    sInput.value = '';
+                    sInput.blur();
+                }
                 applyUserRoleUI();
                 loadDB();
             } else {
@@ -781,7 +788,10 @@
     if (localStorage.getItem('isLoggedIn') === 'true') {
         document.getElementById('authOverlay').style.display = 'none';
         const sInput = document.getElementById('searchInput');
-        if (sInput) sInput.value = '';
+        if (sInput) {
+            sInput.value = '';
+            sInput.blur();
+        }
         applyUserRoleUI();
     }
 
@@ -1431,10 +1441,14 @@
     }
 
     if (localStorage.getItem('isLoggedIn') === 'true') { 
+        document.getElementById('authOverlay').style.display = 'none';
+        const sInput = document.getElementById('searchInput');
+        if (sInput) {
+            sInput.value = '';
+            sInput.blur();
+        }
         loadDB(); 
         applyUserRoleUI();
-        const sInput = document.getElementById('searchInput');
-        if (sInput) sInput.value = '';
         if (activeTab === 'admin') loadUsers();
     }
 </script>
