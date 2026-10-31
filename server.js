@@ -35,7 +35,7 @@ const db = new sqlite3.Database(dbFile, (err) => {
     else console.log('Подключено к базе данных SQLite.');
 });
 
-// Создание таблиц при запуске
+// Создание таблиц и проверка колонок при запуске
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
@@ -68,8 +68,17 @@ db.serialize(() => {
         status TEXT,
         notes TEXT
     )`, () => {
-        // Автоматически добавляем колонку gsiNumber, если таблица была создана ранее без неё
-        db.run(`ALTER TABLE equipment ADD COLUMN gsiNumber TEXT`, () => {});
+        // Автоматически добавляем все возможные колонки, если таблица была создана ранее со старой структурой
+        const columns = [
+            'gsiNumber TEXT', 'minCapacity TEXT', 'discrete TEXT', 'adcType TEXT',
+            'sensorType TEXT', 'platformCount TEXT', 'weighingMode TEXT', 'certNumber TEXT',
+            'phone TEXT', 'email TEXT', 'status TEXT', 'notes TEXT', 'ownerName TEXT',
+            'location TEXT', 'installationDate TEXT', 'capacity TEXT', 'lastVerification TEXT',
+            'nextVerification TEXT'
+        ];
+        columns.forEach(col => {
+            db.run(`ALTER TABLE equipment ADD COLUMN ${col}`, () => {});
+        });
     });
 
     db.run(`CREATE TABLE IF NOT EXISTS folders (
