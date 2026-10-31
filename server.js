@@ -67,7 +67,10 @@ db.serialize(() => {
         email TEXT,
         status TEXT,
         notes TEXT
-    )`);
+    )`, () => {
+        // Автоматически добавляем колонку gsiNumber, если таблица была создана ранее без неё
+        db.run(`ALTER TABLE equipment ADD COLUMN gsiNumber TEXT`, () => {});
+    });
 
     db.run(`CREATE TABLE IF NOT EXISTS folders (
         id TEXT PRIMARY KEY,
