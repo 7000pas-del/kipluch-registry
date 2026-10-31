@@ -1390,7 +1390,7 @@
             html += `<div style="font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 8px;">📁 Папки (${foundFolders.length}):</div>`;
             html += `<div class="folders-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin-bottom: 16px;">`;
             html += foundFolders.map(f => `
-                <div class="folder-item" onclick="selectTab('${f.type}'); setTimeout(() => openFolder('${f.id}'), 50);">
+                <div class="folder-item" onclick="document.getElementById('searchInput').value=''; activeTab='${f.type}'; currentFolderId='${f.id}'; updateHash(); render();">
                     <div class="folder-info">
                         <span>📁</span>
                         <div class="folder-title">${f.name} <span style="font-size: 10px; color: var(--text-muted);">(${f.type === 'doc' ? 'Документы' : f.type === 'image' ? 'Фото' : 'Заметки'})</span></div>
