@@ -77,9 +77,6 @@
 
         .badge-status { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; }
         .status-ok { background: #d1fae5; color: #065f46; }
-        .status-warning { background: #fef3c7; color: #92400e; }
-        .status-danger { background: #fee2e2; color: #991b1b; }
-        .status-muted { background: #e2e8f0; color: #475569; }
 
         .admin-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
         .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -317,30 +314,24 @@
     </div>
 </div>
 
-<!-- Модальное окно РЕЗЕРВНОГО КОПИРОВАНИЯ (БЭКАП) -->
+<!-- Модальные окна -->
 <div class="modal-backdrop" id="backupModal">
     <div class="modal-box" style="max-width: 450px;">
         <button class="modal-close-btn" type="button" onclick="closeBackupModal()">✕</button>
         <h3>💾 Резервное копирование БД</h3>
         <div class="modal-body-scroll" style="gap: 14px; padding-top: 10px;">
-            <div style="font-size: 12px; color: var(--text-muted);">
-                Вы можете скачать текущую копию базы данных (`archive.db`) на свой компьютер или восстановить систему из ранее сохраненного файла бэкапа.
-            </div>
+            <div style="font-size: 12px; color: var(--text-muted);">Скачайте текущую копию базы данных (`archive.db`) или восстановите ее из бэкапа.</div>
             <a href="/api/backup/download" class="btn btn-backup" style="width: 100%; justify-content: center; padding: 12px;" download>📥 Скачать бэкап (archive.db)</a>
-            
             <div class="form-group" style="margin-top: 10px;">
                 <label>Восстановить из файла бэкапа:</label>
                 <input type="file" id="backupFileInput" style="display: block; padding: 6px; background: #f8fafc;" accept=".db">
             </div>
             <button class="btn btn-success" type="button" style="width: 100%; justify-content: center; padding: 10px;" onclick="uploadBackupFile()">📤 Загрузить и восстановить</button>
         </div>
-        <div class="modal-buttons">
-            <button class="btn" type="button" style="background: var(--text-muted); width: 100%;" onclick="closeBackupModal()">Закрыть</button>
-        </div>
+        <div class="modal-buttons"><button class="btn" type="button" style="background: var(--text-muted); width: 100%;" onclick="closeBackupModal()">Закрыть</button></div>
     </div>
 </div>
 
-<!-- Модальное окно ПОЛЬЗОВАТЕЛЯ С ПРАВАМИ -->
 <div class="modal-backdrop" id="userModal">
     <div class="modal-box" style="max-width: 450px;">
         <button class="modal-close-btn" type="button" onclick="closeUserModal()">✕</button>
@@ -357,14 +348,14 @@
                 </select>
             </div>
             <div class="form-group" id="permissionsGroup" style="margin-top: 6px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
-                <label style="margin-bottom: 6px; display: block; font-weight: 700;">Права доступа (что разрешено делать):</label>
+                <label style="margin-bottom: 6px; display: block; font-weight: 700;">Права доступа:</label>
                 <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="equipment"> 📊 Управление весами (добавление, правка, удаление)</label>
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="maintenance"> 🛠️ Ведение журнала обслуживания весов</label>
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="upload"> 📸 Загрузка документов и фотографий</label>
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="notes"> 📝 Создание и редактирование заметок</label>
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="folders"> 📁 Создание и удаление папок</label>
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="backup"> 💾 Доступ к бэкапам системы</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="equipment"> 📊 Управление весами</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="maintenance"> 🛠️ Журнал обслуживания</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="upload"> 📸 Загрузка документов и фото</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="notes"> 📝 Заметки</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="folders"> 📁 Папки</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="backup"> 💾 Бэкапы</label>
                 </div>
             </div>
         </div>
@@ -375,7 +366,6 @@
     </div>
 </div>
 
-<!-- Модальное окно ПРОСМОТРА И РЕДАКТИРОВАНИЯ ЗАМЕТКИ -->
 <div class="modal-backdrop" id="viewNoteModal">
     <div class="modal-box">
         <button class="modal-close-btn" type="button" onclick="closeViewNoteModal()">✕</button>
@@ -387,57 +377,53 @@
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewNoteModal()">Закрыть</button>
-            <button class="btn btn-success" id="btnSaveNoteChanges" type="button" onclick="updateExistingNote()">Сохранить изменения</button>
+            <button class="btn btn-success" id="btnSaveNoteChanges" type="button" onclick="updateExistingNote()">Сохранить</button>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно ПАСПОРТА ВЕСОВ -->
 <div class="modal-backdrop" id="viewEquipmentModal">
     <div class="modal-box">
-        <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()" title="Закрыть">✕</button>
+        <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()">✕</button>
         <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 30px;">
-            <h3 id="viewEqTitle">🔍 Паспорт весов</h3>
-            <span id="viewEqBadge"></span>
+            <h3 id="viewEqTitle">🔍 Паспорт весов</h3><span id="viewEqBadge"></span>
         </div>
         <div class="modal-body-scroll">
             <div class="detail-card">
                 <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="detail-item"><div class="detail-label">Модель / Наименование:</div><div class="detail-value" id="viewEqName">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Заводской номер:</div><div class="detail-value" id="viewEqSerial">-</div></div>
-                    <div class="detail-item"><div class="detail-label">№ в Реестре ГСИ РК:</div><div class="detail-value" id="viewEqGsiNumber">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Наименование:</div><div class="detail-value" id="viewEqName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Зав. №:</div><div class="detail-value" id="viewEqSerial">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Реестр ГСИ:</div><div class="detail-value" id="viewEqGsiNumber">-</div></div>
                 </div>
                 <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="detail-item"><div class="detail-label">👤 Владелец / Организация:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Место установки / Объект:</div><div class="detail-value" id="viewEqLocation">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Дата ввода в экспл.:</div><div class="detail-value" id="viewEqInstallationDate">-</div></div>
+                    <div class="detail-item"><div class="detail-label">👤 Владелец:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Объект:</div><div class="detail-value" id="viewEqLocation">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Ввод в экспл.:</div><div class="detail-value" id="viewEqInstallationDate">-</div></div>
                 </div>
                 <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="detail-item"><div class="detail-label">НПВ (Max):</div><div class="detail-value" id="viewEqCapacity">-</div></div>
-                    <div class="detail-item"><div class="detail-label">НмПВ (Min):</div><div class="detail-value" id="viewEqMinCapacity">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Дискретность (d=e):</div><div class="detail-value" id="viewEqDiscrete">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Max:</div><div class="detail-value" id="viewEqCapacity">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Min:</div><div class="detail-value" id="viewEqMinCapacity">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Дискретность:</div><div class="detail-value" id="viewEqDiscrete">-</div></div>
                 </div>
                 <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="detail-item"><div class="detail-label">Терминал / ПО:</div><div class="detail-value" id="viewEqAdcType">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Терминал:</div><div class="detail-value" id="viewEqAdcType">-</div></div>
                     <div class="detail-item"><div class="detail-label">Датчики:</div><div class="detail-value" id="viewEqSensorType">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Платформа / Размеры:</div><div class="detail-value" id="viewEqPlatformCount">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Платформа:</div><div class="detail-value" id="viewEqPlatformCount">-</div></div>
                 </div>
                 <div class="detail-grid" style="grid-template-columns: 1fr;">
-                    <div class="detail-item"><div class="detail-label">Режим взвешивания:</div><div class="detail-value" id="viewEqWeighingMode">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Режим:</div><div class="detail-value" id="viewEqWeighingMode">-</div></div>
                 </div>
                 <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="detail-item"><div class="detail-label">Дата последней поверки:</div><div class="detail-value" id="viewEqLastVer">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Срок поверки (до):</div><div class="detail-value" id="viewEqNextVer">-</div></div>
-                    <div class="detail-item"><div class="detail-label">№ аттестата / клейма:</div><div class="detail-value" id="viewEqCertNumber">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Посл. поверка:</div><div class="detail-value" id="viewEqLastVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">След. поверка:</div><div class="detail-value" id="viewEqNextVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">№ аттестата:</div><div class="detail-value" id="viewEqCertNumber">-</div></div>
                 </div>
                 <div class="detail-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="detail-item"><div class="detail-label">📞 Телефон ответственного:</div><div class="detail-value" id="viewEqPhone">-</div></div>
-                    <div class="detail-item"><div class="detail-label">✉️ Email ответственного:</div><div class="detail-value" id="viewEqEmail">-</div></div>
+                    <div class="detail-item"><div class="detail-label">📞 Телефон:</div><div class="detail-value" id="viewEqPhone">-</div></div>
+                    <div class="detail-item"><div class="detail-label">✉️ Email:</div><div class="detail-value" id="viewEqEmail">-</div></div>
                 </div>
                 <div class="detail-item"><div class="detail-label">Примечания:</div><div class="detail-value" id="viewEqNotes" style="font-weight: 400; white-space: pre-wrap;">-</div></div>
             </div>
-
-            <!-- Блок журнала обслуживания -->
             <div class="detail-card">
                 <div style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
                     <span>🛠️ Журнал обслуживания</span>
@@ -454,39 +440,38 @@
     </div>
 </div>
 
-<!-- Модальное окно РЕДАКТИРОВАНИЯ/ДОБАВЛЕНИЯ ВЕСОВ -->
 <div class="modal-backdrop" id="equipmentModal">
     <div class="modal-box">
-        <button class="modal-close-btn" type="button" onclick="closeEquipmentModal()" title="Закрыть">✕</button>
-        <h3 id="eqModalTitle" style="padding-right: 30px;">➕ Оборудование</h3>
+        <button class="modal-close-btn" type="button" onclick="closeEquipmentModal()">✕</button>
+        <h3 id="eqModalTitle">➕ Оборудование</h3>
         <div class="modal-body-scroll">
             <div class="form-row">
-                <div class="form-group"><label>Наименование / Модель:*</label><input type="text" id="eqName" placeholder="Весы Автомобильные"></div>
-                <div class="form-group"><label>Заводской номер:</label><input type="text" id="eqSerial" placeholder="968"></div>
+                <div class="form-group"><label>Наименование:*</label><input type="text" id="eqName" placeholder="Весы"></div>
+                <div class="form-group"><label>Зав. №:</label><input type="text" id="eqSerial" placeholder="968"></div>
             </div>
             <div class="form-row-3">
-                <div class="form-group"><label>№ в Реестре ГСИ РК:</label><input type="text" id="eqGsiNumber" placeholder="KZ.02.02..."></div>
-                <div class="form-group"><label>👤 Владелец / Организация:</label><input type="text" id="eqOwnerName" placeholder="ТОО ТрансТелеком"></div>
-                <div class="form-group"><label>Место установки / Объект:</label><input type="text" id="eqLocation" placeholder="Тепском"></div>
+                <div class="form-group"><label>№ ГСИ РК:</label><input type="text" id="eqGsiNumber" placeholder="KZ..."></div>
+                <div class="form-group"><label>👤 Владелец:</label><input type="text" id="eqOwnerName" placeholder="ТОО..."></div>
+                <div class="form-group"><label>Объект:</label><input type="text" id="eqLocation" placeholder="Место"></div>
             </div>
             <div class="form-row-3">
-                <div class="form-group"><label>Дата ввода в экспл.:</label><input type="date" id="eqInstallationDate"></div>
-                <div class="form-group"><label>НПВ (Max):</label><input type="text" id="eqCapacity" placeholder="200 т"></div>
-                <div class="form-group"><label>НмПВ (Min):</label><input type="text" id="eqMinCapacity" placeholder="2 т"></div>
+                <div class="form-group"><label>Ввод в экспл.:</label><input type="date" id="eqInstallationDate"></div>
+                <div class="form-group"><label>Max:</label><input type="text" id="eqCapacity" placeholder="200 т"></div>
+                <div class="form-group"><label>Min:</label><input type="text" id="eqMinCapacity" placeholder="2 т"></div>
             </div>
             <div class="form-row-3">
-                <div class="form-group"><label>Дискретность (d=e):</label><input type="text" id="eqDiscrete" placeholder="20 кг"></div>
-                <div class="form-group"><label>Терминал / ПО:</label><input type="text" id="eqAdcType" placeholder="Тензо-М"></div>
+                <div class="form-group"><label>Дискретность:</label><input type="text" id="eqDiscrete" placeholder="20 кг"></div>
+                <div class="form-group"><label>Терминал:</label><input type="text" id="eqAdcType" placeholder="Тензо-М"></div>
                 <div class="form-group"><label>Датчики:</label><input type="text" id="eqSensorType" placeholder="Zemic"></div>
             </div>
             <div class="form-row-3">
-                <div class="form-group"><label>Платформа / Размеры:</label><input type="text" id="eqPlatformCount" placeholder="1,5x1 м"></div>
-                <div class="form-group"><label>Режим взвешивания:</label><input type="text" id="eqWeighingMode" placeholder="Статика"></div>
-                <div class="form-group"><label>№ аттестата / клейма:</label><input type="text" id="eqCertNumber" placeholder="№..."></div>
+                <div class="form-group"><label>Платформа:</label><input type="text" id="eqPlatformCount" placeholder="Размеры"></div>
+                <div class="form-group"><label>Режим:</label><input type="text" id="eqWeighingMode" placeholder="Статика"></div>
+                <div class="form-group"><label>№ аттестата:</label><input type="text" id="eqCertNumber" placeholder="№..."></div>
             </div>
             <div class="form-row-3">
                 <div class="form-group"><label>Посл. поверка:</label><input type="date" id="eqLastVer"></div>
-                <div class="form-group"><label>След. поверка (до):</label><input type="date" id="eqNextVer"></div>
+                <div class="form-group"><label>След. поверка:</label><input type="date" id="eqNextVer"></div>
                 <div class="form-group">
                     <label>Статус:</label>
                     <select id="eqStatus">
@@ -498,8 +483,8 @@
                 </div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>📞 Телефон ответственного:</label><input type="text" id="eqPhone" placeholder="+77052596954"></div>
-                <div class="form-group"><label>✉️ Email ответственного:</label><input type="text" id="eqEmail" placeholder="7000pas@gmail.com"></div>
+                <div class="form-group"><label>📞 Телефон:</label><input type="text" id="eqPhone" placeholder="+7..."></div>
+                <div class="form-group"><label>✉️ Email:</label><input type="text" id="eqEmail" placeholder="email@gmail.com"></div>
             </div>
             <div class="form-group"><label>Примечания:</label><textarea id="eqNotes" style="height: 50px;" placeholder="Примечания..."></textarea></div>
         </div>
@@ -510,18 +495,17 @@
     </div>
 </div>
 
-<!-- Модальное окно ДОБАВЛЕНИЯ ЗАПИСИ ОБСЛУЖИВАНИЯ -->
 <div class="modal-backdrop" id="maintenanceModal">
     <div class="modal-box">
         <button class="modal-close-btn" type="button" onclick="closeMaintenanceModal()">✕</button>
-        <h3>🛠️ Добавить запись обслуживания</h3>
+        <h3>🛠️ Обслуживание</h3>
         <div class="modal-body-scroll">
             <div class="form-row">
-                <div class="form-group"><label>Вид работы:</label><input type="text" id="maintWorkType" placeholder="Ремонт кабеля связи"></div>
+                <div class="form-group"><label>Вид работы:</label><input type="text" id="maintWorkType" placeholder="Ремонт"></div>
                 <div class="form-group"><label>Дата:</label><input type="date" id="maintDate"></div>
             </div>
-            <div class="form-group"><label>Что сделано / Описание:</label><textarea id="maintDesc" style="height: 80px;" placeholder="Описание работ..."></textarea></div>
-            <div class="form-group"><label>Исполнитель:</label><input type="text" id="maintPerformedBy" placeholder="ФИО / Компания"></div>
+            <div class="form-group"><label>Описание:</label><textarea id="maintDesc" style="height: 80px;" placeholder="Описание..."></textarea></div>
+            <div class="form-group"><label>Исполнитель:</label><input type="text" id="maintPerformedBy" placeholder="ФИО"></div>
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeMaintenanceModal()">Отмена</button>
@@ -530,14 +514,13 @@
     </div>
 </div>
 
-<!-- Модальное окно НОВОЙ ЗАМЕТКИ -->
 <div class="modal-backdrop" id="noteModal">
     <div class="modal-box">
         <button class="modal-close-btn" type="button" onclick="closeModals()">✕</button>
-        <h3 id="modalTitle">📝 Новая заметка</h3>
+        <h3 id="modalTitle">📝 Заметка</h3>
         <div class="modal-body-scroll">
             <div class="form-group"><label>Название:</label><input type="text" id="noteNameInput" placeholder="Название..."></div>
-            <div class="form-group"><label>Текст:</label><textarea id="noteContentInput" style="height: 130px;" placeholder="Текст заметки..."></textarea></div>
+            <div class="form-group"><label>Текст:</label><textarea id="noteContentInput" style="height: 130px;" placeholder="Текст..."></textarea></div>
         </div>
         <div class="modal-buttons">
             <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeModals()">Отмена</button>
@@ -547,6 +530,230 @@
 </div>
 
 <script>
+    <!-- Модальные окна -->
+<div class="modal-backdrop" id="backupModal">
+    <div class="modal-box" style="max-width: 450px;">
+        <button class="modal-close-btn" type="button" onclick="closeBackupModal()">✕</button>
+        <h3>💾 Резервное копирование БД</h3>
+        <div class="modal-body-scroll" style="gap: 14px; padding-top: 10px;">
+            <div style="font-size: 12px; color: var(--text-muted);">Скачайте текущую копию базы данных (`archive.db`) или восстановите ее из бэкапа.</div>
+            <a href="/api/backup/download" class="btn btn-backup" style="width: 100%; justify-content: center; padding: 12px;" download>📥 Скачать бэкап (archive.db)</a>
+            <div class="form-group" style="margin-top: 10px;">
+                <label>Восстановить из файла бэкапа:</label>
+                <input type="file" id="backupFileInput" style="display: block; padding: 6px; background: #f8fafc;" accept=".db">
+            </div>
+            <button class="btn btn-success" type="button" style="width: 100%; justify-content: center; padding: 10px;" onclick="uploadBackupFile()">📤 Загрузить и восстановить</button>
+        </div>
+        <div class="modal-buttons"><button class="btn" type="button" style="background: var(--text-muted); width: 100%;" onclick="closeBackupModal()">Закрыть</button></div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="userModal">
+    <div class="modal-box" style="max-width: 450px;">
+        <button class="modal-close-btn" type="button" onclick="closeUserModal()">✕</button>
+        <h3 id="userModalTitle">➕ Новый пользователь</h3>
+        <div class="modal-body-scroll" style="gap: 10px;">
+            <input type="hidden" id="userIdInput">
+            <div class="form-group"><label>Логин:*</label><input type="text" id="userLoginInput" placeholder="username"></div>
+            <div class="form-group"><label>Пароль:*</label><input type="password" id="userPasswordInput" placeholder="••••••••"></div>
+            <div class="form-group">
+                <label>Роль в системе:</label>
+                <select id="userRoleInput" onchange="onRoleChangeSelect()">
+                    <option value="user">Пользователь</option>
+                    <option value="admin">Администратор</option>
+                </select>
+            </div>
+            <div class="form-group" id="permissionsGroup" style="margin-top: 6px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+                <label style="margin-bottom: 6px; display: block; font-weight: 700;">Права доступа:</label>
+                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="equipment"> 📊 Управление весами</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="maintenance"> 🛠️ Журнал обслуживания</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="upload"> 📸 Загрузка документов и фото</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="notes"> 📝 Заметки</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="folders"> 📁 Папки</label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" class="perm-checkbox" value="backup"> 💾 Бэкапы</label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeUserModal()">Отмена</button>
+            <button class="btn btn-success" type="button" onclick="saveUser(event)">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="viewNoteModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeViewNoteModal()">✕</button>
+        <h3 id="viewNoteTitle">📝 Просмотр заметки</h3>
+        <div class="modal-body-scroll">
+            <div class="form-group"><label>Название:</label><input type="text" id="viewNoteNameInput" placeholder="Название..."></div>
+            <div class="form-group"><label>Текст:</label><textarea id="viewNoteContentInput" style="height: 150px;" placeholder="Текст заметки..."></textarea></div>
+            <div style="font-size: 11px; color: var(--text-muted);" id="viewNoteDate"></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewNoteModal()">Закрыть</button>
+            <button class="btn btn-success" id="btnSaveNoteChanges" type="button" onclick="updateExistingNote()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="viewEquipmentModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeViewEquipmentModal()">✕</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 30px;">
+            <h3 id="viewEqTitle">🔍 Паспорт весов</h3><span id="viewEqBadge"></span>
+        </div>
+        <div class="modal-body-scroll">
+            <div class="detail-card">
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">Наименование:</div><div class="detail-value" id="viewEqName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Зав. №:</div><div class="detail-value" id="viewEqSerial">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Реестр ГСИ:</div><div class="detail-value" id="viewEqGsiNumber">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">👤 Владелец:</div><div class="detail-value" id="viewEqOwnerName">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Объект:</div><div class="detail-value" id="viewEqLocation">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Ввод в экспл.:</div><div class="detail-value" id="viewEqInstallationDate">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">Max:</div><div class="detail-value" id="viewEqCapacity">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Min:</div><div class="detail-value" id="viewEqMinCapacity">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Дискретность:</div><div class="detail-value" id="viewEqDiscrete">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">Терминал:</div><div class="detail-value" id="viewEqAdcType">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Датчики:</div><div class="detail-value" id="viewEqSensorType">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Платформа:</div><div class="detail-value" id="viewEqPlatformCount">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: 1fr;">
+                    <div class="detail-item"><div class="detail-label">Режим:</div><div class="detail-value" id="viewEqWeighingMode">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="detail-item"><div class="detail-label">Посл. поверка:</div><div class="detail-value" id="viewEqLastVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">След. поверка:</div><div class="detail-value" id="viewEqNextVer">-</div></div>
+                    <div class="detail-item"><div class="detail-label">№ аттестата:</div><div class="detail-value" id="viewEqCertNumber">-</div></div>
+                </div>
+                <div class="detail-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="detail-item"><div class="detail-label">📞 Телефон:</div><div class="detail-value" id="viewEqPhone">-</div></div>
+                    <div class="detail-item"><div class="detail-label">✉️ Email:</div><div class="detail-value" id="viewEqEmail">-</div></div>
+                </div>
+                <div class="detail-item"><div class="detail-label">Примечания:</div><div class="detail-value" id="viewEqNotes" style="font-weight: 400; white-space: pre-wrap;">-</div></div>
+            </div>
+            <div class="detail-card">
+                <div style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
+                    <span>🛠️ Журнал обслуживания</span>
+                    <button class="btn btn-success" id="btnAddMaintenance" type="button" style="padding: 4px 8px; font-size: 11px;" onclick="openMaintenanceModal()">➕ Запись</button>
+                </div>
+                <div id="maintenanceListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;"></div>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeViewEquipmentModal()">Закрыть</button>
+            <button class="btn btn-folder" type="button" onclick="printPassport()">🖨️ Печать</button>
+            <button class="btn" type="button" id="btnEditFromView">✏️ Изменить</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="equipmentModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeEquipmentModal()">✕</button>
+        <h3 id="eqModalTitle">➕ Оборудование</h3>
+        <div class="modal-body-scroll">
+            <div class="form-row">
+                <div class="form-group"><label>Наименование:*</label><input type="text" id="eqName" placeholder="Весы"></div>
+                <div class="form-group"><label>Зав. №:</label><input type="text" id="eqSerial" placeholder="968"></div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group"><label>№ ГСИ РК:</label><input type="text" id="eqGsiNumber" placeholder="KZ..."></div>
+                <div class="form-group"><label>👤 Владелец:</label><input type="text" id="eqOwnerName" placeholder="ТОО..."></div>
+                <div class="form-group"><label>Объект:</label><input type="text" id="eqLocation" placeholder="Место"></div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group"><label>Ввод в экспл.:</label><input type="date" id="eqInstallationDate"></div>
+                <div class="form-group"><label>Max:</label><input type="text" id="eqCapacity" placeholder="200 т"></div>
+                <div class="form-group"><label>Min:</label><input type="text" id="eqMinCapacity" placeholder="2 т"></div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group"><label>Дискретность:</label><input type="text" id="eqDiscrete" placeholder="20 кг"></div>
+                <div class="form-group"><label>Терминал:</label><input type="text" id="eqAdcType" placeholder="Тензо-М"></div>
+                <div class="form-group"><label>Датчики:</label><input type="text" id="eqSensorType" placeholder="Zemic"></div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group"><label>Платформа:</label><input type="text" id="eqPlatformCount" placeholder="Размеры"></div>
+                <div class="form-group"><label>Режим:</label><input type="text" id="eqWeighingMode" placeholder="Статика"></div>
+                <div class="form-group"><label>№ аттестата:</label><input type="text" id="eqCertNumber" placeholder="№..."></div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group"><label>Посл. поверка:</label><input type="date" id="eqLastVer"></div>
+                <div class="form-group"><label>След. поверка:</label><input type="date" id="eqNextVer"></div>
+                <div class="form-group">
+                    <label>Статус:</label>
+                    <select id="eqStatus">
+                        <option value="В эксплуатации">🟢 В эксплуатации</option>
+                        <option value="Требует поверки">🟡 Требует поверки</option>
+                        <option value="В ремонте">🔴 В ремонте</option>
+                        <option value="Выведены из эксплуатации">⚫ Выведены</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>📞 Телефон:</label><input type="text" id="eqPhone" placeholder="+7..."></div>
+                <div class="form-group"><label>✉️ Email:</label><input type="text" id="eqEmail" placeholder="email@gmail.com"></div>
+            </div>
+            <div class="form-group"><label>Примечания:</label><textarea id="eqNotes" style="height: 50px;" placeholder="Примечания..."></textarea></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeEquipmentModal()">Отмена</button>
+            <button class="btn btn-success" type="button" onclick="saveEquipment(event)">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="maintenanceModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeMaintenanceModal()">✕</button>
+        <h3>🛠️ Обслуживание</h3>
+        <div class="modal-body-scroll">
+            <div class="form-row">
+                <div class="form-group"><label>Вид работы:</label><input type="text" id="maintWorkType" placeholder="Ремонт"></div>
+                <div class="form-group"><label>Дата:</label><input type="date" id="maintDate"></div>
+            </div>
+            <div class="form-group"><label>Описание:</label><textarea id="maintDesc" style="height: 80px;" placeholder="Описание..."></textarea></div>
+            <div class="form-group"><label>Исполнитель:</label><input type="text" id="maintPerformedBy" placeholder="ФИО"></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeMaintenanceModal()">Отмена</button>
+            <button class="btn btn-success" type="button" onclick="saveMaintenance(event)">Добавить</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="noteModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" type="button" onclick="closeModals()">✕</button>
+        <h3 id="modalTitle">📝 Заметка</h3>
+        <div class="modal-body-scroll">
+            <div class="form-group"><label>Название:</label><input type="text" id="noteNameInput" placeholder="Название..."></div>
+            <div class="form-group"><label>Текст:</label><textarea id="noteContentInput" style="height: 130px;" placeholder="Текст..."></textarea></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" type="button" style="background: var(--text-muted);" onclick="closeModals()">Отмена</button>
+            <button class="btn btn-success" type="button" onclick="saveNote(event)">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db = { folders: [], items: [] };
+    let equipmentList = [];
+    let activeTab = null;
+    let currentFolderId = null;
+    let viewingNoteId = null;
+    let viewingEqId = null;
+    let editingEqId = null;
+
     function openBackupModal() { document.getElementById('backupModal').style.display = 'flex'; }
     function closeBackupModal() { document.getElementById('backupModal').style.display = 'none'; }
 
@@ -575,25 +782,6 @@
 
     let usersList = [];
 
-    function esc(value) {
-        return String(value ?? '')
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;');
-    }
-
-    function statusClass(status) {
-        switch (status) {
-            case 'В эксплуатации': return 'status-ok';
-            case 'Требует поверки': return 'status-warning';
-            case 'В ремонте': return 'status-danger';
-            case 'Выведены из эксплуатации': return 'status-muted';
-            default: return 'status-ok';
-        }
-    }
-
     async function loadUsers() {
         try {
             const res = await fetch('/api/users');
@@ -610,10 +798,10 @@
             return;
         }
         tbody.innerHTML = usersList.map(u => {
-            let pText = u.permissions === 'all' ? '✨ Полные права (Админ)' : (u.permissions ? esc(u.permissions.split(',').join(', ')) : 'Нет прав');
+            let pText = u.permissions === 'all' ? '✨ Полные права (Админ)' : (u.permissions ? u.permissions.split(',').join(', ') : 'Нет прав');
             return `
                 <tr>
-                    <td><b>${esc(u.username)}</b></td>
+                    <td><b>${u.username}</b></td>
                     <td>${u.role === 'admin' ? '⚙️ Администратор' : '👤 Пользователь'}</td>
                     <td style="font-size: 11px; color: var(--text-muted);">${pText}</td>
                     <td style="text-align: right;">
@@ -804,13 +992,10 @@
         if (btnNewNote) btnNewNote.style.display = checkPermission('notes') ? 'inline-flex' : 'none';
     }
 
-    let db = { folders: [], items: [] };
-    let equipmentList = [];
-    let activeTab = null;
-    let currentFolderId = null;
-    let viewingNoteId = null;
-    let viewingEqId = null;
-    let editingEqId = null;
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+        document.getElementById('authOverlay').style.display = 'none';
+        applyUserRoleUI();
+    }
 
     function toggleMobileSearch() {
         const container = document.getElementById('searchBoxContainer');
@@ -876,24 +1061,24 @@
         }
 
         tbody.innerHTML = equipmentList.map(eq => `
-            <tr onclick="viewEquipment('${esc(eq.id)}')">
-                <td><b>${esc(eq.name) || '-'}</b></td>
-                <td>${esc(eq.serialNumber) || '-'}</td>
-                <td>${esc(eq.ownerName) || '-'}</td>
-                <td>${esc(eq.location) || '-'}</td>
-                <td>${esc(eq.nextVerification) || '-'}</td>
-                <td><span class="badge-status ${statusClass(eq.status)}">${esc(eq.status) || 'В эксплуатации'}</span></td>
+            <tr onclick="viewEquipment('${eq.id}')">
+                <td><b>${eq.name || '-'}</b></td>
+                <td>${eq.serialNumber || '-'}</td>
+                <td>${eq.ownerName || '-'}</td>
+                <td>${eq.location || '-'}</td>
+                <td>${eq.nextVerification || '-'}</td>
+                <td><span class="badge-status status-ok">${eq.status || 'В эксплуатации'}</span></td>
                 <td style="text-align: right;" onclick="event.stopPropagation()">
-                    ${canEq ? `<button class="btn" type="button" style="padding: 6px 10px; font-size: 12px;" onclick="editEquipment('${esc(eq.id)}')">✏️</button>
-                    <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; background: var(--danger);" onclick="deleteEquipment('${esc(eq.id)}')">🗑️</button>` : '<span style="font-size:11px; color:var(--text-muted);">Просмотр</span>'}
+                    ${canEq ? `<button class="btn" type="button" style="padding: 6px 10px; font-size: 12px;" onclick="editEquipment('${eq.id}')">✏️</button>
+                    <button class="btn" type="button" style="padding: 6px 10px; font-size: 12px; background: var(--danger);" onclick="deleteEquipment('${eq.id}')">🗑️</button>` : '<span style="font-size:11px; color:var(--text-muted);">Просмотр</span>'}
                 </td>
             </tr>
         `).join('');
 
         mobileList.innerHTML = equipmentList.map(eq => `
-            <div class="mobile-eq-card" onclick="viewEquipment('${esc(eq.id)}')">
-                <div style="font-weight: 700; font-size: 14px; color: var(--primary);">${esc(eq.name) || '-'}</div>
-                <div style="font-size: 11px; color: var(--text-muted);">Зав. №: ${esc(eq.serialNumber) || '-'} | Поверка: ${esc(eq.nextVerification) || '-'}</div>
+            <div class="mobile-eq-card" onclick="viewEquipment('${eq.id}')">
+                <div style="font-weight: 700; font-size: 14px; color: var(--primary);">${eq.name || '-'}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Зав. №: ${eq.serialNumber || '-'} | Поверка: ${eq.nextVerification || '-'}</div>
             </div>
         `).join('');
     }
@@ -1316,12 +1501,12 @@
 
         if (list.length === 0) { container.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px;">Папок нет.</div>`; return; }
         container.innerHTML = list.map(f => `
-            <div class="folder-item" onclick="openFolder('${esc(f.id)}')">
+            <div class="folder-item" onclick="openFolder('${f.id}')">
                 <div class="folder-info">
                     <span>📁</span>
-                    <div class="folder-title">${esc(f.name)}</div>
+                    <div class="folder-title">${f.name}</div>
                 </div>
-                ${canFolders ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${esc(f.id)}')">🗑️</button>` : ''}
+                ${canFolders ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteFolder('${f.id}')">🗑️</button>` : ''}
             </div>
         `).join('');
     }
@@ -1341,10 +1526,10 @@
             container.innerHTML = `<div class="files-list">${list.map(item => `
                 <div class="file-row" onclick="openNoteModalView('${item.id}')" style="gap: 6px; cursor: pointer;">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${esc(item.name)}</div>
-                        ${canNotes ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${esc(item.id)}')">🗑️</button>` : ''}
+                        <div style="font-weight: 700; font-size: 14px; color: var(--primary);">📝 ${item.name}</div>
+                        ${canNotes ? `<button class="btn" type="button" style="padding: 4px 6px; font-size: 10px; background: var(--danger);" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>` : ''}
                     </div>
-                    <div style="font-size: 12px; color: var(--text-main);">${esc(item.content)}</div>
+                    <div style="font-size: 12px; color: var(--text-main);">${item.content || ''}</div>
                 </div>`).join('')}</div>`;
         } else if (activeTab === 'image') {
             container.innerHTML = `<div class="gallery-grid">${list.map(item => `
@@ -1356,7 +1541,7 @@
         } else if (activeTab === 'doc') {
             container.innerHTML = `<div class="files-list">${list.map(item => `
                 <div class="file-row">
-                    <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${esc(item.name)}</div></div>
+                    <div class="file-meta" onclick="window.open('${item.filePath}', '_blank')"><span>📄</span><div class="file-name">${item.name}</div></div>
                     <div class="file-actions"><button class="btn" type="button" onclick="window.open('${item.filePath}', '_blank')">Открыть</button>${canUpload ? `<button class="btn" type="button" style="background: var(--danger);" onclick="deleteItem('${item.id}')">Удалить</button>` : ''}</div>
                 </div>`).join('')}</div>`;
         }
@@ -1372,7 +1557,7 @@
         if (contentSection) contentSection.style.display = 'flex';
 
         const sectionTitle = document.getElementById('sectionTitle');
-        sectionTitle.textContent = `🔍 Результаты поиска: "${esc(q)}"`;
+        sectionTitle.textContent = `🔍 Результаты поиска: "${q}"`;
 
         const folderBanner = document.getElementById('folderBanner');
         if (folderBanner) folderBanner.style.display = 'none';
@@ -1408,8 +1593,8 @@
                     <div class="file-meta">
                         <span>⚖️</span>
                         <div>
-                            <div class="file-name">${esc(eq.name) || '-'} (Зав. №: ${esc(eq.serialNumber) || '-'})</div>
-                            <div style="font-size: 11px; color: var(--text-muted);">Владелец: ${esc(eq.ownerName) || '-'} | Место: ${esc(eq.location) || '-'}</div>
+                            <div class="file-name">${eq.name || '-'} (Зав. №: ${eq.serialNumber || '-'})</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Владелец: ${eq.ownerName || '-'} | Место: ${eq.location || '-'}</div>
                         </div>
                     </div>
                 </div>
@@ -1424,7 +1609,7 @@
                 <div class="folder-item" onclick="selectTab('${f.type}'); setTimeout(() => openFolder('${f.id}'), 50);">
                     <div class="folder-info">
                         <span>📁</span>
-                        <div class="folder-title">${esc(f.name)} <span style="font-size: 10px; color: var(--text-muted);">(${f.type === 'doc' ? 'Документы' : f.type === 'image' ? 'Фото' : 'Заметки'})</span></div>
+                        <div class="folder-title">${f.name} <span style="font-size: 10px; color: var(--text-muted);">(${f.type === 'doc' ? 'Документы' : f.type === 'image' ? 'Фото' : 'Заметки'})</span></div>
                     </div>
                 </div>
             `).join('');
@@ -1441,7 +1626,7 @@
                     <div class="file-row" onclick="${clickAction}" style="cursor: pointer;">
                         <div class="file-meta">
                             <span>${icon}</span>
-                            <div class="file-name">${esc(item.name)}</div>
+                            <div class="file-name">${item.name}</div>
                         </div>
                         <div style="font-size: 11px; color: var(--text-muted);">${item.date || ''}</div>
                     </div>
@@ -1451,18 +1636,15 @@
         }
 
         if (foundEq.length === 0 && foundFolders.length === 0 && foundItems.length === 0) {
-            container.innerHTML = `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено по запросу "${esc(q)}".</div>`;
+            container.innerHTML = `<div style="color: var(--text-muted); padding: 24px; text-align: center;">Ничего не найдено по запросу "${q}".</div>`;
         } else {
             container.innerHTML = html;
         }
     }
 
-    if (localStorage.getItem('isLoggedIn') === 'true') {
-        document.getElementById('authOverlay').style.display = 'none';
-        parseHash();
+    if (localStorage.getItem('isLoggedIn') === 'true') { 
+        loadDB(); 
         applyUserRoleUI();
-        loadDB();
-
         if (activeTab === 'admin') loadUsers();
     }
 </script>
