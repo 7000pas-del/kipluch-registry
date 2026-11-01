@@ -43,6 +43,7 @@ function initDatabase() {
             role TEXT
         )`);
 
+        // Оборудование
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT
@@ -61,14 +62,21 @@ function initDatabase() {
             });
         });
 
+        // Папки с автоматическим добавлением колонок, если их нет
         db.run(`CREATE TABLE IF NOT EXISTS folders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            parentId INTEGER
+            id INTEGER PRIMARY KEY AUTOINCREMENT
         )`, () => {
-            db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
+            const folderColumns = [
+                'name TEXT',
+                'parentId INTEGER',
+                'type TEXT'
+            ];
+            folderColumns.forEach(colDef => {
+                db.run(`ALTER TABLE folders ADD COLUMN ${colDef}`, () => {});
+            });
         });
 
+        // Заметки
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
