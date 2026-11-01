@@ -89,7 +89,7 @@ function logoutSystem() {
     location.reload();
 }
 
-// Текущая активная вкладка («doc», «image», «note») и текущая папка
+// Текущая активная вкладка («doc», «image», «note»)
 window.currentTab = 'doc';
 window.currentFolderId = null;
 
@@ -277,10 +277,10 @@ async function deleteEquipment(event, id) {
     }
 }
 
-// --- Архив, папки и заметки ---
+// --- Управление вкладками архива (Документы / Фото / Заметки) ---
 function selectTab(tabName) {
     window.currentTab = tabName;
-    window.currentFolderId = null; // Сбрасываем выбранную папку при смене вкладки
+    window.currentFolderId = null;
 
     const welcomeScreen = document.getElementById('welcomeScreen');
     const adminSection = document.getElementById('adminSection');
@@ -289,12 +289,6 @@ function selectTab(tabName) {
     if (welcomeScreen) welcomeScreen.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
     if (contentSection) contentSection.style.display = 'none';
-
-    // Управляем видимостью кнопок загрузки
-    const btnUploadPhoto = document.getElementById('btnUploadPhoto');
-    const btnUploadDoc = document.getElementById('btnUploadDoc');
-    if (btnUploadPhoto) btnUploadPhoto.style.display = (tabName === 'image') ? 'inline-block' : 'none';
-    if (btnUploadDoc) btnUploadDoc.style.display = (tabName === 'doc') ? 'inline-block' : 'none';
 
     if (tabName === 'admin') {
         if (adminSection) adminSection.style.display = 'flex';
@@ -318,6 +312,7 @@ function goHome() {
     selectTab('home');
 }
 
+// Загрузка папок и файлов для текущего раздела
 async function loadArchiveContent() {
     const user = getCurrentUser();
     if (!user) return;
@@ -328,12 +323,11 @@ async function loadArchiveContent() {
     }
 
     try {
-        // Загружаем папки для текущей вкладки
-        const resFolders = await fetch(`/api/folders?type=${window.currentTab}`, {
+        const res = await fetch(`/api/folders?type=${window.currentTab}`, {
             headers: { 'x-auth-user': JSON.stringify(user) }
         });
-        if (resFolders.ok) {
-            const folders = await resFolders.json();
+        if (res.ok) {
+            const folders = await res.json();
             renderFolders(folders);
         }
     } catch (err) {
@@ -341,6 +335,7 @@ async function loadArchiveContent() {
     }
 }
 
+// Функция создания папки (привязана к кнопке "Создать папку")
 async function promptCreateFolder() {
     if (window.currentTab === 'note') {
         openNoteModal();
@@ -367,7 +362,7 @@ async function promptCreateFolder() {
     }
 }
 
-async function loadFolders() {
+function loadFolders() {
     loadArchiveContent();
 }
 
@@ -376,6 +371,11 @@ function renderFolders(folders) {
     if (!container) return;
 
     container.innerHTML = '';
+    if (folders.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 10px;">Папок пока нет</div>';
+        return;
+    }
+
     folders.forEach(folder => {
         const div = document.createElement('div');
         div.className = 'folder-card';
@@ -384,6 +384,10 @@ function renderFolders(folders) {
             <span>📁 ${folder.name}</span>
             <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteFolder(event, ${folder.id})">🗑️</button>
         `;
+        div.onclick = () => {
+            window.currentFolderId = folder.id;
+            alert(`Открыта папка: ${folder.name}`);
+        };
         container.appendChild(div);
     });
 }
@@ -404,6 +408,7 @@ async function deleteFolder(event, id) {
     }
 }
 
+// --- Заметки ---
 function openNoteModal() {
     const nameInput = document.getElementById('noteNameInput');
     const contentInput = document.getElementById('noteContentInput');
@@ -475,7 +480,7 @@ function renderNotes(notes) {
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
-                <button class="btn" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteNote(${note.id})">🗑️</button>
+                <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteNote(${note.id})">🗑️</button>
             </div>
             <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap; margin-bottom: 6px;">${note.content || ''}</div>
             <div style="font-size: 10px; color: var(--text-muted);">${note.date || ''}</div>
