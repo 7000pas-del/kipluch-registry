@@ -61,13 +61,21 @@
             <div class="search-box" id="searchBoxContainer">
                 <button class="mobile-search-toggle" type="button" onclick="toggleMobileSearch()" title="Поиск">🔍</button>
                 <span class="search-icon">🔍</span>
-                <input type="text" 
+                
+                <!-- Фальшивые скрытые поля-ловушки для браузерных менеджеров паролей -->
+                <input type="text" name="fake_search_trap" style="display:none;" tabindex="-1" autocomplete="off">
+                <input type="password" name="fake_password_trap" style="display:none;" tabindex="-1" autocomplete="off">
+
+                <!-- Поле поиска -->
+                <input type="search" 
                        class="search-input real-search-input" 
-                       name="search_query_random_99" 
+                       name="registry_global_filter_query" 
                        placeholder="Поиск по всему..." 
                        autocomplete="off" 
+                       autocorrect="off" 
                        autocapitalize="off" 
                        spellcheck="false" 
+                       data-form-type="other"
                        data-lpignore="true" 
                        readonly 
                        onfocus="this.removeAttribute('readonly');" 
