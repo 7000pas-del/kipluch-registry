@@ -53,7 +53,12 @@ function initDatabase() {
             location TEXT,
             notes TEXT,
             files TEXT
-        )`);
+        )`, () => {
+            // Безопасно добавляем колонку, если её не было в старой базе
+            db.run(`ALTER TABLE equipment ADD COLUMN verificationDate TEXT`, (err) => {
+                // Ошибку игнорируем (она возникнет, если колонка уже существует)
+            });
+        });
 
         db.run("DELETE FROM users WHERE username = 'admin'", () => {
             db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", (err) => {
@@ -109,7 +114,7 @@ app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) 
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
                    
-    db.run(query, [name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, JSON.stringify(files)], function(err) {
+    db.run(query, [name, serialNumber, verificationDate || '', nextVerificationDate, status, location, notes, JSON.stringify(files)], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
     });
