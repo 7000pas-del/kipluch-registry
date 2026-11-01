@@ -4,42 +4,75 @@ document.addEventListener('DOMContentLoaded', () => {
         loadEquipment();
     }
 
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
+    // Универсальный перехват отправки любой формы на странице
+    document.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await performLogin();
+    });
 
-            if (!usernameInput || !passwordInput) return;
-
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
-
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Ошибка входа');
-                }
-
-                localStorage.setItem('currentUser', JSON.stringify(data.user));
-                loginForm.reset();
-                checkAuthUI();
-                loadEquipment();
-            } catch (err) {
-                alert(err.message);
+    // Универсальный перехват клика по любой кнопке (если это не форма)
+    document.addEventListener('click', async (e) => {
+        if (e.target && (e.target.type === 'submit' || e.target.id.includes('login') || e.target.classList.contains('login-btn'))) {
+            // Проверяем, что это действительно кнопка входа, а не что-то другое
+            const usernameInput = document.getElementById('username') || document.querySelector('input[name="username"]');
+            if (usernameInput && usernameInput.offsetParent !== null) {
+                e.preventDefault();
+                await performLogin();
             }
-        });
-    }
+        }
+    });
 });
+
+async function performLogin() {
+    // Ищем поля ввода по любым возможным ID или атрибутам
+    const usernameInput = document.getElementById('username') || 
+                          document.querySelector('input[name="username"]') || 
+                          document.querySelector('input[type="text"]');
+                          
+    const passwordInput = document.getElementById('password') || 
+                          document.querySelector('input[name="password"]') || 
+                          document.querySelector('input[type="password"]');
+
+    if (!usernameInput || !passwordInput) {
+        alert('Не удалось найти поля логина или пароля на странице');
+        return;
+    }
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+        alert('Введите логин и пароль!');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Сервер вернул ошибку (например, неверный пароль) — показываем её пользователю!
+            throw new Error(data.error || 'Неверный логин или пароль');
+        }
+
+        // Успешный вход
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        
+        usernameInput.value = '';
+        passwordInput.value = '';
+        
+        checkAuthUI();
+        loadEquipment();
+    } catch (err) {
+        // Обязательно выводим ошибку на экран
+        alert(err.message);
+    }
+}
 
 function getCurrentUser() {
     try {
@@ -52,17 +85,18 @@ function getCurrentUser() {
 function checkAuthUI() {
     const user = getCurrentUser();
     
-    // Ищем блок входа по разным возможным ID
+    // Ищем блоки авторизации и контента по возможным ID или классам
     const authPanel = document.getElementById('auth-panel') || 
                       document.getElementById('login-section') || 
                       document.getElementById('login-container') ||
-                      document.querySelector('.login-container');
+                      document.querySelector('.login-container') ||
+                      document.querySelector('form');
 
-    // Ищем основной контент по разным возможным ID
     const appContent = document.getElementById('app-content') || 
                        document.getElementById('equipment-section') || 
                        document.getElementById('main-app') ||
-                       document.querySelector('.app-content');
+                       document.querySelector('.app-content') ||
+                       document.querySelector('table');
 
     if (user) {
         if (authPanel) authPanel.style.display = 'none';
@@ -96,7 +130,7 @@ async function loadEquipment() {
 }
 
 function renderEquipment(data) {
-    const tableBody = document.getElementById('equipment-table-body');
+    const tableBody = document.getElementById('equipment-table-body') || document.querySelector('tbody');
     if (!tableBody) return;
 
     tableBody.innerHTML = '';
