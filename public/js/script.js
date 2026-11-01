@@ -343,6 +343,11 @@ async function promptCreateFolder() {
     if (!folderName || !folderName.trim()) return;
 
     const user = getCurrentUser();
+    if (!user) {
+        alert('Пользователь не авторизован!');
+        return;
+    }
+
     try {
         const res = await fetch('/api/folders', {
             method: 'POST',
@@ -350,12 +355,22 @@ async function promptCreateFolder() {
                 'Content-Type': 'application/json',
                 'x-auth-user': JSON.stringify(user)
             },
-            body: JSON.stringify({ name: folderName.trim(), type: window.currentTab })
+            body: JSON.stringify({ 
+                name: folderName.trim(), 
+                type: window.currentTab || 'doc' 
+            })
         });
-        if (!res.ok) throw new Error('Ошибка создания папки');
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(data.error || 'Не удалось создать папку на сервере');
+        }
+
         loadArchiveContent();
     } catch (err) {
-        alert(err.message);
+        console.error('Ошибка создания папки:', err);
+        alert('Ошибка: ' + err.message);
     }
 }
 
@@ -376,28 +391,47 @@ function renderFolders(folders) {
     folders.forEach(folder => {
         const div = document.createElement('div');
         div.className = 'folder-card';
-        div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer;';
+        div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer; transition: border-color 0.2s;';
+        
         div.innerHTML = `
             <span>📁 ${folder.name}</span>
-            <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteFolder(event, ${folder.id})">🗑️</button>
+            <button class="btn delete-folder-btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;">🗑️</button>
         `;
+
+        const deleteBtn = div.querySelector('.delete-folder-btn');
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteFolder(folder.id);
+        };
+
         div.onclick = () => {
             window.currentFolderId = folder.id;
+            document.querySelectorAll('.folder-card').forEach(card => {
+                card.style.borderColor = 'var(--border)';
+            });
+            div.style.borderColor = '#3b82f6';
+            alert(`📂 Открыта папка: "${folder.name}"`);
         };
+
         container.appendChild(div);
     });
 }
 
-async function deleteFolder(event, id) {
-    if (event) event.stopPropagation();
-    if (!confirm('Удалить эту папку?')) return;
+async function deleteFolder(id) {
+    if (!confirm('Вы уверены, что хотите удалить эту папку?')) return;
     const user = getCurrentUser();
+    
     try {
         const res = await fetch(`/api/folders/${id}`, {
             method: 'DELETE',
             headers: { 'x-auth-user': JSON.stringify(user) }
         });
-        if (!res.ok) throw new Error('Ошибка удаления папки');
+
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(result.error || 'Ошибка удаления папки');
+        }
+
         loadArchiveContent();
     } catch (err) {
         alert(err.message);
