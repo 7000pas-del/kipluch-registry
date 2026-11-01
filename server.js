@@ -43,7 +43,7 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Оборудование
+        // Оборудование + автомиграция колонок
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT
@@ -62,7 +62,7 @@ function initDatabase() {
             });
         });
 
-        // Папки с автоматическим добавлением колонок, если их нет
+        // Папки + автомиграция колонок
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT
         )`, () => {
