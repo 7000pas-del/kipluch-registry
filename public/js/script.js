@@ -6,6 +6,14 @@ let viewingNoteId = null;
 let viewingEqId = null;
 let editingEqId = null;
 
+// Динамически назначаем ID для поиска при загрузке, чтобы браузер не успевал к нему привязать кеш логинов
+document.addEventListener('DOMContentLoaded', () => {
+    const inputElement = document.querySelector('.real-search-input');
+    if (inputElement) {
+        inputElement.id = 'searchInput';
+    }
+});
+
 function openBackupModal() { document.getElementById('backupModal').style.display = 'flex'; }
 function closeBackupModal() { document.getElementById('backupModal').style.display = 'none'; }
 
@@ -267,20 +275,6 @@ function toggleMobileSearch() {
 }
 
 function onSearchInput() { render(); }
-
-// Дополнительная защита от автозаполнения паролей
-document.addEventListener('DOMContentLoaded', () => {
-    const sInput = document.getElementById('searchInput');
-    if (sInput) {
-        setTimeout(() => {
-            sInput.value = '';
-        }, 100);
-
-        sInput.addEventListener('focus', function() {
-            this.setAttribute('autocomplete', 'new-password');
-        });
-    }
-});
 
 function parseHash() {
     try {
@@ -746,7 +740,8 @@ function updateNavUI() {
 }
 
 function render() {
-    const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    const sInput = document.getElementById('searchInput');
+    const query = sInput ? (sInput.value || '').toLowerCase().trim() : '';
     updateNavUI();
     if (query) { renderGlobalSearch(query); return; }
     if (!activeTab || activeTab === 'admin') return;
@@ -882,7 +877,7 @@ function renderGlobalSearch(q) {
         html += `<div style="font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 8px;">📁 Папки (${foundFolders.length}):</div>`;
         html += `<div class="folders-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin-bottom: 16px;">`;
         html += foundFolders.map(f => `
-            <div class="folder-item" onclick="document.getElementById('searchInput').value=''; activeTab='${f.type}'; currentFolderId='${f.id}'; updateHash(); render();">
+            <div class="folder-item" onclick="const s=document.getElementById('searchInput'); if(s) s.value=''; activeTab='${f.type}'; currentFolderId='${f.id}'; updateHash(); render();">
                 <div class="folder-info">
                     <span>📁</span>
                     <div class="folder-title">${f.name} <span style="font-size: 10px; color: var(--text-muted);">(${f.type === 'doc' ? 'Документы' : f.type === 'image' ? 'Фото' : 'Заметки'})</span></div>
