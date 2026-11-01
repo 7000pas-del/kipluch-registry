@@ -156,10 +156,22 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки ---
+// --- Папки (с поддержкой вложенности) ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
-    db.all("SELECT * FROM folders WHERE type = ?", [type], (err, rows) => {
+    const parentId = req.query.parentId;
+
+    let query = "SELECT * FROM folders WHERE type = ?";
+    let params = [type];
+
+    if (parentId && parentId !== 'root') {
+        query += " AND parentId = ?";
+        params.push(parentId);
+    } else {
+        query += " AND (parentId IS NULL OR parentId = '')";
+    }
+
+    db.all(query, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
