@@ -43,12 +43,10 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Создаем базовую таблицу, если её совсем нет
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT
         )`, () => {
-            // Автоматически добавляем все необходимые колонки, если их нет в старой базе
             const columnsToAdd = [
                 'serialNumber TEXT',
                 'verificationDate TEXT',
@@ -58,13 +56,25 @@ function initDatabase() {
                 'notes TEXT',
                 'files TEXT'
             ];
-
             columnsToAdd.forEach(colDef => {
-                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, (err) => {
-                    // Ошибку игнорируем (она значит, что колонка уже существует)
-                });
+                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, () => {});
             });
         });
+
+        // Таблица папок
+        db.run(`CREATE TABLE IF NOT EXISTS folders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            parentId INTEGER
+        )`);
+
+        // Таблица заметок
+        db.run(`CREATE TABLE IF NOT EXISTS notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            content TEXT,
+            date TEXT
+        )`);
 
         db.run("DELETE FROM users WHERE username = 'admin'", () => {
             db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", (err) => {
@@ -106,6 +116,7 @@ const requireAuth = (req, res, next) => {
     res.status(401).json({ error: 'Недействительная сессия' });
 };
 
+// --- Оборудование ---
 app.get('/api/equipment', requireAuth, (req, res) => {
     db.all("SELECT * FROM equipment", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -138,6 +149,53 @@ app.put('/api/equipment/:id', requireAuth, (req, res) => {
 
 app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     db.run("DELETE FROM equipment WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// --- Папки ---
+app.get('/api/folders', requireAuth, (req, res) => {
+    db.all("SELECT * FROM folders", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/folders', requireAuth, (req, res) => {
+    const { name, parentId } = req.body;
+    db.run("INSERT INTO folders (name, parentId) VALUES (?, ?)", [name, parentId || null], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID });
+    });
+});
+
+app.delete('/api/folders/:id', requireAuth, (req, res) => {
+    db.run("DELETE FROM folders WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// --- Заметки ---
+app.get('/api/notes', requireAuth, (req, res) => {
+    db.all("SELECT * FROM notes", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/notes', requireAuth, (req, res) => {
+    const { title, content } = req.body;
+    const date = new Date().toLocaleDateString('ru-RU');
+    db.run("INSERT INTO notes (title, content, date) VALUES (?, ?, ?)", [title || 'Без названия', content || '', date], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID });
+    });
+});
+
+app.delete('/api/notes/:id', requireAuth, (req, res) => {
+    db.run("DELETE FROM notes WHERE id = ?", [req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
