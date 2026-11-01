@@ -61,12 +61,14 @@ function initDatabase() {
             });
         });
 
-        // Таблица папок
+        // Таблица папок с поддержкой типа вкладки (doc / image)
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             parentId INTEGER
-        )`);
+        )`, () => {
+            db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
+        });
 
         // Таблица заметок
         db.run(`CREATE TABLE IF NOT EXISTS notes (
@@ -154,17 +156,18 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки ---
+// --- Папки (с фильтрацией по типу: doc / image) ---
 app.get('/api/folders', requireAuth, (req, res) => {
-    db.all("SELECT * FROM folders", [], (err, rows) => {
+    const type = req.query.type || 'doc';
+    db.all("SELECT * FROM folders WHERE type = ?", [type], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
 app.post('/api/folders', requireAuth, (req, res) => {
-    const { name, parentId } = req.body;
-    db.run("INSERT INTO folders (name, parentId) VALUES (?, ?)", [name, parentId || null], function(err) {
+    const { name, parentId, type } = req.body;
+    db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, parentId || null, type || 'doc'], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
     });
