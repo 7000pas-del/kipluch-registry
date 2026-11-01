@@ -4,42 +4,22 @@ document.addEventListener('DOMContentLoaded', () => {
         loadEquipment();
     }
 
-    // Ищем форму входа
-    const loginForm = document.getElementById('login-form') || 
-                      document.getElementById('login') || 
-                      document.querySelector('form');
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
+    const authForm = document.getElementById('authForm');
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await performLogin(loginForm);
-        });
-    }
-
-    // Если кнопка входа вне формы или форма отправляется кликом
-    const submitButton = document.getElementById('login-btn') || 
-                         document.querySelector('button[type="submit"]');
-    if (submitButton) {
-        submitButton.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const form = submitButton.closest('form') || document;
-            await performLogin(form);
+            await performLogin();
         });
     }
 });
 
-async function performLogin(context = document) {
-    // Ищем поля строго внутри формы или на странице по стандартным именам и ID
-    const usernameInput = context.querySelector('#username') || 
-                          context.querySelector('input[name="username"]') || 
-                          context.querySelector('input[type="text"]');
-                          
-    const passwordInput = context.querySelector('#password') || 
-                          context.querySelector('input[name="password"]') || 
-                          context.querySelector('input[type="password"]');
+async function performLogin() {
+    const usernameInput = document.getElementById('authLogin');
+    const passwordInput = document.getElementById('authPassword');
+    const errorDiv = document.getElementById('authError');
 
     if (!usernameInput || !passwordInput) {
-        alert('Не удалось найти поля логина или пароля');
+        alert('Не найдены поля ввода логина или пароля');
         return;
     }
 
@@ -47,7 +27,12 @@ async function performLogin(context = document) {
     const password = passwordInput.value.trim();
 
     if (!username || !password) {
-        alert('Введите логин и пароль!');
+        if (errorDiv) {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Введите логин и пароль!';
+        } else {
+            alert('Введите логин и пароль!');
+        }
         return;
     }
 
@@ -69,11 +54,17 @@ async function performLogin(context = document) {
         
         usernameInput.value = '';
         passwordInput.value = '';
+        if (errorDiv) errorDiv.style.display = 'none';
         
         checkAuthUI();
         loadEquipment();
     } catch (err) {
-        alert(err.message);
+        if (errorDiv) {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = err.message;
+        } else {
+            alert(err.message);
+        }
     }
 }
 
@@ -87,27 +78,18 @@ function getCurrentUser() {
 
 function checkAuthUI() {
     const user = getCurrentUser();
-    
-    const authPanel = document.getElementById('auth-panel') || 
-                      document.getElementById('login-section') || 
-                      document.getElementById('login-container') ||
-                      document.querySelector('.login-container');
-
-    const appContent = document.getElementById('app-content') || 
-                       document.getElementById('equipment-section') || 
-                       document.getElementById('main-app') ||
-                       document.querySelector('.app-content');
+    const authOverlay = document.getElementById('authOverlay');
+    const currentUserBadge = document.getElementById('currentUserBadge');
 
     if (user) {
-        if (authPanel) authPanel.style.display = 'none';
-        if (appContent) appContent.style.display = 'block';
+        if (authOverlay) authOverlay.style.display = 'none';
+        if (currentUserBadge) currentUserBadge.textContent = `👤 ${user.username} (${user.role})`;
     } else {
-        if (authPanel) authPanel.style.display = 'block';
-        if (appContent) appContent.style.display = 'none';
+        if (authOverlay) authOverlay.style.display = 'flex';
     }
 }
 
-function logout() {
+function logoutSystem() {
     localStorage.removeItem('currentUser');
     checkAuthUI();
     location.reload();
@@ -130,22 +112,20 @@ async function loadEquipment() {
 }
 
 function renderEquipment(data) {
-    const tableBody = document.getElementById('equipment-table-body') || document.querySelector('tbody');
+    const tableBody = document.getElementById('equipmentTableBody');
     if (!tableBody) return;
 
     tableBody.innerHTML = '';
     data.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${item.id}</td>
             <td>${item.name || ''}</td>
-            <td>${item.type || ''}</td>
             <td>${item.serialNumber || ''}</td>
-            <td>${item.verificationDate || ''}</td>
+            <td>${item.ownerName || item.location || ''}</td>
+            <td>${item.location || ''}</td>
             <td>${item.nextVerificationDate || ''}</td>
             <td>${item.status || ''}</td>
-            <td>${item.location || ''}</td>
-            <td><button onclick="deleteEquipment(${item.id})">🗑️</button></td>
+            <td style="text-align: right;"><button class="btn" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(${item.id})">🗑️</button></td>
         `;
         tableBody.appendChild(row);
     });
