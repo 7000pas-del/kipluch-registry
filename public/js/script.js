@@ -51,8 +51,18 @@ function getCurrentUser() {
 
 function checkAuthUI() {
     const user = getCurrentUser();
-    const authPanel = document.getElementById('auth-panel');
-    const appContent = document.getElementById('app-content') || document.getElementById('equipment-section');
+    
+    // Ищем блок входа по разным возможным ID
+    const authPanel = document.getElementById('auth-panel') || 
+                      document.getElementById('login-section') || 
+                      document.getElementById('login-container') ||
+                      document.querySelector('.login-container');
+
+    // Ищем основной контент по разным возможным ID
+    const appContent = document.getElementById('app-content') || 
+                       document.getElementById('equipment-section') || 
+                       document.getElementById('main-app') ||
+                       document.querySelector('.app-content');
 
     if (user) {
         if (authPanel) authPanel.style.display = 'none';
@@ -66,6 +76,7 @@ function checkAuthUI() {
 function logout() {
     localStorage.removeItem('currentUser');
     checkAuthUI();
+    location.reload();
 }
 
 async function loadEquipment() {
