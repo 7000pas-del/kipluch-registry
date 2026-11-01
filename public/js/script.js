@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuthUI();
     if (getCurrentUser()) {
         loadEquipment();
+        loadFolders();
+        loadNotes();
     }
 
     const authForm = document.getElementById('authForm');
@@ -52,6 +54,8 @@ async function performLogin() {
         
         checkAuthUI();
         loadEquipment();
+        loadFolders();
+        loadNotes();
     } catch (err) {
         if (errorDiv) {
             errorDiv.style.display = 'block';
@@ -87,6 +91,7 @@ function logoutSystem() {
     location.reload();
 }
 
+// --- Оборудование ---
 async function loadEquipment() {
     const user = getCurrentUser();
     if (!user) return;
@@ -201,25 +206,6 @@ function editEquipmentFromButton(event, encodedItem) {
     }
 }
 
-function openBackupModal() {
-    const modal = document.getElementById('backupModal');
-    if (modal) modal.style.display = 'flex';
-}
-
-function closeBackupModal() {
-    const modal = document.getElementById('backupModal');
-    if (modal) modal.style.display = 'none';
-}
-
-function openNoteModal() {
-    const modal = document.getElementById('noteModal');
-    if (modal) modal.style.display = 'flex';
-}
-
-function closeModals() {
-    document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
-}
-
 async function saveEquipment(event) {
     if (event) event.preventDefault();
     const user = getCurrentUser();
@@ -289,6 +275,192 @@ async function deleteEquipment(event, id) {
     }
 }
 
+// --- Папки ---
+async function promptCreateFolder() {
+    const folderName = prompt('Введите название новой папки:');
+    if (!folderName || !folderName.trim()) return;
+
+    const user = getCurrentUser();
+    try {
+        const res = await fetch('/api/folders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-auth-user': JSON.stringify(user)
+            },
+            body: JSON.stringify({ name: folderName.trim() })
+        });
+        if (!res.ok) throw new Error('Ошибка создания папки');
+        loadFolders();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+async function loadFolders() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    try {
+        const res = await fetch('/api/folders', {
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
+        if (!res.ok) return;
+        const folders = await res.json();
+        renderFolders(folders);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderFolders(folders) {
+    const container = document.getElementById('foldersContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    folders.forEach(folder => {
+        const div = document.createElement('div');
+        div.className = 'folder-card';
+        div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer;';
+        div.innerHTML = `
+            <span>📁 ${folder.name}</span>
+            <button class="btn" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteFolder(event, ${folder.id})">🗑️</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+async function deleteFolder(event, id) {
+    if (event) event.stopPropagation();
+    if (!confirm('Удалить эту папку?')) return;
+    const user = getCurrentUser();
+    try {
+        const res = await fetch(`/api/folders/${id}`, {
+            method: 'DELETE',
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
+        if (!res.ok) throw new Error('Ошибка удаления папки');
+        loadFolders();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+// --- Заметки ---
+function openNoteModal() {
+    const nameInput = document.getElementById('noteNameInput');
+    const contentInput = document.getElementById('noteContentInput');
+    if (nameInput) nameInput.value = '';
+    if (contentInput) contentInput.value = '';
+
+    const modal = document.getElementById('noteModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+async function saveNote(event) {
+    if (event) event.preventDefault();
+    const user = getCurrentUser();
+
+    const title = document.getElementById('noteNameInput')?.value || '';
+    const content = document.getElementById('noteContentInput')?.value || '';
+
+    if (!title && !content) {
+        alert('Заполните название или текст заметки!');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/notes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-auth-user': JSON.stringify(user)
+            },
+            body: JSON.stringify({ title, content })
+        });
+
+        if (!res.ok) throw new Error('Ошибка сохранения заметки');
+
+        closeModals();
+        loadNotes();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+async function loadNotes() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    try {
+        const res = await fetch('/api/notes', {
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
+        if (!res.ok) return;
+        const notes = await res.json();
+        renderNotes(notes);
+        
+        const countNote = document.getElementById('countNote');
+        if (countNote) countNote.textContent = notes.length;
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderNotes(notes) {
+    const container = document.getElementById('filesContainer');
+    if (!container) return;
+
+    // Проверяем, активна ли вкладка заметок
+    const contentSection = document.getElementById('contentSection');
+    if (!contentSection || contentSection.style.display === 'none') return;
+
+    container.innerHTML = '';
+    notes.forEach(note => {
+        const card = document.createElement('div');
+        card.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 10px;';
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
+                <button class="btn" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteNote(${note.id})">🗑️</button>
+            </div>
+            <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap; margin-bottom: 6px;">${note.content || ''}</div>
+            <div style="font-size: 10px; color: var(--text-muted);">${note.date || ''}</div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+async function deleteNote(id) {
+    if (!confirm('Удалить эту заметку?')) return;
+    const user = getCurrentUser();
+    try {
+        const res = await fetch(`/api/notes/${id}`, {
+            method: 'DELETE',
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
+        if (!res.ok) throw new Error('Ошибка удаления');
+        loadNotes();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+// --- Управление модалками и вкладками ---
+function openBackupModal() {
+    const modal = document.getElementById('backupModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeBackupModal() {
+    const modal = document.getElementById('backupModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function closeModals() {
+    document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+}
+
 function selectTab(tabName) {
     const welcomeScreen = document.getElementById('welcomeScreen');
     const adminSection = document.getElementById('adminSection');
@@ -302,6 +474,9 @@ function selectTab(tabName) {
         if (adminSection) adminSection.style.display = 'flex';
     } else if (tabName === 'doc' || tabName === 'image' || tabName === 'note') {
         if (contentSection) contentSection.style.display = 'flex';
+        if (tabName === 'note') {
+            loadNotes();
+        }
     } else {
         if (welcomeScreen) welcomeScreen.style.display = 'block';
     }
