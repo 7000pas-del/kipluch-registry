@@ -87,7 +87,6 @@ function logoutSystem() {
     location.reload();
 }
 
-// Загрузка оборудования
 async function loadEquipment() {
     const user = getCurrentUser();
     if (!user) return;
@@ -119,6 +118,8 @@ function renderEquipment(data) {
             }
         };
 
+        const itemJson = encodeURIComponent(JSON.stringify(item));
+
         row.innerHTML = `
             <td>${item.name || ''}</td>
             <td>${item.serialNumber || ''}</td>
@@ -127,7 +128,7 @@ function renderEquipment(data) {
             <td>${item.nextVerificationDate || ''}</td>
             <td>${item.status || ''}</td>
             <td style="text-align: right; white-space: nowrap;">
-                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipment(event, ${item.id})">✏️</button>
+                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
                 <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
             </td>
         `;
@@ -135,7 +136,6 @@ function renderEquipment(data) {
     });
 }
 
-// Открытие паспорта/карточки прибора
 function viewEquipmentPassport(id) {
     const item = window.allEquipment?.find(eq => eq.id === id);
     if (!item) return;
@@ -163,7 +163,6 @@ function closeViewEquipmentModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// Открытие модального окна добавления/редактирования
 function openEquipmentModal(editData = null) {
     const modal = document.getElementById('equipmentModal');
     const title = document.getElementById('eqModalTitle');
@@ -192,13 +191,13 @@ function closeEquipmentModal() {
     window.currentEditId = null;
 }
 
-function editEquipment(event, id) {
+function editEquipmentFromButton(event, encodedItem) {
     if (event) event.stopPropagation();
-    const item = window.allEquipment?.find(eq => eq.id === id);
-    if (item) {
+    try {
+        const item = JSON.parse(decodeURIComponent(encodedItem));
         openEquipmentModal(item);
-    } else {
-        alert('Не удалось найти данные записи');
+    } catch (err) {
+        console.error('Ошибка открытия редактора:', err);
     }
 }
 
@@ -221,7 +220,6 @@ function closeModals() {
     document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
 }
 
-// Сохранение оборудования (создание или обновление)
 async function saveEquipment(event) {
     if (event) event.preventDefault();
     const user = getCurrentUser();
@@ -252,7 +250,6 @@ async function saveEquipment(event) {
             },
             body: JSON.stringify({ 
                 name, 
-                type: '', 
                 serialNumber, 
                 verificationDate: '', 
                 nextVerificationDate, 
@@ -276,7 +273,6 @@ async function saveEquipment(event) {
     }
 }
 
-// Удаление записи
 async function deleteEquipment(event, id) {
     if (event) event.stopPropagation();
     if (!confirm('Удалить эту запись?')) return;
