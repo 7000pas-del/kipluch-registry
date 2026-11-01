@@ -268,6 +268,20 @@ function toggleMobileSearch() {
 
 function onSearchInput() { render(); }
 
+// Дополнительная защита от автозаполнения паролей
+document.addEventListener('DOMContentLoaded', () => {
+    const sInput = document.getElementById('searchInput');
+    if (sInput) {
+        setTimeout(() => {
+            sInput.value = '';
+        }, 100);
+
+        sInput.addEventListener('focus', function() {
+            this.setAttribute('autocomplete', 'new-password');
+        });
+    }
+});
+
 function parseHash() {
     try {
         const hash = (window.location.hash || '').replace('#', '').trim();
