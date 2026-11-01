@@ -2,8 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuthUI();
     if (getCurrentUser()) {
         loadEquipment();
-        loadFolders();
-        loadNotes();
+        loadArchiveContent();
     }
 
     const authForm = document.getElementById('authForm');
@@ -54,8 +53,7 @@ async function performLogin() {
         
         checkAuthUI();
         loadEquipment();
-        loadFolders();
-        loadNotes();
+        loadArchiveContent();
     } catch (err) {
         if (errorDiv) {
             errorDiv.style.display = 'block';
@@ -90,6 +88,10 @@ function logoutSystem() {
     checkAuthUI();
     location.reload();
 }
+
+// Текущая активная вкладка («doc», «image», «note») и текущая папка
+window.currentTab = 'doc';
+window.currentFolderId = null;
 
 // --- Оборудование ---
 async function loadEquipment() {
@@ -275,8 +277,76 @@ async function deleteEquipment(event, id) {
     }
 }
 
-// --- Папки ---
+// --- Архив, папки и заметки ---
+function selectTab(tabName) {
+    window.currentTab = tabName;
+    window.currentFolderId = null; // Сбрасываем выбранную папку при смене вкладки
+
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const adminSection = document.getElementById('adminSection');
+    const contentSection = document.getElementById('contentSection');
+
+    if (welcomeScreen) welcomeScreen.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+    if (contentSection) contentSection.style.display = 'none';
+
+    // Управляем видимостью кнопок загрузки
+    const btnUploadPhoto = document.getElementById('btnUploadPhoto');
+    const btnUploadDoc = document.getElementById('btnUploadDoc');
+    if (btnUploadPhoto) btnUploadPhoto.style.display = (tabName === 'image') ? 'inline-block' : 'none';
+    if (btnUploadDoc) btnUploadDoc.style.display = (tabName === 'doc') ? 'inline-block' : 'none';
+
+    if (tabName === 'admin') {
+        if (adminSection) adminSection.style.display = 'flex';
+    } else if (tabName === 'doc' || tabName === 'image' || tabName === 'note') {
+        if (contentSection) contentSection.style.display = 'flex';
+        
+        const titleEl = document.getElementById('sectionTitle');
+        if (titleEl) {
+            if (tabName === 'doc') titleEl.textContent = '📄 Документы';
+            if (tabName === 'image') titleEl.textContent = '🖼️ Фотографии';
+            if (tabName === 'note') titleEl.textContent = '📝 Заметки';
+        }
+
+        loadArchiveContent();
+    } else {
+        if (welcomeScreen) welcomeScreen.style.display = 'block';
+    }
+}
+
+function goHome() {
+    selectTab('home');
+}
+
+async function loadArchiveContent() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    if (window.currentTab === 'note') {
+        loadNotes();
+        return;
+    }
+
+    try {
+        // Загружаем папки для текущей вкладки
+        const resFolders = await fetch(`/api/folders?type=${window.currentTab}`, {
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
+        if (resFolders.ok) {
+            const folders = await resFolders.json();
+            renderFolders(folders);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 async function promptCreateFolder() {
+    if (window.currentTab === 'note') {
+        openNoteModal();
+        return;
+    }
+
     const folderName = prompt('Введите название новой папки:');
     if (!folderName || !folderName.trim()) return;
 
@@ -288,29 +358,17 @@ async function promptCreateFolder() {
                 'Content-Type': 'application/json',
                 'x-auth-user': JSON.stringify(user)
             },
-            body: JSON.stringify({ name: folderName.trim() })
+            body: JSON.stringify({ name: folderName.trim(), type: window.currentTab })
         });
         if (!res.ok) throw new Error('Ошибка создания папки');
-        loadFolders();
+        loadArchiveContent();
     } catch (err) {
         alert(err.message);
     }
 }
 
 async function loadFolders() {
-    const user = getCurrentUser();
-    if (!user) return;
-
-    try {
-        const res = await fetch('/api/folders', {
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
-        if (!res.ok) return;
-        const folders = await res.json();
-        renderFolders(folders);
-    } catch (err) {
-        console.error(err);
-    }
+    loadArchiveContent();
 }
 
 function renderFolders(folders) {
@@ -324,7 +382,7 @@ function renderFolders(folders) {
         div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer;';
         div.innerHTML = `
             <span>📁 ${folder.name}</span>
-            <button class="btn" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteFolder(event, ${folder.id})">🗑️</button>
+            <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteFolder(event, ${folder.id})">🗑️</button>
         `;
         container.appendChild(div);
     });
@@ -340,13 +398,12 @@ async function deleteFolder(event, id) {
             headers: { 'x-auth-user': JSON.stringify(user) }
         });
         if (!res.ok) throw new Error('Ошибка удаления папки');
-        loadFolders();
+        loadArchiveContent();
     } catch (err) {
         alert(err.message);
     }
 }
 
-// --- Заметки ---
 function openNoteModal() {
     const nameInput = document.getElementById('noteNameInput');
     const contentInput = document.getElementById('noteContentInput');
@@ -411,10 +468,6 @@ function renderNotes(notes) {
     const container = document.getElementById('filesContainer');
     if (!container) return;
 
-    // Проверяем, активна ли вкладка заметок
-    const contentSection = document.getElementById('contentSection');
-    if (!contentSection || contentSection.style.display === 'none') return;
-
     container.innerHTML = '';
     notes.forEach(note => {
         const card = document.createElement('div');
@@ -446,7 +499,6 @@ async function deleteNote(id) {
     }
 }
 
-// --- Управление модалками и вкладками ---
 function openBackupModal() {
     const modal = document.getElementById('backupModal');
     if (modal) modal.style.display = 'flex';
@@ -459,29 +511,4 @@ function closeBackupModal() {
 
 function closeModals() {
     document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
-}
-
-function selectTab(tabName) {
-    const welcomeScreen = document.getElementById('welcomeScreen');
-    const adminSection = document.getElementById('adminSection');
-    const contentSection = document.getElementById('contentSection');
-
-    if (welcomeScreen) welcomeScreen.style.display = 'none';
-    if (adminSection) adminSection.style.display = 'none';
-    if (contentSection) contentSection.style.display = 'none';
-
-    if (tabName === 'admin') {
-        if (adminSection) adminSection.style.display = 'flex';
-    } else if (tabName === 'doc' || tabName === 'image' || tabName === 'note') {
-        if (contentSection) contentSection.style.display = 'flex';
-        if (tabName === 'note') {
-            loadNotes();
-        }
-    } else {
-        if (welcomeScreen) welcomeScreen.style.display = 'block';
-    }
-}
-
-function goHome() {
-    selectTab('home');
 }
