@@ -4,37 +4,42 @@ document.addEventListener('DOMContentLoaded', () => {
         loadEquipment();
     }
 
-    // Универсальный перехват отправки любой формы на странице
-    document.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await performLogin();
-    });
+    // Ищем форму входа
+    const loginForm = document.getElementById('login-form') || 
+                      document.getElementById('login') || 
+                      document.querySelector('form');
 
-    // Универсальный перехват клика по любой кнопке (если это не форма)
-    document.addEventListener('click', async (e) => {
-        if (e.target && (e.target.type === 'submit' || e.target.id.includes('login') || e.target.classList.contains('login-btn'))) {
-            // Проверяем, что это действительно кнопка входа, а не что-то другое
-            const usernameInput = document.getElementById('username') || document.querySelector('input[name="username"]');
-            if (usernameInput && usernameInput.offsetParent !== null) {
-                e.preventDefault();
-                await performLogin();
-            }
-        }
-    });
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await performLogin(loginForm);
+        });
+    }
+
+    // Если кнопка входа вне формы или форма отправляется кликом
+    const submitButton = document.getElementById('login-btn') || 
+                         document.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const form = submitButton.closest('form') || document;
+            await performLogin(form);
+        });
+    }
 });
 
-async function performLogin() {
-    // Ищем поля ввода по любым возможным ID или атрибутам
-    const usernameInput = document.getElementById('username') || 
-                          document.querySelector('input[name="username"]') || 
-                          document.querySelector('input[type="text"]');
+async function performLogin(context = document) {
+    // Ищем поля строго внутри формы или на странице по стандартным именам и ID
+    const usernameInput = context.querySelector('#username') || 
+                          context.querySelector('input[name="username"]') || 
+                          context.querySelector('input[type="text"]');
                           
-    const passwordInput = document.getElementById('password') || 
-                          document.querySelector('input[name="password"]') || 
-                          document.querySelector('input[type="password"]');
+    const passwordInput = context.querySelector('#password') || 
+                          context.querySelector('input[name="password"]') || 
+                          context.querySelector('input[type="password"]');
 
     if (!usernameInput || !passwordInput) {
-        alert('Не удалось найти поля логина или пароля на странице');
+        alert('Не удалось найти поля логина или пароля');
         return;
     }
 
@@ -56,7 +61,6 @@ async function performLogin() {
         const data = await response.json();
 
         if (!response.ok) {
-            // Сервер вернул ошибку (например, неверный пароль) — показываем её пользователю!
             throw new Error(data.error || 'Неверный логин или пароль');
         }
 
@@ -69,7 +73,6 @@ async function performLogin() {
         checkAuthUI();
         loadEquipment();
     } catch (err) {
-        // Обязательно выводим ошибку на экран
         alert(err.message);
     }
 }
@@ -85,18 +88,15 @@ function getCurrentUser() {
 function checkAuthUI() {
     const user = getCurrentUser();
     
-    // Ищем блоки авторизации и контента по возможным ID или классам
     const authPanel = document.getElementById('auth-panel') || 
                       document.getElementById('login-section') || 
                       document.getElementById('login-container') ||
-                      document.querySelector('.login-container') ||
-                      document.querySelector('form');
+                      document.querySelector('.login-container');
 
     const appContent = document.getElementById('app-content') || 
                        document.getElementById('equipment-section') || 
                        document.getElementById('main-app') ||
-                       document.querySelector('.app-content') ||
-                       document.querySelector('table');
+                       document.querySelector('.app-content');
 
     if (user) {
         if (authPanel) authPanel.style.display = 'none';
