@@ -43,20 +43,26 @@ function initDatabase() {
             role TEXT
         )`);
 
+        // Создаем базовую таблицу, если её совсем нет
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            serialNumber TEXT,
-            verificationDate TEXT,
-            nextVerificationDate TEXT,
-            status TEXT,
-            location TEXT,
-            notes TEXT,
-            files TEXT
+            name TEXT
         )`, () => {
-            // Безопасно добавляем колонку, если её не было в старой базе
-            db.run(`ALTER TABLE equipment ADD COLUMN verificationDate TEXT`, (err) => {
-                // Ошибку игнорируем (она возникнет, если колонка уже существует)
+            // Автоматически добавляем все необходимые колонки, если их нет в старой базе
+            const columnsToAdd = [
+                'serialNumber TEXT',
+                'verificationDate TEXT',
+                'nextVerificationDate TEXT',
+                'status TEXT',
+                'location TEXT',
+                'notes TEXT',
+                'files TEXT'
+            ];
+
+            columnsToAdd.forEach(colDef => {
+                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, (err) => {
+                    // Ошибку игнорируем (она значит, что колонка уже существует)
+                });
             });
         });
 
@@ -114,7 +120,7 @@ app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) 
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
                    
-    db.run(query, [name, serialNumber, verificationDate || '', nextVerificationDate, status, location, notes, JSON.stringify(files)], function(err) {
+    db.run(query, [name, serialNumber || '', verificationDate || '', nextVerificationDate || '', status || '', location || '', notes || '', JSON.stringify(files)], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
     });
@@ -124,7 +130,7 @@ app.put('/api/equipment/:id', requireAuth, (req, res) => {
     const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
     const query = `UPDATE equipment SET name = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
     
-    db.run(query, [name, serialNumber, verificationDate || '', nextVerificationDate, status, location, notes, req.params.id], function(err) {
+    db.run(query, [name, serialNumber || '', verificationDate || '', nextVerificationDate || '', status || '', location || '', notes || '', req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
