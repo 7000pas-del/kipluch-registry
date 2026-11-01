@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthUI();
-    loadEquipment();
+    if (getCurrentUser()) {
+        loadEquipment();
+    }
 
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
@@ -28,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.error || 'Ошибка входа');
                 }
 
-                localStorage.setItem('currentUser', JSON.stringify(data));
+                localStorage.setItem('currentUser', JSON.stringify(data.user));
                 loginForm.reset();
                 checkAuthUI();
                 loadEquipment();
@@ -67,8 +69,13 @@ function logout() {
 }
 
 async function loadEquipment() {
+    const user = getCurrentUser();
+    if (!user) return;
+
     try {
-        const res = await fetch('/api/equipment');
+        const res = await fetch('/api/equipment', {
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
         if (!res.ok) throw new Error('Ошибка загрузки реестра');
         const data = await res.json();
         renderEquipment(data);
@@ -101,8 +108,12 @@ function renderEquipment(data) {
 
 async function deleteEquipment(id) {
     if (!confirm('Удалить эту запись?')) return;
+    const user = getCurrentUser();
     try {
-        const res = await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/equipment/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
         if (!res.ok) throw new Error('Ошибка удаления');
         loadEquipment();
     } catch (err) {
