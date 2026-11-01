@@ -83,11 +83,11 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// Middleware для проверки, что пользователь авторизован (проверка заголовка)
+// Middleware для проверки авторизации
 const requireAuth = (req, res, next) => {
     const authHeader = req.headers['x-auth-user'];
     if (!authHeader) {
-        return res.status(403.4, 401).json({ error: 'Требуется авторизация' });
+        return res.status(401).json({ error: 'Требуется авторизация' });
     }
     try {
         const user = JSON.parse(authHeader);
@@ -98,7 +98,7 @@ const requireAuth = (req, res, next) => {
     res.status(401).json({ error: 'Недействительная сессия' });
 };
 
-// Все эндпоинты реестра теперь защищены строго на сервере
+// Защищенные эндпоинты реестра
 app.get('/api/equipment', requireAuth, (req, res) => {
     db.all("SELECT * FROM equipment", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -116,6 +116,17 @@ app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     db.run(query, [name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, JSON.stringify(files)], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
+    });
+});
+
+// Редактирование записи оборудования (PUT)
+app.put('/api/equipment/:id', requireAuth, (req, res) => {
+    const { name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
+    const query = `UPDATE equipment SET name = ?, type = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
+    
+    db.run(query, [name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
     });
 });
 
