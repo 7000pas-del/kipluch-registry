@@ -1,359 +1,234 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DB_PATH = path.join(__dirname, 'archive.db');
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Настройка папки для загрузок
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
+// --- НАСТРОЙКА ХРАНИЛИЩА И ЛИМИТОВ (MULTER) ---
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage });
 
-// Инициализация базы данных SQLite
-const dbFile = path.join(__dirname, 'archive.db');
-const db = new sqlite3.Database(dbFile, (err) => {
-    if (err) console.error('Ошибка открытия БД:', err.message);
-    else console.log('Подключено к базе данных SQLite.');
+// Защита от переполнения: ограничение размера файла до 10 МБ
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-// Создание таблиц и проверка колонок при запуске
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        username TEXT UNIQUE,
-        password TEXT,
-        role TEXT,
-        permissions TEXT
-    )`);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-    db.run(`CREATE TABLE IF NOT EXISTS equipment (
-        id TEXT PRIMARY KEY,
-        name TEXT,
-        serialNumber TEXT,
-        gsiNumber TEXT,
-        ownerName TEXT,
-        location TEXT,
-        installationDate TEXT,
-        capacity TEXT,
-        minCapacity TEXT,
-        discrete TEXT,
-        adcType TEXT,
-        sensorType TEXT,
-        platformCount TEXT,
-        weighingMode TEXT,
-        lastVerification TEXT,
-        nextVerification TEXT,
-        certNumber TEXT,
-        phone TEXT,
-        email TEXT,
-        status TEXT,
-        notes TEXT
-    )`, () => {
-        // Автоматически добавляем все возможные колонки, если таблица была создана ранее со старой структурой
-        const columns = [
-            'gsiNumber TEXT', 'minCapacity TEXT', 'discrete TEXT', 'adcType TEXT',
-            'sensorType TEXT', 'platformCount TEXT', 'weighingMode TEXT', 'certNumber TEXT',
-            'phone TEXT', 'email TEXT', 'status TEXT', 'notes TEXT', 'ownerName TEXT',
-            'location TEXT', 'installationDate TEXT', 'capacity TEXT', 'lastVerification TEXT',
-            'nextVerification TEXT'
-        ];
-        columns.forEach(col => {
-            db.run(`ALTER TABLE equipment ADD COLUMN ${col}`, () => {});
+// --- ИНИЦИАЛИЗАЦИЯ И МИГРАЦИЯ БАЗЫ ДАННЫХ ---
+let db = new sqlite3.Database(DB_PATH, (err) => {
+    if (err) console.error('Ошибка подключения к БД:', err.message);
+    else console.log('Успешное подключение к SQLite БД');
+});
+
+function initDatabase() {
+    db.serialize(() => {
+        // Таблица пользователей
+        db.run(`CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT
+        )`);
+
+        // Таблица оборудования
+        db.run(`CREATE TABLE IF NOT EXISTS equipment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            type TEXT,
+            serialNumber TEXT,
+            verificationDate TEXT,
+            nextVerificationDate TEXT,
+            status TEXT,
+            location TEXT,
+            notes TEXT,
+            files TEXT
+        )`);
+
+        // Создание стандартного администратора, если его нет
+        db.get("SELECT * FROM users WHERE username = 'admin'", async (err, row) => {
+            if (!row) {
+                const hashedPassword = await bcrypt.hash('admin123', 10);
+                db.run("INSERT INTO users (username, password, role) VALUES ('admin', ?, 'admin')", [hashedPassword]);
+                console.log('Создан дефолтный администратор (admin / admin123)');
+            }
+        });
+
+        // Автоматическое захеширование старых паролей открытого текста
+        db.all("SELECT id, password FROM users", async (err, users) => {
+            if (users) {
+                for (const user of users) {
+                    if (user.password && !user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')) {
+                        const hashed = await bcrypt.hash(user.password, 10);
+                        db.run("UPDATE users SET password = ? WHERE id = ?", [hashed, user.id]);
+                        console.log(`Пароль пользователя ID ${user.id} захеширован.`);
+                    }
+                }
+            }
         });
     });
+}
 
-    db.run(`CREATE TABLE IF NOT EXISTS folders (
-        id TEXT PRIMARY KEY,
-        type TEXT,
-        name TEXT
-    )`);
+initDatabase();
 
-    db.run(`CREATE TABLE IF NOT EXISTS items (
-        id TEXT PRIMARY KEY,
-        type TEXT,
-        name TEXT,
-        content TEXT,
-        filePath TEXT,
-        folderId TEXT,
-        equipmentId TEXT,
-        date TEXT
-    )`);
+// --- MIDDLEWARE ПРОВЕРКИ АВТОРИЗАЦИИ И ПРАВ НА СЕРВЕРЕ ---
+const requireAuth = (req, res, next) => {
+    const userRole = req.headers['x-user-role'];
+    if (!userRole) {
+        return res.status(401).json({ error: 'Необходима авторизация' });
+    }
+    next();
+};
 
-    db.run(`CREATE TABLE IF NOT EXISTS maintenance (
-        id TEXT PRIMARY KEY,
-        equipmentId TEXT,
-        workType TEXT,
-        date TEXT,
-        description TEXT,
-        performedBy TEXT
-    )`);
+const requireAdmin = (req, res, next) => {
+    const userRole = req.headers['x-user-role'];
+    if (userRole !== 'admin') {
+        return res.status(403).json({ error: 'Доступ запрещен. Требуются права администратора' });
+    }
+    next();
+};
 
-    // Создаем админа по умолчанию, если его нет
-    db.get(`SELECT * FROM users WHERE username = ?`, ['admin'], (err, row) => {
-        if (!row) {
-            const adminId = 'user_' + Date.now();
-            db.run(
-                `INSERT INTO users (id, username, password, role, permissions) VALUES (?, ?, ?, ?, ?)`,
-                [adminId, 'admin', 'admin', 'admin', 'all'],
-                (e) => {
-                    if (!e) console.log('Создан дефолтный администратор (логин: admin, пароль: admin)');
-                }
-            );
-        }
-    });
-});
-
-// --- API АВТОРИЗАЦИИ ---
+// --- AUTH API ---
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, user) => {
-        if (err || !user) {
-            return res.json({ success: false, error: 'Неверный логин или пароль' });
-        }
+    db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
+        if (err) return res.status(500).json({ error: 'Ошибка сервера' });
+        if (!user) return res.status(401).json({ error: 'Неверный логин или пароль' });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ error: 'Неверный логин или пароль' });
+
         res.json({
-            success: true,
-            role: user.role,
-            permissions: user.permissions
+            id: user.id,
+            username: user.username,
+            role: user.role
         });
     });
 });
 
-// --- API ПОЛЬЗОВАТЕЛЕЙ ---
-app.get('/api/users', (req, res) => {
-    db.all(`SELECT id, username, role, permissions FROM users`, [], (err, rows) => {
+// --- USERS API ---
+app.get('/api/users', requireAdmin, (req, res) => {
+    db.all("SELECT id, username, role FROM users", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-app.post('/api/users', (req, res) => {
-    let { id, username, password, role, permissions } = req.body;
-    const permString = Array.isArray(permissions) ? permissions.join(',') : (permissions || '');
+app.post('/api/users', requireAdmin, async (req, res) => {
+    const { username, password, role } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Укажите логин и пароль' });
 
-    if (!id) {
-        id = 'user_' + Date.now();
-        db.run(
-            `INSERT INTO users (id, username, password, role, permissions) VALUES (?, ?, ?, ?, ?)`,
-            [id, username, password, role, permString],
-            (err) => {
-                if (err) return res.json({ success: false, error: 'Пользователь уже существует' });
-                res.json({ success: true });
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        db.run("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+            [username, hashedPassword, role || 'user'],
+            function(err) {
+                if (err) return res.status(400).json({ error: 'Пользователь уже существует' });
+                res.json({ id: this.lastID, username, role });
             }
         );
-    } else {
-        if (password) {
-            db.run(
-                `UPDATE users SET username = ?, password = ?, role = ?, permissions = ? WHERE id = ?`,
-                [username, password, role, permString, id],
-                (err) => {
-                    if (err) return res.json({ success: false, error: err.message });
-                    res.json({ success: true });
-                }
-            );
-        } else {
-            db.run(
-                `UPDATE users SET username = ?, role = ?, permissions = ? WHERE id = ?`,
-                [username, role, permString, id],
-                (err) => {
-                    if (err) return res.json({ success: false, error: err.message });
-                    res.json({ success: true });
-                }
-            );
-        }
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка хеширования пароля' });
     }
 });
 
-app.delete('/api/users/:id', (req, res) => {
-    db.run(`DELETE FROM users WHERE id = ?`, [req.params.id], (err) => {
-        if (err) return res.json({ success: false, error: err.message });
+app.delete('/api/users/:id', requireAdmin, (req, res) => {
+    db.run("DELETE FROM users WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
 });
 
-// --- API БАЗЫ ДАННЫХ И ОБОРУДОВАНИЯ ---
-app.get('/api/db', (req, res) => {
-    db.all(`SELECT * FROM folders`, [], (err, folders) => {
-        if (err) return res.status(500).json({ error: err.message });
-        db.all(`SELECT * FROM items`, [], (err2, items) => {
-            if (err2) return res.status(500).json({ error: err2.message });
-            res.json({ folders, items });
-        });
-    });
-});
-
-app.get('/api/equipment', (req, res) => {
-    db.all(`SELECT * FROM equipment`, [], (err, rows) => {
+// --- EQUIPMENT API ---
+app.get('/api/equipment', requireAuth, (req, res) => {
+    db.all("SELECT * FROM equipment", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-app.post('/api/equipment', (req, res) => {
-    const eq = req.body;
-    const id = eq.id || ('eq_' + Date.now());
-
-    const query = `INSERT INTO equipment (
-        id, name, serialNumber, gsiNumber, ownerName, location, installationDate,
-        capacity, minCapacity, discrete, adcType, sensorType, platformCount,
-        weighingMode, lastVerification, nextVerification, certNumber, phone, email, status, notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-        name=excluded.name, serialNumber=excluded.serialNumber, gsiNumber=excluded.gsiNumber,
-        ownerName=excluded.ownerName, location=excluded.location, installationDate=excluded.installationDate,
-        capacity=excluded.capacity, minCapacity=excluded.minCapacity, discrete=excluded.discrete,
-        adcType=excluded.adcType, sensorType=excluded.sensorType, platformCount=excluded.platformCount,
-        weighingMode=excluded.weighingMode, lastVerification=excluded.lastVerification,
-        nextVerification=excluded.nextVerification, certNumber=excluded.certNumber,
-        phone=excluded.phone, email=excluded.email, status=excluded.status, notes=excluded.notes`;
-
-    db.run(query, [
-        id, eq.name, eq.serialNumber, eq.gsiNumber, eq.ownerName, eq.location, eq.installationDate,
-        eq.capacity, eq.minCapacity, eq.discrete, eq.adcType, eq.sensorType, eq.platformCount,
-        eq.weighingMode, eq.lastVerification, eq.nextVerification, eq.certNumber, eq.phone, eq.email, eq.status, eq.notes
-    ], (err) => {
-        if (err) return res.json({ success: false, error: err.message });
-        res.json({ success: true, id });
+app.post('/api/equipment', requireAuth, (req, res) => {
+    const { name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files } = req.body;
+    const query = `INSERT INTO equipment (name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.run(query, [name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, JSON.stringify(files || [])], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID });
     });
 });
 
-app.delete('/api/equipment/:id', (req, res) => {
-    db.run(`DELETE FROM equipment WHERE id = ?`, [req.params.id], (err) => {
-        if (err) return res.json({ success: false, error: err.message });
+app.put('/api/equipment/:id', requireAuth, (req, res) => {
+    const { name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files } = req.body;
+    const query = `UPDATE equipment SET name=?, type=?, serialNumber=?, verificationDate=?, nextVerificationDate=?, status=?, location=?, notes=?, files=? WHERE id=?`;
+    db.run(query, [name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, JSON.stringify(files || []), req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
 });
 
-// --- API ОБСЛУЖИВАНИЯ ---
-app.get('/api/maintenance/:eqId', (req, res) => {
-    db.all(`SELECT * FROM maintenance WHERE equipmentId = ?`, [req.params.eqId], (err, rows) => {
+app.delete('/api/equipment/:id', requireAuth, (req, res) => {
+    db.run("DELETE FROM equipment WHERE id = ?", [req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
+        res.json({ success: true });
     });
 });
 
-app.post('/api/maintenance', (req, res) => {
-    const m = req.body;
-    const id = 'maint_' + Date.now();
-    db.run(
-        `INSERT INTO maintenance (id, equipmentId, workType, date, description, performedBy) VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, m.equipmentId, m.workType, m.date, m.description, m.performedBy],
-        (err) => {
-            if (err) return res.json({ success: false, error: err.message });
-            res.json({ success: true });
+// --- UPLOAD API ---
+app.post('/api/upload', requireAuth, upload.array('files'), (req, res) => {
+    const filePaths = req.files.map(f => `/uploads/${f.filename}`);
+    res.json({ paths: filePaths });
+});
+
+// --- BACKUP & RESTORE API ---
+app.get('/api/backup/download', requireAdmin, (req, res) => {
+    res.download(DB_PATH, 'archive.db');
+});
+
+const backupUpload = multer({ dest: 'temp/' });
+app.post('/api/backup/upload', requireAdmin, backupUpload.single('backup'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Файл бэкапа не выбран' });
+
+    const tempPath = req.file.path;
+
+    // Корректно закрываем текущую БД во избежание ошибки EBUSY на Windows
+    db.close((err) => {
+        if (err) {
+            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            return res.status(500).json({ error: 'Не удалось освободить файл базы данных' });
         }
-    );
-});
 
-app.delete('/api/maintenance/:id', (req, res) => {
-    db.run(`DELETE FROM maintenance WHERE id = ?`, [req.params.id], (err) => {
-        if (err) return res.json({ success: false, error: err.message });
-        res.json({ success: true });
-    });
-});
+        fs.copyFile(tempPath, DB_PATH, (copyErr) => {
+            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 
-// --- API ПАПОК, ФАЙЛОВ И ЗАМЕТОК ---
-app.post('/api/folders', (req, res) => {
-    const { id, type, name } = req.body;
-    db.run(`INSERT INTO folders (id, type, name) VALUES (?, ?, ?)`, [id, type, name], (err) => {
-        if (err) return res.json({ success: false, error: err.message });
-        res.json({ success: true });
-    });
-});
-
-app.delete('/api/folders/:id', (req, res) => {
-    db.run(`DELETE FROM folders WHERE id = ?`, [req.params.id], (err) => {
-        if (err) return res.json({ success: false, error: err.message });
-        res.json({ success: true });
-    });
-});
-
-app.post('/api/upload', upload.array('files'), (req, res) => {
-    const folderId = req.body.folderId || null;
-    const files = req.files;
-    if (!files || files.length === 0) return res.json({ success: false, error: 'Файлы не загружены' });
-
-    db.serialize(() => {
-        const stmt = db.prepare(`INSERT INTO items (id, type, name, content, filePath, folderId, date) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-        files.forEach(file => {
-            const id = 'item_' + Date.now() + Math.random().toString(36).substring(2, 7);
-            const isImage = file.mimetype.startsWith('image/');
-            const type = isImage ? 'image' : 'doc';
-            const filePath = `/uploads/${file.filename}`;
-            const dateStr = new Date().toISOString().slice(0, 10);
-            stmt.run(id, type, file.originalname, '', filePath, folderId, dateStr);
+            // Переподключаем сервер к обновленной базе данных
+            db = new sqlite3.Database(DB_PATH, (reconnectErr) => {
+                if (copyErr || reconnectErr) {
+                    return res.status(500).json({ error: 'Ошибка восстановления базы данных' });
+                }
+                initDatabase();
+                res.json({ success: true, message: 'База данных успешно восстановлена' });
+            });
         });
-        stmt.finalize((err) => {
-            if (err) return res.json({ success: false, error: err.message });
-            res.json({ success: true });
-        });
-    });
-});
-
-app.post('/api/notes', (req, res) => {
-    const { id, name, content, folderId } = req.body;
-    const dateStr = new Date().toISOString().slice(0, 10);
-
-    if (!id) {
-        const newId = 'item_' + Date.now();
-        db.run(
-            `INSERT INTO items (id, type, name, content, filePath, folderId, date) VALUES (?, 'note', ?, ?, '', ?, ?)`,
-            [newId, name, content, folderId || null, dateStr],
-            (err) => {
-                if (err) return res.json({ success: false, error: err.message });
-                res.json({ success: true });
-            }
-        );
-    } else {
-        db.run(
-            `UPDATE items SET name = ?, content = ? WHERE id = ?`,
-            [name, content, id],
-            (err) => {
-                if (err) return res.json({ success: false, error: err.message });
-                res.json({ success: true });
-            }
-        );
-    }
-});
-
-app.delete('/api/items/:id', (req, res) => {
-    db.run(`DELETE FROM items WHERE id = ?`, [req.params.id], (err) => {
-        if (err) return res.json({ success: false, error: err.message });
-        res.json({ success: true });
-    });
-});
-
-// --- API БЭКАПА ---
-app.get('/api/backup/download', (req, res) => {
-    res.download(dbFile, 'archive.db');
-});
-
-const backupUpload = multer({ dest: path.join(__dirname, 'temp') });
-app.post('/api/backup/upload', backupUpload.single('backup'), (req, res) => {
-    if (!req.file) return res.json({ success: false, error: 'Файл бэкапа не передан' });
-    
-    fs.copyFile(req.file.path, dbFile, (err) => {
-        fs.unlink(req.file.path, () => {}); // удалить временный файл
-        if (err) return res.json({ success: false, error: err.message });
-        res.json({ success: true });
     });
 });
 
