@@ -98,7 +98,7 @@ async function loadEquipment() {
         });
         if (!res.ok) throw new Error('Ошибка загрузки реестра');
         const data = await res.json();
-        window.allEquipment = data; // Сохраняем в глобальную переменную для просмотра/редактирования
+        window.allEquipment = data; 
         renderEquipment(data);
     } catch (err) {
         console.error(err);
@@ -112,10 +112,8 @@ function renderEquipment(data) {
     tableBody.innerHTML = '';
     data.forEach(item => {
         const row = document.createElement('tr');
-        // Клик по строке открывает паспорт/карточку прибора
         row.style.cursor = 'pointer';
         row.onclick = (e) => {
-            // Если кликнули не по кнопке удаления или редактирования, открываем карточку
             if (!e.target.closest('button')) {
                 viewEquipmentPassport(item.id);
             }
@@ -129,8 +127,8 @@ function renderEquipment(data) {
             <td>${item.nextVerificationDate || ''}</td>
             <td>${item.status || ''}</td>
             <td style="text-align: right; white-space: nowrap;">
-                <button class="btn" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipment(${item.id})">✏️</button>
-                <button class="btn" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(${item.id})">🗑️</button>
+                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipment(event, ${item.id})">✏️</button>
+                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
             </td>
         `;
         tableBody.appendChild(row);
@@ -142,19 +140,17 @@ function viewEquipmentPassport(id) {
     const item = window.allEquipment?.find(eq => eq.id === id);
     if (!item) return;
 
-    // Заполняем поля модального окна просмотра
     document.getElementById('viewEqName').textContent = item.name || '-';
     document.getElementById('viewEqSerial').textContent = item.serialNumber || '-';
     document.getElementById('viewEqLocation').textContent = item.location || '-';
     document.getElementById('viewEqNextVer').textContent = item.nextVerificationDate || '-';
     document.getElementById('viewEqNotes').textContent = item.notes || '-';
     
-    // Кнопка «Изменить» прямо из карточки
     const btnEdit = document.getElementById('btnEditFromView');
     if (btnEdit) {
         btnEdit.onclick = () => {
             closeViewEquipmentModal();
-            editEquipment(item.id);
+            openEquipmentModal(item);
         };
     }
 
@@ -167,12 +163,11 @@ function closeViewEquipmentModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// Управление модальными окнами
+// Открытие модального окна добавления/редактирования
 function openEquipmentModal(editData = null) {
     const modal = document.getElementById('equipmentModal');
     const title = document.getElementById('eqModalTitle');
 
-    // Очищаем или заполняем форму
     document.getElementById('eqName').value = editData ? editData.name || '' : '';
     document.getElementById('eqSerial').value = editData ? editData.serialNumber || '' : '';
     document.getElementById('eqLocation').value = editData ? editData.location || '' : '';
@@ -197,7 +192,8 @@ function closeEquipmentModal() {
     window.currentEditId = null;
 }
 
-function editEquipment(id) {
+function editEquipment(event, id) {
+    if (event) event.stopPropagation();
     const item = window.allEquipment?.find(eq => eq.id === id);
     if (item) {
         openEquipmentModal(item);
@@ -223,7 +219,7 @@ function closeModals() {
     document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
 }
 
-// Сохранение (создание или обновление) оборудования
+// Сохранение оборудования (создание или обновление)
 async function saveEquipment(event) {
     if (event) event.preventDefault();
     const user = getCurrentUser();
@@ -251,10 +247,10 @@ async function saveEquipment(event) {
                 'Content-Type': 'application/json',
                 'x-auth-user': JSON.stringify(user)
             },
-            body: JSON.stringify({ name, serialNumber, location, status, nextVerificationDate, notes })
+            body: JSON.stringify({ name, type: '', serialNumber, verificationDate: '', nextVerificationDate, status, location, notes })
         });
 
-        if (!res.ok) throw new Error('Ошибка сохранения');
+        if (!res.ok) throw new Error('Ошибка сохранения на сервере');
 
         closeEquipmentModal();
         loadEquipment();
@@ -264,7 +260,8 @@ async function saveEquipment(event) {
 }
 
 // Удаление записи
-async function deleteEquipment(id) {
+async function deleteEquipment(event, id) {
+    if (event) event.stopPropagation();
     if (!confirm('Удалить эту запись?')) return;
     const user = getCurrentUser();
     try {
@@ -279,7 +276,6 @@ async function deleteEquipment(id) {
     }
 }
 
-// Переключение вкладок
 function selectTab(tabName) {
     const welcomeScreen = document.getElementById('welcomeScreen');
     const adminSection = document.getElementById('adminSection');
