@@ -89,7 +89,6 @@ function logoutSystem() {
     location.reload();
 }
 
-// Текущая активная вкладка («doc», «image», «note»)
 window.currentTab = 'doc';
 window.currentFolderId = null;
 
@@ -277,7 +276,7 @@ async function deleteEquipment(event, id) {
     }
 }
 
-// --- Управление вкладками архива (Документы / Фото / Заметки) ---
+// --- Управление вкладками архива ---
 function selectTab(tabName) {
     window.currentTab = tabName;
     window.currentFolderId = null;
@@ -312,7 +311,6 @@ function goHome() {
     selectTab('home');
 }
 
-// Загрузка папок и файлов для текущего раздела
 async function loadArchiveContent() {
     const user = getCurrentUser();
     if (!user) return;
@@ -335,7 +333,6 @@ async function loadArchiveContent() {
     }
 }
 
-// Функция создания папки (привязана к кнопке "Создать папку")
 async function promptCreateFolder() {
     if (window.currentTab === 'note') {
         openNoteModal();
@@ -386,7 +383,6 @@ function renderFolders(folders) {
         `;
         div.onclick = () => {
             window.currentFolderId = folder.id;
-            alert(`Открыта папка: ${folder.name}`);
         };
         container.appendChild(div);
     });
