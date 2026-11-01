@@ -61,7 +61,6 @@ function initDatabase() {
             });
         });
 
-        // Таблица папок с поддержкой типа вкладки (doc / image)
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -70,7 +69,6 @@ function initDatabase() {
             db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
         });
 
-        // Таблица заметок
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
@@ -90,13 +88,11 @@ initDatabase();
 
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    
     db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
         if (err) return res.status(500).json({ error: 'Ошибка сервера' });
         if (!user || user.password !== password) {
             return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
-
         res.json({
             success: true,
             user: { id: user.id, username: user.username, role: user.role }
@@ -129,10 +125,7 @@ app.get('/api/equipment', requireAuth, (req, res) => {
 app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
     const files = req.files ? req.files.map(f => f.filename) : [];
-    
-    const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-                   
+    const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     db.run(query, [name, serialNumber || '', verificationDate || '', nextVerificationDate || '', status || '', location || '', notes || '', JSON.stringify(files)], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
@@ -142,7 +135,6 @@ app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
 app.put('/api/equipment/:id', requireAuth, (req, res) => {
     const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
     const query = `UPDATE equipment SET name = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
-    
     db.run(query, [name, serialNumber || '', verificationDate || '', nextVerificationDate || '', status || '', location || '', notes || '', req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
@@ -156,7 +148,7 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки (с фильтрацией по типу: doc / image) ---
+// --- Папки ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     db.all("SELECT * FROM folders WHERE type = ?", [type], (err, rows) => {
