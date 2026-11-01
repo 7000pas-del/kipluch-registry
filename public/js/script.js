@@ -223,12 +223,13 @@ function checkPermission(perm) {
 }
 
 function applyUserRoleUI() {
-    const role = localStorage.getItem('currentUserRole') || 'user';
     const username = localStorage.getItem('currentUser') || 'Пользователь';
+    const role = localStorage.getItem('currentUserRole') || 'user';
     
     const badge = document.getElementById('currentUserBadge');
     if (badge) {
-        badge.textContent = `👤 ${username} (${role === 'admin' ? 'Админ' : 'Пользователь'})`;
+        // Выводим только имя пользователя без роли в скобках
+        badge.textContent = `👤 ${username}`;
     }
 
     const navAdmin = document.getElementById('navAdmin');
