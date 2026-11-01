@@ -321,7 +321,14 @@ async function loadArchiveContent() {
     }
 
     try {
-        const res = await fetch(`/api/folders?type=${window.currentTab}`, {
+        let url = `/api/folders?type=${window.currentTab}`;
+        if (window.currentFolderId) {
+            url += `&parentId=${window.currentFolderId}`;
+        } else {
+            url += `&parentId=root`;
+        }
+
+        const res = await fetch(url, {
             headers: { 'x-auth-user': JSON.stringify(user) }
         });
         if (res.ok) {
@@ -357,7 +364,8 @@ async function promptCreateFolder() {
             },
             body: JSON.stringify({ 
                 name: folderName.trim(), 
-                type: window.currentTab || 'doc' 
+                type: window.currentTab || 'doc',
+                parentId: window.currentFolderId || null
             })
         });
 
@@ -383,7 +391,20 @@ function renderFolders(folders) {
     if (!container) return;
 
     container.innerHTML = '';
-    if (folders.length === 0) {
+
+    if (window.currentFolderId) {
+        const backDiv = document.createElement('div');
+        backDiv.className = 'folder-card';
+        backDiv.style.cssText = 'background: #334155; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; align-items: center; margin-bottom: 6px; cursor: pointer; color: #38bdf8; font-weight: bold;';
+        backDiv.innerHTML = `<span>⬅️ Назад</span>`;
+        backDiv.onclick = () => {
+            window.currentFolderId = null;
+            loadArchiveContent();
+        };
+        container.appendChild(backDiv);
+    }
+
+    if (folders.length === 0 && !window.currentFolderId) {
         container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 10px;">Папок пока нет</div>';
         return;
     }
@@ -406,11 +427,7 @@ function renderFolders(folders) {
 
         div.onclick = () => {
             window.currentFolderId = folder.id;
-            document.querySelectorAll('.folder-card').forEach(card => {
-                card.style.borderColor = 'var(--border)';
-            });
-            div.style.borderColor = '#3b82f6';
-            alert(`📂 Открыта папка: "${folder.name}"`);
+            loadArchiveContent();
         };
 
         container.appendChild(div);
