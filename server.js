@@ -46,7 +46,6 @@ function initDatabase() {
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
-            type TEXT,
             serialNumber TEXT,
             verificationDate TEXT,
             nextVerificationDate TEXT,
@@ -104,23 +103,23 @@ app.get('/api/equipment', requireAuth, (req, res) => {
 });
 
 app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
-    const { name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
+    const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
     const files = req.files ? req.files.map(f => f.filename) : [];
     
-    const query = `INSERT INTO equipment (name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
                    
-    db.run(query, [name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, JSON.stringify(files)], function(err) {
+    db.run(query, [name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, JSON.stringify(files)], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
     });
 });
 
 app.put('/api/equipment/:id', requireAuth, (req, res) => {
-    const { name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
-    const query = `UPDATE equipment SET name = ?, type = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
+    const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
+    const query = `UPDATE equipment SET name = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
     
-    db.run(query, [name, type || '', serialNumber, verificationDate || '', nextVerificationDate, status, location, notes, req.params.id], function(err) {
+    db.run(query, [name, serialNumber, verificationDate || '', nextVerificationDate, status, location, notes, req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
