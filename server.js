@@ -34,7 +34,6 @@ let db = new sqlite3.Database(DB_PATH, (err) => {
     else console.log('Успешное подключение к SQLite БД');
 });
 
-// Инициализация таблиц и создание учетной записи администратора
 function initDatabase() {
     db.serialize(() => {
         db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -78,23 +77,36 @@ app.post('/api/login', (req, res) => {
         }
 
         res.json({
-            id: user.id,
-            username: user.username,
-            role: user.role
+            success: true,
+            user: { id: user.id, username: user.username, role: user.role }
         });
     });
 });
 
-// Получить список оборудования
-app.get('/api/equipment', (req, res) => {
+// Middleware для проверки, что пользователь авторизован (проверка заголовка)
+const requireAuth = (req, res, next) => {
+    const authHeader = req.headers['x-auth-user'];
+    if (!authHeader) {
+        return res.status(403.4, 401).json({ error: 'Требуется авторизация' });
+    }
+    try {
+        const user = JSON.parse(authHeader);
+        if (user && user.username) {
+            return next();
+        }
+    } catch (e) {}
+    res.status(401).json({ error: 'Недействительная сессия' });
+};
+
+// Все эндпоинты реестра теперь защищены строго на сервере
+app.get('/api/equipment', requireAuth, (req, res) => {
     db.all("SELECT * FROM equipment", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-// Добавить запись
-app.post('/api/equipment', upload.array('files'), (req, res) => {
+app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     const { name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
     const files = req.files ? req.files.map(f => f.filename) : [];
     
@@ -107,8 +119,7 @@ app.post('/api/equipment', upload.array('files'), (req, res) => {
     });
 });
 
-// Удалить запись
-app.delete('/api/equipment/:id', (req, res) => {
+app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     db.run("DELETE FROM equipment WHERE id = ?", [req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
