@@ -1,20 +1,42 @@
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthUI();
-    if (getCurrentUser()) {
-        loadEquipment();
-    }
+    loadEquipment();
 
+    // Обработка формы входа с защитой от перезагрузки страницы
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Блокируем стандартную перезагрузку и автозаполнение
+            e.preventDefault();
             
-            const userInput = document.getElementById('username');
-            const passInput = document.getElementById('password');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
 
-            if (!userInput || !passInput) return;
+            if (!usernameInput || !passwordInput) return;
 
-            await login(userInput.value.trim(), passInput.value.trim());
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Ошибка входа');
+                }
+
+                // Сохраняем сессию и обновляем интерфейс
+                localStorage.setItem('currentUser', JSON.stringify(data));
+                loginForm.reset();
+                checkAuthUI();
+                loadEquipment();
+            } catch (err) {
+                alert(err.message);
+            }
         });
     }
 });
@@ -27,70 +49,28 @@ function getCurrentUser() {
     }
 }
 
-function getAuthHeaders() {
-    const user = getCurrentUser() || {};
-    return {
-        'Content-Type': 'application/json',
-        'X-User-Role': user.role || '',
-        'X-User-Name': user.username || ''
-    };
-}
-
 function checkAuthUI() {
     const user = getCurrentUser();
     const authPanel = document.getElementById('auth-panel');
-    const userDisplay = document.getElementById('user-display');
-    const adminTab = document.getElementById('admin-tab');
+    const appContent = document.getElementById('app-content') || document.getElementById('equipment-section');
 
     if (user) {
         if (authPanel) authPanel.style.display = 'none';
-        if (userDisplay) {
-            userDisplay.style.display = 'block';
-            userDisplay.textContent = `Пользователь: ${user.username}`;
-        }
-        if (adminTab) {
-            adminTab.style.display = user.role === 'admin' ? 'block' : 'none';
-        }
+        if (appContent) appContent.style.display = 'block';
     } else {
         if (authPanel) authPanel.style.display = 'block';
-        if (userDisplay) userDisplay.style.display = 'none';
-        if (adminTab) adminTab.style.display = 'none';
-    }
-}
-
-async function login(username, password) {
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Ошибка входа');
-        }
-
-        localStorage.setItem('currentUser', JSON.stringify(data));
-        checkAuthUI();
-        await loadEquipment();
-    } catch (err) {
-        alert(`Не удалось войти: ${err.message}`);
+        if (appContent) appContent.style.display = 'none';
     }
 }
 
 function logout() {
     localStorage.removeItem('currentUser');
     checkAuthUI();
-    renderEquipment([]);
 }
 
 async function loadEquipment() {
     try {
-        const res = await fetch('/api/equipment', {
-            headers: getAuthHeaders()
-        });
+        const res = await fetch('/api/equipment');
         if (!res.ok) throw new Error('Ошибка загрузки реестра');
         const data = await res.json();
         renderEquipment(data);
@@ -119,4 +99,15 @@ function renderEquipment(data) {
         `;
         tableBody.appendChild(row);
     });
+}
+
+async function deleteEquipment(id) {
+    if (!confirm('Удалить эту запись?')) return;
+    try {
+        const res = await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Ошибка удаления');
+        loadEquipment();
+    } catch (err) {
+        alert(err.message);
+    }
 }
