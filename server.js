@@ -66,7 +66,6 @@ function initDatabase() {
 
 initDatabase();
 
-// Авторизация
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     
@@ -83,7 +82,6 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// Middleware для проверки авторизации
 const requireAuth = (req, res, next) => {
     const authHeader = req.headers['x-auth-user'];
     if (!authHeader) {
@@ -98,7 +96,6 @@ const requireAuth = (req, res, next) => {
     res.status(401).json({ error: 'Недействительная сессия' });
 };
 
-// Защищенные эндпоинты реестра
 app.get('/api/equipment', requireAuth, (req, res) => {
     db.all("SELECT * FROM equipment", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -119,12 +116,11 @@ app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     });
 });
 
-// Редактирование записи оборудования (PUT)
 app.put('/api/equipment/:id', requireAuth, (req, res) => {
     const { name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
     const query = `UPDATE equipment SET name = ?, type = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
     
-    db.run(query, [name, type, serialNumber, verificationDate, nextVerificationDate, status, location, notes, req.params.id], function(err) {
+    db.run(query, [name, type || '', serialNumber, verificationDate || '', nextVerificationDate, status, location, notes, req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
