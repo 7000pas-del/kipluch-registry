@@ -61,7 +61,18 @@
             <div class="search-box" id="searchBoxContainer">
                 <button class="mobile-search-toggle" type="button" onclick="toggleMobileSearch()" title="Поиск">🔍</button>
                 <span class="search-icon">🔍</span>
-                <input type="search" id="searchInput" class="search-input" name="site_search_query" placeholder="Поиск по всему..." autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" readonly onfocus="this.removeAttribute('readonly');" oninput="onSearchInput()">
+                <input type="text" 
+                       id="searchInput" 
+                       class="search-input" 
+                       name="not_a_password_field_xyz" 
+                       placeholder="Поиск по всему..." 
+                       autocomplete="new-password" 
+                       autocapitalize="off" 
+                       spellcheck="false" 
+                       data-lpignore="true" 
+                       readonly 
+                       onfocus="this.removeAttribute('readonly');" 
+                       oninput="onSearchInput()">
             </div>
         </div>
 
