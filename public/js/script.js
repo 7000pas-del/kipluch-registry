@@ -175,7 +175,7 @@ function openEquipmentModal(editData = null) {
     document.getElementById('eqNextVer').value = editData ? editData.nextVerificationDate || '' : '';
     document.getElementById('eqNotes').value = editData ? editData.notes || '' : '';
 
-    if (editData) {
+    if (editData && editData.id) {
         if (title) title.textContent = '✏️ Редактировать оборудование';
         window.currentEditId = editData.id;
     } else {
@@ -197,6 +197,8 @@ function editEquipment(event, id) {
     const item = window.allEquipment?.find(eq => eq.id === id);
     if (item) {
         openEquipmentModal(item);
+    } else {
+        alert('Не удалось найти данные записи');
     }
 }
 
@@ -236,8 +238,9 @@ async function saveEquipment(event) {
         return;
     }
 
-    const isEdit = window.currentEditId !== null && window.currentEditId !== undefined;
-    const url = isEdit ? `/api/equipment/${window.currentEditId}` : '/api/equipment';
+    const editId = window.currentEditId;
+    const isEdit = editId !== null && editId !== undefined && editId !== '';
+    const url = isEdit ? `/api/equipment/${editId}` : '/api/equipment';
     const method = isEdit ? 'PUT' : 'POST';
 
     try {
@@ -247,12 +250,26 @@ async function saveEquipment(event) {
                 'Content-Type': 'application/json',
                 'x-auth-user': JSON.stringify(user)
             },
-            body: JSON.stringify({ name, type: '', serialNumber, verificationDate: '', nextVerificationDate, status, location, notes })
+            body: JSON.stringify({ 
+                name, 
+                type: '', 
+                serialNumber, 
+                verificationDate: '', 
+                nextVerificationDate, 
+                status, 
+                location, 
+                notes 
+            })
         });
 
-        if (!res.ok) throw new Error('Ошибка сохранения на сервере');
+        const resultData = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(resultData.error || 'Ошибка сохранения на сервере');
+        }
 
         closeEquipmentModal();
+        window.currentEditId = null;
         loadEquipment();
     } catch (err) {
         alert(err.message);
