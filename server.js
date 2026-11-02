@@ -153,7 +153,7 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки ---
+// --- Папки (Стабильный базовый вариант удаления и открытия) ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const parentId = req.query.parentId;
@@ -161,11 +161,11 @@ app.get('/api/folders', requireAuth, (req, res) => {
     let query = "SELECT * FROM folders WHERE type = ?";
     let params = [type];
 
-    if (parentId && parentId !== 'root' && parentId !== 'null') {
+    if (parentId && parentId !== 'root' && parentId !== 'null' && parentId !== 'undefined') {
         query += " AND parentId = ?";
         params.push(parentId);
     } else {
-        query += " AND (parentId IS NULL OR parentId = '' OR parentId = 'null')";
+        query += " AND (parentId IS NULL OR parentId = '' OR parentId = 0)";
     }
 
     db.all(query, params, (err, rows) => {
@@ -176,7 +176,7 @@ app.get('/api/folders', requireAuth, (req, res) => {
 
 app.post('/api/folders', requireAuth, (req, res) => {
     const { name, parentId, type } = req.body;
-    const pId = (!parentId || parentId === 'null') ? null : parentId;
+    const pId = (!parentId || parentId === 'null' || parentId === 'undefined') ? null : parentId;
     db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, type || 'doc'], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
@@ -184,7 +184,7 @@ app.post('/api/folders', requireAuth, (req, res) => {
 });
 
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
-    db.run("DELETE FROM folders WHERE id = ? OR parentId = ?", [req.params.id, req.params.id], function(err) {
+    db.run("DELETE FROM folders WHERE id = ?", [req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
