@@ -276,8 +276,9 @@ async function deleteEquipment(event, id) {
     }
 }
 
-// --- Управление вкладками архива и кнопка Загрузить ---
+// --- Управление вкладками архива ---
 function selectTab(tabName) {
+    // Жестко фиксируем вкладку, сбрасывая вложенность при переключении
     window.currentTab = tabName;
     window.currentFolderId = null;
 
@@ -301,7 +302,6 @@ function selectTab(tabName) {
             if (tabName === 'note') titleEl.textContent = '📝 Заметки';
         }
 
-        ensureUploadButtonExists();
         loadArchiveContent();
     } else {
         if (welcomeScreen) welcomeScreen.style.display = 'block';
@@ -312,69 +312,11 @@ function goHome() {
     selectTab('home');
 }
 
-// Динамически проверяем и добавляем кнопку «Загрузить файл» на панель управления вкладки
-function ensureUploadButtonExists() {
-    const actionContainer = document.querySelector('.content-actions') || document.querySelector('#contentSection .actions') || document.querySelector('#contentSection');
-    if (!actionContainer) return;
-
-    let uploadBtn = document.getElementById('dynamicUploadBtn');
-    if (!uploadBtn) {
-        uploadBtn = document.createElement('button');
-        uploadBtn.id = 'dynamicUploadBtn';
-        uploadBtn.className = 'btn';
-        uploadBtn.style.cssText = 'background: #10b981; color: white; padding: 6px 12px; font-size: 13px; border-radius: 6px; margin-right: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;';
-        uploadBtn.innerHTML = '📤 Загрузить файл';
-        
-        // Создаем скрытый инпут для выбора файла
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'dynamicFileInput';
-        fileInput.style.display = 'none';
-        fileInput.onchange = (e) => handleFileUpload(e);
-
-        document.body.appendChild(fileInput);
-
-        uploadBtn.onclick = () => fileInput.click();
-
-        // Вставляем кнопку рядом с кнопкой создания папки
-        actionContainer.insertBefore(uploadBtn, actionContainer.firstChild);
-    }
-}
-
-async function handleFileUpload(event) {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const user = getCurrentUser();
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-        formData.append('files', files[i]);
-    }
-    formData.append('name', files[0].name);
-    formData.append('location', window.currentFolderId ? `Папка ID: ${window.currentFolderId}` : 'Корень');
-    formData.append('status', 'Архив');
-
-    try {
-        const res = await fetch('/api/equipment', {
-            method: 'POST',
-            headers: { 'x-auth-user': JSON.stringify(user) },
-            body: formData
-        });
-
-        if (!res.ok) throw new Error('Ошибка загрузки файла');
-
-        alert('Файл успешно загружен!');
-        event.target.value = '';
-        loadArchiveContent();
-    } catch (err) {
-        alert('Ошибка: ' + err.message);
-    }
-}
-
 async function loadArchiveContent() {
     const user = getCurrentUser();
     if (!user) return;
 
+    // Если открыты заметки — папки не грузим
     if (window.currentTab === 'note') {
         loadNotes();
         return;
@@ -396,7 +338,7 @@ async function loadArchiveContent() {
             renderFolders(folders);
         }
     } catch (err) {
-        console.error(err);
+        console.error('Ошибка загрузки папок:', err);
     }
 }
 
@@ -424,7 +366,7 @@ async function promptCreateFolder() {
             },
             body: JSON.stringify({ 
                 name: folderName.trim(), 
-                type: window.currentTab || 'doc',
+                type: window.currentTab, // Строго передаем текущий тип (doc или image)
                 parentId: window.currentFolderId || null
             })
         });
@@ -454,10 +396,10 @@ function renderFolders(folders) {
 
     if (window.currentFolderId) {
         const backDiv = document.createElement('div');
-        backDiv.className = 'folder-card';
-        backDiv.style.cssText = 'background: #334155; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; align-items: center; margin-bottom: 6px; cursor: pointer; color: #38bdf8; font-weight: bold;';
+        backDiv.style.cssText = 'background: #334155; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; display: flex; align-items: center; margin-bottom: 6px; cursor: pointer; color: #38bdf8; font-weight: bold; pointer-events: auto;';
         backDiv.innerHTML = `<span>⬅️ Назад</span>`;
-        backDiv.onclick = () => {
+        backDiv.onclick = (e) => {
+            e.preventDefault();
             window.currentFolderId = null;
             loadArchiveContent();
         };
@@ -465,18 +407,18 @@ function renderFolders(folders) {
     }
 
     if (folders.length === 0 && !window.currentFolderId) {
-        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 10px;">Папок пока нет</div>';
+        container.innerHTML = '<div style="color: #94a3b8; font-size: 13px; padding: 10px;">Папок пока нет</div>';
         return;
     }
 
     folders.forEach(folder => {
         const div = document.createElement('div');
-        div.className = 'folder-card';
-        div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer; transition: border-color 0.2s;';
+        // Принудительно включаем pointer-events и надежный стиль
+        div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer; pointer-events: auto;';
         
         div.innerHTML = `
-            <span>📁 ${folder.name}</span>
-            <button class="btn delete-folder-btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;">🗑️</button>
+            <span style="pointer-events: none; color: #fff;">📁 ${folder.name}</span>
+            <button class="btn delete-folder-btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; pointer-events: auto;">🗑️</button>
         `;
 
         const deleteBtn = div.querySelector('.delete-folder-btn');
@@ -485,7 +427,8 @@ function renderFolders(folders) {
             deleteFolder(folder.id);
         };
 
-        div.onclick = () => {
+        div.onclick = (e) => {
+            e.stopPropagation();
             window.currentFolderId = folder.id;
             loadArchiveContent();
         };
@@ -583,14 +526,14 @@ function renderNotes(notes) {
     container.innerHTML = '';
     notes.forEach(note => {
         const card = document.createElement('div');
-        card.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 10px;';
+        card.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px;';
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
-                <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteNote(${note.id})">🗑️</button>
+                <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="deleteNote(${note.id})">🗑️</button>
             </div>
-            <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap; margin-bottom: 6px;">${note.content || ''}</div>
-            <div style="font-size: 10px; color: var(--text-muted);">${note.date || ''}</div>
+            <div style="font-size: 13px; color: #cbd5e1; white-space: pre-wrap; margin-bottom: 6px;">${note.content || ''}</div>
+            <div style="font-size: 10px; color: #94a3b8;">${note.date || ''}</div>
         `;
         container.appendChild(card);
     });
