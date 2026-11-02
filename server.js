@@ -184,11 +184,21 @@ app.post('/api/folders', requireAuth, (req, res) => {
     });
 });
 
+// ИСПРАВЛЕНО: При удалении папки теперь также удаляются все файлы, находившиеся внутри неё
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
     const folderId = req.params.id;
-    db.run("DELETE FROM folders WHERE id = ?", [folderId], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true });
+    
+    db.serialize(() => {
+        // Сначала удаляем файлы внутри этой папки
+        db.run("DELETE FROM files WHERE folderId = ?", [folderId], (err) => {
+            if (err) console.error('Ошибка при удалении файлов папки:', err.message);
+        });
+
+        // Затем удаляем саму папку
+        db.run("DELETE FROM folders WHERE id = ?", [folderId], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true });
+        });
     });
 });
 
@@ -196,13 +206,12 @@ app.delete('/api/folders/:id', requireAuth, (req, res) => {
 app.get('/api/files', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const folderId = req.query.folderId;
-    const all = req.query.all; // Если передан параметр all=true, возвращаем ВСЕ файлы этого типа (для счетчиков)
+    const all = req.query.all;
 
     let query = "SELECT * FROM files WHERE type = ?";
     let params = [type];
 
     if (all === 'true') {
-        // Возвращаем вообще все файлы раздела для правильного подсчета на главной
         db.all(query, params, (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json(rows || []);
