@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (getCurrentUser()) {
         loadEquipment();
         loadArchiveContent();
+        updateCounters(); // Автоматически обновляем счетчики при загрузке
     }
 
     const authForm = document.getElementById('authForm');
@@ -50,6 +51,7 @@ async function performLogin() {
         checkAuthUI();
         loadEquipment();
         loadArchiveContent();
+        updateCounters();
     } catch (err) {
         if (errorDiv) {
             errorDiv.style.display = 'block';
@@ -87,6 +89,40 @@ function logoutSystem() {
 
 window.currentTab = 'doc';
 window.currentFolderId = null;
+
+// --- Обновление счетчиков на главном экране ---
+async function updateCounters() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    try {
+        // Документы
+        const docRes = await fetch('/api/files?type=doc', { headers: { 'x-auth-user': JSON.stringify(user) } });
+        if (docRes.ok) {
+            const docs = await docRes.json();
+            const countDoc = document.getElementById('countDoc');
+            if (countDoc) countDoc.textContent = docs.length;
+        }
+
+        // Фотографии
+        const imgRes = await fetch('/api/files?type=image', { headers: { 'x-auth-user': JSON.stringify(user) } });
+        if (imgRes.ok) {
+            const images = await imgRes.json();
+            const countImage = document.getElementById('countImage');
+            if (countImage) countImage.textContent = images.length;
+        }
+
+        // Заметки
+        const noteRes = await fetch('/api/notes', { headers: { 'x-auth-user': JSON.stringify(user) } });
+        if (noteRes.ok) {
+            const notes = await noteRes.json();
+            const countNote = document.getElementById('countNote');
+            if (countNote) countNote.textContent = notes.length;
+        }
+    } catch (err) {
+        console.error('Ошибка обновления счетчиков:', err);
+    }
+}
 
 // --- Оборудование ---
 async function loadEquipment() {
@@ -297,6 +333,7 @@ function selectTab(tabName) {
 
 function goHome() {
     selectTab('home');
+    updateCounters();
 }
 
 function ensureUploadButtonExists() {
@@ -348,6 +385,7 @@ async function handleFileUpload(event) {
         alert('Файл успешно загружен!');
         event.target.value = '';
         loadArchiveContent();
+        updateCounters();
     } catch (err) {
         alert('Ошибка: ' + err.message);
     }
@@ -505,7 +543,6 @@ function renderFoldersAndFiles(folders, files) {
         });
     }
 
-    // Рендер файлов с кнопкой скачивания и правильной иконкой
     const filesContainer = document.getElementById('filesContainer');
     if (!filesContainer) return;
 
@@ -571,6 +608,7 @@ function renderFoldersAndFiles(folders, files) {
                     });
                     if (!res.ok) throw new Error('Ошибка удаления');
                     loadArchiveContent();
+                    updateCounters();
                 } catch (err) {
                     alert('Не удалось удалить: ' + err.message);
                 }
@@ -633,6 +671,7 @@ async function saveNote(event) {
         window.currentEditNoteId = null;
         closeModals();
         loadNotes();
+        updateCounters();
     } catch (err) {
         alert(err.message);
     }
@@ -651,8 +690,7 @@ async function loadNotes() {
         renderNotes(notes);
         
         window.allNotes = notes;
-        const countNote = document.getElementById('countNote');
-        if (countNote) countNote.textContent = notes.length;
+        updateCounters();
     } catch (err) {
         console.error(err);
     }
@@ -711,6 +749,7 @@ async function deleteNote(event, id) {
     try {
         await fetch(`/api/notes/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
         loadNotes();
+        updateCounters();
     } catch (err) {
         alert(err.message);
     }
