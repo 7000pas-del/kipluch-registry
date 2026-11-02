@@ -276,7 +276,7 @@ async function deleteEquipment(event, id) {
     }
 }
 
-// --- Управление вкладками архива ---
+// --- Управление вкладками архива и кнопка Загрузить ---
 function selectTab(tabName) {
     window.currentTab = tabName;
     window.currentFolderId = null;
@@ -301,6 +301,7 @@ function selectTab(tabName) {
             if (tabName === 'note') titleEl.textContent = '📝 Заметки';
         }
 
+        ensureUploadButtonExists();
         loadArchiveContent();
     } else {
         if (welcomeScreen) welcomeScreen.style.display = 'block';
@@ -309,6 +310,65 @@ function selectTab(tabName) {
 
 function goHome() {
     selectTab('home');
+}
+
+// Динамически проверяем и добавляем кнопку «Загрузить файл» на панель управления вкладки
+function ensureUploadButtonExists() {
+    const actionContainer = document.querySelector('.content-actions') || document.querySelector('#contentSection .actions') || document.querySelector('#contentSection');
+    if (!actionContainer) return;
+
+    let uploadBtn = document.getElementById('dynamicUploadBtn');
+    if (!uploadBtn) {
+        uploadBtn = document.createElement('button');
+        uploadBtn.id = 'dynamicUploadBtn';
+        uploadBtn.className = 'btn';
+        uploadBtn.style.cssText = 'background: #10b981; color: white; padding: 6px 12px; font-size: 13px; border-radius: 6px; margin-right: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;';
+        uploadBtn.innerHTML = '📤 Загрузить файл';
+        
+        // Создаем скрытый инпут для выбора файла
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'dynamicFileInput';
+        fileInput.style.display = 'none';
+        fileInput.onchange = (e) => handleFileUpload(e);
+
+        document.body.appendChild(fileInput);
+
+        uploadBtn.onclick = () => fileInput.click();
+
+        // Вставляем кнопку рядом с кнопкой создания папки
+        actionContainer.insertBefore(uploadBtn, actionContainer.firstChild);
+    }
+}
+
+async function handleFileUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const user = getCurrentUser();
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    formData.append('name', files[0].name);
+    formData.append('location', window.currentFolderId ? `Папка ID: ${window.currentFolderId}` : 'Корень');
+    formData.append('status', 'Архив');
+
+    try {
+        const res = await fetch('/api/equipment', {
+            method: 'POST',
+            headers: { 'x-auth-user': JSON.stringify(user) },
+            body: formData
+        });
+
+        if (!res.ok) throw new Error('Ошибка загрузки файла');
+
+        alert('Файл успешно загружен!');
+        event.target.value = '';
+        loadArchiveContent();
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
 
 async function loadArchiveContent() {
