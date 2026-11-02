@@ -1,587 +1,204 @@
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuthUI();
-    if (getCurrentUser()) {
-        loadEquipment();
-        loadArchiveContent();
-    }
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 
-    const authForm = document.getElementById('authForm');
-    if (authForm) {
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await performLogin();
-        });
+const app = express();
+const PORT = process.env.PORT || 3000;
+const DB_PATH = path.join(__dirname, 'archive.db');
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
 
-async function performLogin() {
-    const usernameInput = document.getElementById('authLogin');
-    const passwordInput = document.getElementById('authPassword');
-    const errorDiv = document.getElementById('authError');
+const upload = multer({ storage: storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
-    if (!usernameInput || !passwordInput) return;
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
+let db = new sqlite3.Database(DB_PATH, (err) => {
+    if (err) console.error('Ошибка подключения к БД:', err.message);
+    else console.log('Успешное подключение к SQLite БД');
+});
 
-    if (!username || !password) {
-        if (errorDiv) {
-            errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Введите логин и пароль!';
-        }
-        return;
-    }
+function initDatabase() {
+    db.serialize(() => {
+        db.run(`CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT
+        )`);
 
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+        db.run(`CREATE TABLE IF NOT EXISTS equipment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT
+        )`, () => {
+            const columnsToAdd = [
+                'serialNumber TEXT',
+                'verificationDate TEXT',
+                'nextVerificationDate TEXT',
+                'status TEXT',
+                'location TEXT',
+                'notes TEXT',
+                'files TEXT'
+            ];
+            columnsToAdd.forEach(colDef => {
+                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, () => {});
+            });
         });
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Неверный логин или пароль');
+        db.run(`CREATE TABLE IF NOT EXISTS folders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            parentId INTEGER,
+            type TEXT
+        )`);
 
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-        usernameInput.value = '';
-        passwordInput.value = '';
-        if (errorDiv) errorDiv.style.display = 'none';
-        
-        checkAuthUI();
-        loadEquipment();
-        loadArchiveContent();
-    } catch (err) {
-        if (errorDiv) {
-            errorDiv.style.display = 'block';
-            errorDiv.textContent = err.message;
-        }
-    }
-}
+        db.run(`CREATE TABLE IF NOT EXISTS notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            content TEXT,
+            date TEXT
+        )`);
 
-function getCurrentUser() {
-    try {
-        return JSON.parse(localStorage.getItem('currentUser') || 'null');
-    } catch (e) {
-        return null;
-    }
-}
-
-function checkAuthUI() {
-    const user = getCurrentUser();
-    const authOverlay = document.getElementById('authOverlay');
-    const currentUserBadge = document.getElementById('currentUserBadge');
-
-    if (user) {
-        if (authOverlay) authOverlay.style.display = 'none';
-        if (currentUserBadge) currentUserBadge.textContent = `👤 ${user.username} (${user.role})`;
-    } else {
-        if (authOverlay) authOverlay.style.display = 'flex';
-    }
-}
-
-function logoutSystem() {
-    localStorage.removeItem('currentUser');
-    checkAuthUI();
-    location.reload();
-}
-
-window.currentTab = 'doc';
-window.currentFolderId = null;
-
-// --- Реестр оборудования ---
-async function loadEquipment() {
-    const user = getCurrentUser();
-    if (!user) return;
-
-    try {
-        const res = await fetch('/api/equipment', {
-            headers: { 'x-auth-user': JSON.stringify(user) }
+        db.run("DELETE FROM users WHERE username = 'admin'", () => {
+            db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", (err) => {
+                if (!err) console.log('Пользователь admin успешно инициализирован');
+            });
         });
-        if (!res.ok) throw new Error('Ошибка загрузки реестра');
-        const data = await res.json();
-        window.allEquipment = data; 
-        renderEquipment(data);
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-function renderEquipment(data) {
-    const tableBody = document.getElementById('equipmentTableBody');
-    if (!tableBody) return;
-
-    tableBody.innerHTML = '';
-    data.forEach(item => {
-        const row = document.createElement('tr');
-        row.style.cursor = 'pointer';
-        row.onclick = (e) => {
-            if (!e.target.closest('button')) viewEquipmentPassport(item.id);
-        };
-
-        const itemJson = encodeURIComponent(JSON.stringify(item));
-
-        row.innerHTML = `
-            <td>${item.name || ''}</td>
-            <td>${item.serialNumber || ''}</td>
-            <td>${item.location || ''}</td>
-            <td>${item.location || ''}</td>
-            <td>${item.nextVerificationDate || ''}</td>
-            <td>${item.status || ''}</td>
-            <td style="text-align: right; white-space: nowrap;">
-                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
-                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
-            </td>
-        `;
-        tableBody.appendChild(row);
     });
 }
 
-function viewEquipmentPassport(id) {
-    const item = window.allEquipment?.find(eq => eq.id === id);
-    if (!item) return;
+initDatabase();
 
-    document.getElementById('viewEqName').textContent = item.name || '-';
-    document.getElementById('viewEqSerial').textContent = item.serialNumber || '-';
-    document.getElementById('viewEqLocation').textContent = item.location || '-';
-    document.getElementById('viewEqNextVer').textContent = item.nextVerificationDate || '-';
-    document.getElementById('viewEqNotes').textContent = item.notes || '-';
-    
-    const btnEdit = document.getElementById('btnEditFromView');
-    if (btnEdit) {
-        btnEdit.onclick = () => {
-            closeViewEquipmentModal();
-            openEquipmentModal(item);
-        };
-    }
-
-    const modal = document.getElementById('viewEquipmentModal');
-    if (modal) modal.style.display = 'flex';
-}
-
-function closeViewEquipmentModal() {
-    const modal = document.getElementById('viewEquipmentModal');
-    if (modal) modal.style.display = 'none';
-}
-
-function openEquipmentModal(editData = null) {
-    const modal = document.getElementById('equipmentModal');
-    const title = document.getElementById('eqModalTitle');
-
-    document.getElementById('eqName').value = editData ? editData.name || '' : '';
-    document.getElementById('eqSerial').value = editData ? editData.serialNumber || '' : '';
-    document.getElementById('eqLocation').value = editData ? editData.location || '' : '';
-    document.getElementById('eqStatus').value = editData ? editData.status || 'В эксплуатации' : 'В эксплуатации';
-    document.getElementById('eqNextVer').value = editData ? editData.nextVerificationDate || '' : '';
-    document.getElementById('eqNotes').value = editData ? editData.notes || '' : '';
-
-    if (editData && editData.id) {
-        if (title) title.textContent = '✏️ Редактировать оборудование';
-        window.currentEditId = editData.id;
-    } else {
-        if (title) title.textContent = '➕ Добавить оборудование';
-        window.currentEditId = null;
-    }
-
-    if (modal) modal.style.display = 'flex';
-}
-
-function closeEquipmentModal() {
-    const modal = document.getElementById('equipmentModal');
-    if (modal) modal.style.display = 'none';
-    window.currentEditId = null;
-}
-
-function editEquipmentFromButton(event, encodedItem) {
-    if (event) event.stopPropagation();
-    try {
-        const item = JSON.parse(decodeURIComponent(encodedItem));
-        openEquipmentModal(item);
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-async function saveEquipment(event) {
-    if (event) event.preventDefault();
-    const user = getCurrentUser();
-
-    const name = document.getElementById('eqName')?.value || '';
-    const serialNumber = document.getElementById('eqSerial')?.value || '';
-    const location = document.getElementById('eqLocation')?.value || '';
-    const status = document.getElementById('eqStatus')?.value || 'В эксплуатации';
-    const nextVerificationDate = document.getElementById('eqNextVer')?.value || '';
-    const notes = document.getElementById('eqNotes')?.value || '';
-
-    if (!name) {
-        alert('Введите наименование!');
-        return;
-    }
-
-    const editId = window.currentEditId;
-    const isEdit = editId !== null && editId !== undefined && editId !== '';
-    const url = isEdit ? `/api/equipment/${editId}` : '/api/equipment';
-
-    try {
-        const res = await fetch(url, {
-            method: isEdit ? 'PUT' : 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
-            body: JSON.stringify({ name, serialNumber, nextVerificationDate, status, location, notes })
-        });
-        if (!res.ok) throw new Error('Ошибка сохранения');
-
-        closeEquipmentModal();
-        window.currentEditId = null;
-        loadEquipment();
-    } catch (err) {
-        alert(err.message);
-    }
-}
-
-async function deleteEquipment(event, id) {
-    if (event) event.stopPropagation();
-    if (!confirm('Удалить запись?')) return;
-    const user = getCurrentUser();
-    try {
-        await fetch(`/api/equipment/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
-        loadEquipment();
-    } catch (err) {
-        alert(err.message);
-    }
-}
-
-// --- Управление вкладками и контентом ---
-function selectTab(tabName) {
-    window.currentTab = tabName;
-    window.currentFolderId = null;
-
-    const fc = document.getElementById('foldersContainer');
-    if (fc) fc.innerHTML = '';
-    const fic = document.getElementById('filesContainer');
-    if (fic) fic.innerHTML = '';
-
-    const welcomeScreen = document.getElementById('welcomeScreen');
-    const adminSection = document.getElementById('adminSection');
-    const contentSection = document.getElementById('contentSection');
-
-    if (welcomeScreen) welcomeScreen.style.display = 'none';
-    if (adminSection) adminSection.style.display = 'none';
-    if (contentSection) contentSection.style.display = 'none';
-
-    if (tabName === 'admin') {
-        if (adminSection) adminSection.style.display = 'flex';
-    } else if (tabName === 'doc' || tabName === 'image' || tabName === 'note') {
-        if (contentSection) contentSection.style.display = 'flex';
-        
-        const titleEl = document.getElementById('sectionTitle');
-        if (titleEl) {
-            if (tabName === 'doc') titleEl.textContent = '📄 Документы';
-            if (tabName === 'image') titleEl.textContent = '🖼️ Фотографии';
-            if (tabName === 'note') titleEl.textContent = '📝 Заметки';
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
+        if (err) return res.status(500).json({ error: 'Ошибка сервера' });
+        if (!user || user.password !== password) {
+            return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
-
-        ensureUploadButtonExists();
-        loadArchiveContent();
-    } else {
-        if (welcomeScreen) welcomeScreen.style.display = 'block';
-    }
-}
-
-function goHome() {
-    selectTab('home');
-}
-
-function ensureUploadButtonExists() {
-    const actionContainer = document.querySelector('.content-actions') || document.querySelector('#contentSection .actions') || document.querySelector('#contentSection');
-    if (!actionContainer) return;
-
-    let uploadBtn = document.getElementById('dynamicUploadBtn');
-    if (!uploadBtn) {
-        uploadBtn = document.createElement('button');
-        uploadBtn.id = 'dynamicUploadBtn';
-        uploadBtn.className = 'btn';
-        uploadBtn.style.cssText = 'background: #10b981; color: white; padding: 6px 12px; font-size: 13px; border-radius: 6px; margin-right: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;';
-        uploadBtn.innerHTML = '📤 Загрузить файл';
-        
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'dynamicFileInput';
-        fileInput.style.display = 'none';
-        fileInput.onchange = (e) => handleFileUpload(e);
-
-        document.body.appendChild(fileInput);
-        uploadBtn.onclick = () => fileInput.click();
-
-        actionContainer.insertBefore(uploadBtn, actionContainer.firstChild);
-    }
-}
-
-async function handleFileUpload(event) {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const user = getCurrentUser();
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-        formData.append('files', files[i]);
-    }
-    formData.append('name', files[0].name);
-    formData.append('location', window.currentFolderId ? `Папка ID: ${window.currentFolderId}` : 'Корень');
-    formData.append('status', 'Архив');
-
-    try {
-        const res = await fetch('/api/equipment', {
-            method: 'POST',
-            headers: { 'x-auth-user': JSON.stringify(user) },
-            body: formData
+        res.json({
+            success: true,
+            user: { id: user.id, username: user.username, role: user.role }
         });
-        if (!res.ok) throw new Error('Ошибка загрузки файла');
-
-        alert('Файл успешно загружен!');
-        event.target.value = '';
-    } catch (err) {
-        alert('Ошибка: ' + err.message);
-    }
-}
-
-async function loadArchiveContent() {
-    const user = getCurrentUser();
-    if (!user) return;
-
-    if (window.currentTab === 'note') {
-        loadNotes();
-        return;
-    }
-
-    try {
-        let url = `/api/folders?type=${window.currentTab}`;
-        if (window.currentFolderId) {
-            url += `&parentId=${window.currentFolderId}`;
-        }
-
-        const res = await fetch(url, {
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
-        if (res.ok) {
-            const folders = await res.json();
-            renderFolders(folders);
-        }
-    } catch (err) {
-        console.error('Ошибка загрузки папок:', err);
-    }
-}
-
-async function promptCreateFolder() {
-    if (window.currentTab === 'note') {
-        openNoteModal();
-        return;
-    }
-
-    const folderName = prompt('Введите название новой папки:');
-    if (!folderName || !folderName.trim()) return;
-
-    const user = getCurrentUser();
-    if (!user) return;
-
-    const payload = { 
-        name: folderName.trim(), 
-        type: window.currentTab, 
-        parentId: window.currentFolderId || null
-    };
-
-    try {
-        const res = await fetch('/api/folders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
-            body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error('Не удалось создать папку');
-        loadArchiveContent();
-    } catch (err) {
-        alert('Ошибка: ' + err.message);
-    }
-}
-
-function loadFolders() {
-    loadArchiveContent();
-}
-
-function renderFolders(folders) {
-    const container = document.getElementById('foldersContainer');
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    if (window.currentFolderId) {
-        const backDiv = document.createElement('div');
-        backDiv.style.cssText = 'background: #334155; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 8px; color: #38bdf8; font-weight: bold; text-align: center; cursor: pointer;';
-        backDiv.innerHTML = '⬅️ Назад';
-        backDiv.addEventListener('click', () => {
-            window.currentFolderId = null;
-            loadArchiveContent();
-        });
-        container.appendChild(backDiv);
-    }
-
-    if (!folders || folders.length === 0) {
-        const emptyDiv = document.createElement('div');
-        emptyDiv.style.cssText = 'color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;';
-        emptyDiv.textContent = window.currentFolderId ? '📭 Папка пуста' : 'Папок пока нет';
-        container.appendChild(emptyDiv);
-        return;
-    }
-
-    folders.forEach(folder => {
-        const div = document.createElement('div');
-        div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
-        
-        const titleSpan = document.createElement('span');
-        titleSpan.style.cssText = 'color: #fff; cursor: pointer; flex-grow: 1;';
-        titleSpan.innerHTML = `📁 <b>${folder.name}</b>`;
-        titleSpan.addEventListener('click', () => {
-            window.currentFolderId = folder.id;
-            loadArchiveContent();
-        });
-
-        const btnContainer = document.createElement('div');
-
-        const openBtn = document.createElement('button');
-        openBtn.type = 'button';
-        openBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;';
-        openBtn.textContent = 'Открыть';
-        openBtn.addEventListener('click', () => {
-            window.currentFolderId = folder.id;
-            loadArchiveContent();
-        });
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
-        deleteBtn.textContent = 'Удалить';
-        deleteBtn.addEventListener('click', () => deleteFolderDirect(folder.id));
-
-        btnContainer.appendChild(openBtn);
-        btnContainer.appendChild(deleteBtn);
-
-        div.appendChild(titleSpan);
-        div.appendChild(btnContainer);
-        container.appendChild(div);
     });
-}
+});
 
-async function deleteFolderDirect(id) {
-    if (!confirm('Удалить папку и всё её содержимое?')) return;
-    const user = getCurrentUser();
+const requireAuth = (req, res, next) => {
+    const authHeader = req.headers['x-auth-user'];
+    if (!authHeader) return res.status(401).json({ error: 'Требуется авторизация' });
     try {
-        const res = await fetch(`/api/folders/${id}`, {
-            method: 'DELETE',
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
-        if (!res.ok) throw new Error('Ошибка удаления');
-        loadArchiveContent();
-    } catch (err) {
-        alert('Не удалось удалить: ' + err.message);
+        const user = JSON.parse(authHeader);
+        if (user && user.username) return next();
+    } catch (e) {}
+    res.status(401).json({ error: 'Недействительная сессия' });
+};
+
+// --- Оборудование ---
+app.get('/api/equipment', requireAuth, (req, res) => {
+    db.all("SELECT * FROM equipment", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
+    const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
+    const files = req.files ? req.files.map(f => f.filename) : [];
+    const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.run(query, [name, serialNumber || '', verificationDate || '', nextVerificationDate || '', status || '', location || '', notes || '', JSON.stringify(files)], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID });
+    });
+});
+
+app.delete('/api/equipment/:id', requireAuth, (req, res) => {
+    db.run("DELETE FROM equipment WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// --- Папки (Прямой SQL-доступ) ---
+app.get('/api/folders', requireAuth, (req, res) => {
+    const type = req.query.type || 'doc';
+    const parentId = req.query.parentId;
+
+    let query = "SELECT * FROM folders WHERE type = ?";
+    let params = [type];
+
+    if (parentId && parentId !== 'root' && parentId !== 'null' && parentId !== 'undefined' && parentId !== '') {
+        query += " AND parentId = ?";
+        params.push(parentId);
+    } else {
+        query += " AND (parentId IS NULL OR parentId = '' OR parentId = 0)";
     }
-}
+
+    db.all(query, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+app.post('/api/folders', requireAuth, (req, res) => {
+    const { name, parentId, type } = req.body;
+    const pId = (!parentId || parentId === 'root' || parentId === 'null' || parentId === 'undefined' || parentId === '') ? null : parentId;
+    const fType = type || 'doc';
+
+    db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, fType], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, success: true });
+    });
+});
+
+app.delete('/api/folders/:id', requireAuth, (req, res) => {
+    const folderId = req.params.id;
+    // Удаляем саму папку и всё, что внутри неё лежит
+    db.run("DELETE FROM folders WHERE id = ? OR parentId = ?", [folderId, folderId], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
 
 // --- Заметки ---
-function openNoteModal() {
-    const nameInput = document.getElementById('noteNameInput');
-    const contentInput = document.getElementById('noteContentInput');
-    if (nameInput) nameInput.value = '';
-    if (contentInput) contentInput.value = '';
-
-    const modal = document.getElementById('noteModal');
-    if (modal) modal.style.display = 'flex';
-}
-
-async function saveNote(event) {
-    if (event) event.preventDefault();
-    const user = getCurrentUser();
-
-    const title = document.getElementById('noteNameInput')?.value || '';
-    const content = document.getElementById('noteContentInput')?.value || '';
-
-    if (!title && !content) {
-        alert('Заполните название или текст заметки!');
-        return;
-    }
-
-    try {
-        const res = await fetch('/api/notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
-            body: JSON.stringify({ title, content })
-        });
-        if (!res.ok) throw new Error('Ошибка сохранения');
-
-        closeModals();
-        loadNotes();
-    } catch (err) {
-        alert(err.message);
-    }
-}
-
-async function loadNotes() {
-    const user = getCurrentUser();
-    if (!user) return;
-
-    try {
-        const res = await fetch('/api/notes', {
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
-        if (!res.ok) return;
-        const notes = await res.json();
-        renderNotes(notes);
-        
-        const countNote = document.getElementById('countNote');
-        if (countNote) countNote.textContent = notes.length;
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-function renderNotes(notes) {
-    const container = document.getElementById('filesContainer');
-    if (!container) return;
-
-    container.innerHTML = '';
-    notes.forEach(note => {
-        const card = document.createElement('div');
-        card.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px;';
-        card.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
-                <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="deleteNote(${note.id})">🗑️</button>
-            </div>
-            <div style="font-size: 13px; color: #cbd5e1; white-space: pre-wrap; margin-bottom: 6px;">${note.content || ''}</div>
-            <div style="font-size: 10px; color: #94a3b8;">${note.date || ''}</div>
-        `;
-        container.appendChild(card);
+app.get('/api/notes', requireAuth, (req, res) => {
+    db.all("SELECT * FROM notes", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
     });
-}
+});
 
-async function deleteNote(id) {
-    if (!confirm('Удалить эту заметку?')) return;
-    const user = getCurrentUser();
-    try {
-        await fetch(`/api/notes/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
-        loadNotes();
-    } catch (err) {
-        alert(err.message);
-    }
-}
+app.post('/api/notes', requireAuth, (req, res) => {
+    const { title, content } = req.body;
+    const date = new Date().toLocaleDateString('ru-RU');
+    db.run("INSERT INTO notes (title, content, date) VALUES (?, ?, ?)", [title || 'Без названия', content || '', date], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID });
+    });
+});
 
-function openBackupModal() {
-    const modal = document.getElementById('backupModal');
-    if (modal) modal.style.display = 'flex';
-}
+app.delete('/api/notes/:id', requireAuth, (req, res) => {
+    db.run("DELETE FROM notes WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
 
-function closeBackupModal() {
-    const modal = document.getElementById('backupModal');
-    if (modal) modal.style.display = 'none';
-}
-
-function closeModals() {
-    document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
-}
+app.listen(PORT, () => {
+    console.log(`Сервер запущен на порту ${PORT}`);
+});
