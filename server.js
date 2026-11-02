@@ -192,7 +192,7 @@ app.delete('/api/folders/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Файлы и Фото (с исправлением кодировки кириллицы) ---
+// --- Файлы и Фото ---
 app.get('/api/files', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const folderId = req.query.folderId;
@@ -204,7 +204,8 @@ app.get('/api/files', requireAuth, (req, res) => {
         query += " AND folderId = ?";
         params.push(folderId);
     } else {
-        query += " AND (parentId IS NULL OR folderId IS NULL OR folderId = '' OR folderId = 0)";
+        // Исправлено: проверяем правильное поле folderId вместо несуществующего parentId
+        query += " AND (folderId IS NULL OR folderId = '' OR folderId = 0)";
     }
 
     db.all(query, params, (err, rows) => {
@@ -225,7 +226,6 @@ app.post('/api/files', requireAuth, upload.array('files'), (req, res) => {
 
     let insertedCount = 0;
     req.files.forEach(file => {
-        // Исправляем кракозябры в названии файла (переводим из latin1 в utf8)
         const fixedOriginalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
 
         const query = `INSERT INTO files (name, filename, folderId, type, date) VALUES (?, ?, ?, ?, ?)`;
