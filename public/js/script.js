@@ -357,15 +357,12 @@ async function loadArchiveContent() {
         if (window.currentFolderId) {
             url += `&parentId=${window.currentFolderId}`;
         }
-        
-        console.log('📤 Запрос папок с URL:', url);
 
         const res = await fetch(url, {
             headers: { 'x-auth-user': JSON.stringify(user) }
         });
         if (res.ok) {
             const folders = await res.json();
-            console.log('📥 Получены папки от сервера:', folders);
             renderFolders(folders);
         }
     } catch (err) {
@@ -391,8 +388,6 @@ async function promptCreateFolder() {
         parentId: window.currentFolderId || null
     };
 
-    console.log('🚀 Отправка на создание папки:', payload);
-
     try {
         const res = await fetch('/api/folders', {
             method: 'POST',
@@ -400,11 +395,7 @@ async function promptCreateFolder() {
             body: JSON.stringify(payload)
         });
 
-        const data = await res.json();
-        console.log('✅ Ответ сервера после создания:', data);
-
         if (!res.ok) throw new Error('Не удалось создать папку');
-        
         loadArchiveContent();
     } catch (err) {
         alert('Ошибка: ' + err.message);
@@ -433,9 +424,10 @@ function renderFolders(folders) {
     }
 
     if (!folders || folders.length === 0) {
-        if (!window.currentFolderId) {
-            container.innerHTML = '<div style="color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;">Папок пока нет</div>';
-        }
+        const emptyDiv = document.createElement('div');
+        emptyDiv.style.cssText = 'color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;';
+        emptyDiv.textContent = window.currentFolderId ? '📭 Папка пуста' : 'Папок пока нет';
+        container.appendChild(emptyDiv);
         return;
     }
 
@@ -445,9 +437,8 @@ function renderFolders(folders) {
         
         const titleSpan = document.createElement('span');
         titleSpan.style.cssText = 'color: #fff; cursor: pointer; flex-grow: 1;';
-        titleSpan.innerHTML = `📁 <b>${folder.name}</b> <span style="font-size: 11px; color: #94a3b8;">(ID: ${folder.id}, type: ${folder.type})</span>`;
+        titleSpan.innerHTML = `📁 <b>${folder.name}</b>`;
         titleSpan.addEventListener('click', () => {
-            console.log('📁 Клик по папке ID:', folder.id);
             window.currentFolderId = folder.id;
             loadArchiveContent();
         });
@@ -459,7 +450,6 @@ function renderFolders(folders) {
         openBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;';
         openBtn.textContent = 'Открыть';
         openBtn.addEventListener('click', () => {
-            console.log('📂 Клик Открыть для папки ID:', folder.id);
             window.currentFolderId = folder.id;
             loadArchiveContent();
         });
@@ -468,10 +458,7 @@ function renderFolders(folders) {
         deleteBtn.type = 'button';
         deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
         deleteBtn.textContent = 'Удалить';
-        deleteBtn.addEventListener('click', () => {
-            console.log('🗑️ Клик Удалить для папки ID:', folder.id);
-            deleteFolderDirect(folder.id);
-        });
+        deleteBtn.addEventListener('click', () => deleteFolderDirect(folder.id));
 
         btnContainer.appendChild(openBtn);
         btnContainer.appendChild(deleteBtn);
