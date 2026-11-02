@@ -315,6 +315,7 @@ function ensureUploadButtonExists() {
         fileInput.type = 'file';
         fileInput.id = 'dynamicFileInput';
         fileInput.style.display = 'none';
+        fileInput.multiple = true;
         fileInput.onchange = (e) => handleFileUpload(e);
 
         document.body.appendChild(fileInput);
@@ -333,13 +334,11 @@ async function handleFileUpload(event) {
     for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
     }
-    formData.append('name', files[0].name);
-    // Теперь локация корректно указывает ID текущей папки, если вы находитесь внутри неё
-    formData.append('location', window.currentFolderId ? `Папка ID: ${window.currentFolderId}` : 'Корень');
-    formData.append('status', 'Архив');
+    formData.append('type', window.currentTab);
+    formData.append('folderId', window.currentFolderId || '');
 
     try {
-        const res = await fetch('/api/equipment', {
+        const res = await fetch('/api/files', {
             method: 'POST',
             headers: { 'x-auth-user': JSON.stringify(user) },
             body: formData
@@ -348,6 +347,7 @@ async function handleFileUpload(event) {
 
         alert('Файл успешно загружен!');
         event.target.value = '';
+        loadArchiveContent();
     } catch (err) {
         alert('Ошибка: ' + err.message);
     }
@@ -368,15 +368,21 @@ async function loadArchiveContent() {
             url += `&parentId=${window.currentFolderId}`;
         }
 
-        const res = await fetch(url, {
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
+        const res = await fetch(url, { headers: { 'x-auth-user': JSON.stringify(user) } });
         if (res.ok) {
             const folders = await res.json();
-            renderFolders(folders);
+            
+            let filesUrl = `/api/files?type=${window.currentTab}`;
+            if (window.currentFolderId) {
+                filesUrl += `&folderId=${window.currentFolderId}`;
+            }
+            const filesRes = await fetch(filesUrl, { headers: { 'x-auth-user': JSON.stringify(user) } });
+            const files = filesRes.ok ? await filesRes.json() : [];
+
+            renderFoldersAndFiles(folders, files);
         }
     } catch (err) {
-        console.error('Ошибка загрузки папок:', err);
+        console.error('Ошибка загрузки контента:', err);
     }
 }
 
@@ -430,7 +436,7 @@ function loadFolders() {
     loadArchiveContent();
 }
 
-function renderFolders(folders) {
+function renderFoldersAndFiles(folders, files) {
     const container = document.getElementById('foldersContainer');
     if (!container) return;
 
@@ -447,63 +453,117 @@ function renderFolders(folders) {
         container.appendChild(backDiv);
     }
 
-    if (!folders || folders.length === 0) {
-        const emptyDiv = document.createElement('div');
-        emptyDiv.style.cssText = 'color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;';
-        emptyDiv.textContent = window.currentFolderId ? '📭 Папка пуста' : 'Папок пока нет';
-        container.appendChild(emptyDiv);
+    if (folders && folders.length > 0) {
+        folders.forEach(folder => {
+            const div = document.createElement('div');
+            div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.style.cssText = 'color: #fff; cursor: pointer; flex-grow: 1; font-weight: bold;';
+            titleSpan.innerHTML = `📁 ${folder.name}`;
+            titleSpan.onclick = () => {
+                window.currentFolderId = folder.id;
+                loadArchiveContent();
+            };
+
+            const btnContainer = document.createElement('div');
+
+            const openBtn = document.createElement('button');
+            openBtn.type = 'button';
+            openBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;';
+            openBtn.textContent = 'Открыть';
+            openBtn.onclick = () => {
+                window.currentFolderId = folder.id;
+                loadArchiveContent();
+            };
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
+            deleteBtn.textContent = 'Удалить';
+            deleteBtn.onclick = async () => {
+                if (!confirm(`Удалить папку "${folder.name}"?`)) return;
+                const user = getCurrentUser();
+                try {
+                    const res = await fetch(`/api/folders/${folder.id}`, {
+                        method: 'DELETE',
+                        headers: { 'x-auth-user': JSON.stringify(user) }
+                    });
+                    if (!res.ok) throw new Error('Ошибка удаления');
+                    loadArchiveContent();
+                } catch (err) {
+                    alert('Не удалось удалить: ' + err.message);
+                }
+            };
+
+            btnContainer.appendChild(openBtn);
+            btnContainer.appendChild(deleteBtn);
+
+            div.appendChild(titleSpan);
+            div.appendChild(btnContainer);
+            container.appendChild(div);
+        });
+    }
+
+    // Рендер файлов
+    const filesContainer = document.getElementById('filesContainer');
+    if (!filesContainer) return;
+
+    filesContainer.innerHTML = '';
+
+    if ((!folders || folders.length === 0) && (!files || files.length === 0)) {
+        filesContainer.innerHTML = '<div style="color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;">📭 Папка пуста</div>';
         return;
     }
 
-    folders.forEach(folder => {
-        const div = document.createElement('div');
-        div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
-        
-        const titleSpan = document.createElement('span');
-        titleSpan.style.cssText = 'color: #fff; cursor: pointer; flex-grow: 1; font-weight: bold;';
-        titleSpan.innerHTML = `📁 ${folder.name}`;
-        titleSpan.onclick = () => {
-            window.currentFolderId = folder.id;
-            loadArchiveContent();
-        };
-
-        const btnContainer = document.createElement('div');
-
-        const openBtn = document.createElement('button');
-        openBtn.type = 'button';
-        openBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;';
-        openBtn.textContent = 'Открыть';
-        openBtn.onclick = () => {
-            window.currentFolderId = folder.id;
-            loadArchiveContent();
-        };
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
-        deleteBtn.textContent = 'Удалить';
-        deleteBtn.onclick = async () => {
-            if (!confirm(`Удалить папку "${folder.name}"?`)) return;
-            const user = getCurrentUser();
-            try {
-                const res = await fetch(`/api/folders/${folder.id}`, {
-                    method: 'DELETE',
-                    headers: { 'x-auth-user': JSON.stringify(user) }
-                });
-                if (!res.ok) throw new Error('Ошибка удаления');
-                loadArchiveContent();
-            } catch (err) {
-                alert('Не удалось удалить: ' + err.message);
+    if (files && files.length > 0) {
+        files.forEach(file => {
+            const div = document.createElement('div');
+            div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
+            
+            const isImage = file.type === 'image' || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
+            
+            let previewHtml = '';
+            if (isImage) {
+                previewHtml = `<a href="/uploads/${file.filename}" target="_blank"><img src="/uploads/${file.filename}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px;"></a>`;
+            } else {
+                previewHtml = `<span style="font-size: 20px; margin-right: 10px;">📄</span>`;
             }
-        };
 
-        btnContainer.appendChild(openBtn);
-        btnContainer.appendChild(deleteBtn);
+            const infoDiv = document.createElement('div');
+            infoDiv.style.cssText = 'display: flex; align-items: center; flex-grow: 1;';
+            infoDiv.innerHTML = `
+                ${previewHtml}
+                <div>
+                    <a href="/uploads/${file.filename}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 14px; display: block;">${file.name}</a>
+                    <span style="font-size: 11px; color: #94a3b8;">${file.date || ''}</span>
+                </div>
+            `;
 
-        div.appendChild(titleSpan);
-        div.appendChild(btnContainer);
-        container.appendChild(div);
-    });
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
+            deleteBtn.textContent = 'Удалить';
+            deleteBtn.onclick = async () => {
+                if (!confirm(`Удалить файл "${file.name}"?`)) return;
+                const user = getCurrentUser();
+                try {
+                    const res = await fetch(`/api/files/${file.id}`, {
+                        method: 'DELETE',
+                        headers: { 'x-auth-user': JSON.stringify(user) }
+                    });
+                    if (!res.ok) throw new Error('Ошибка удаления');
+                    loadArchiveContent();
+                } catch (err) {
+                    alert('Не удалось удалить: ' + err.message);
+                }
+            };
+
+            div.appendChild(infoDiv);
+            div.appendChild(deleteBtn);
+            filesContainer.appendChild(div);
+        });
+    }
 }
 
 // --- Заметки ---
