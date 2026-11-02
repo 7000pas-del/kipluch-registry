@@ -43,48 +43,32 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Автоматическая проверка и миграция таблицы оборудования для надежного ID
-        db.all("PRAGMA table_info(equipment)", [], (err, rows) => {
-            if (err || !rows || rows.length === 0) {
-                // Таблицы еще нет вообще — создаем с нуля
-                db.run(`CREATE TABLE IF NOT EXISTS equipment (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT,
-                    serialNumber TEXT,
-                    verificationDate TEXT,
-                    nextVerificationDate TEXT,
-                    status TEXT,
-                    location TEXT,
-                    notes TEXT,
-                    files TEXT
-                )`);
-            } else {
-                const hasId = rows.some(r => r.name === 'id');
-                if (!hasId) {
-                    console.log('🔄 Обнаружена старая таблица equipment без ID. Выполняем миграцию...');
-                    db.serialize(() => {
-                        db.run(`CREATE TABLE equipment_temp AS SELECT * FROM equipment`);
-                        db.run(`DROP TABLE equipment`);
-                        db.run(`CREATE TABLE equipment (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            name TEXT,
-                            serialNumber TEXT,
-                            verificationDate TEXT,
-                            nextVerificationDate TEXT,
-                            status TEXT,
-                            location TEXT,
-                            notes TEXT,
-                            files TEXT
-                        )`);
-                        db.run(`INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) 
-                                SELECT name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files FROM equipment_temp`, (insErr) => {
-                            if (!insErr) {
-                                db.run(`DROP TABLE equipment_temp`);
-                                console.log('✅ Миграция таблицы equipment успешно завершена!');
-                            }
-                        });
-                    });
-                }
+        // Гарантируем создание правильной таблицы оборудования со всеми полями
+        db.run(`CREATE TABLE IF NOT EXISTS equipment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            serialNumber TEXT,
+            verificationDate TEXT,
+            nextVerificationDate TEXT,
+            status TEXT,
+            location TEXT,
+            notes TEXT,
+            files TEXT
+        )`, (err) => {
+            if (!err) {
+                // Если таблица уже существовала со старой структурой, безопасно добавляем недостающие колонки
+                const columns = [
+                    'serialNumber TEXT',
+                    'verificationDate TEXT',
+                    'nextVerificationDate TEXT',
+                    'status TEXT',
+                    'location TEXT',
+                    'notes TEXT',
+                    'files TEXT'
+                ];
+                columns.forEach(col => {
+                    db.run(`ALTER TABLE equipment ADD COLUMN ${col}`, () => {});
+                });
             }
         });
 
