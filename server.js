@@ -43,32 +43,44 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Гарантируем создание правильной таблицы оборудования со всеми полями
-        db.run(`CREATE TABLE IF NOT EXISTS equipment (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            serialNumber TEXT,
-            verificationDate TEXT,
-            nextVerificationDate TEXT,
-            status TEXT,
-            location TEXT,
-            notes TEXT,
-            files TEXT
-        )`, (err) => {
-            if (!err) {
-                // Если таблица уже существовала со старой структурой, безопасно добавляем недостающие колонки
-                const columns = [
-                    'serialNumber TEXT',
-                    'verificationDate TEXT',
-                    'nextVerificationDate TEXT',
-                    'status TEXT',
-                    'location TEXT',
-                    'notes TEXT',
-                    'files TEXT'
-                ];
-                columns.forEach(col => {
-                    db.run(`ALTER TABLE equipment ADD COLUMN ${col}`, () => {});
+        // Жесткая проверка структуры оборудования и гарантированное добавление ID
+        db.all("PRAGMA table_info(equipment)", [], (err, rows) => {
+            const hasId = rows && rows.some(r => r.name === 'id');
+            if (rows && rows.length > 0 && !hasId) {
+                console.log('🔄 Обнаружена таблица equipment без ID. Выполняем автомиграцию...');
+                db.serialize(() => {
+                    db.run(`CREATE TABLE equipment_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT,
+                        serialNumber TEXT,
+                        verificationDate TEXT,
+                        nextVerificationDate TEXT,
+                        status TEXT,
+                        location TEXT,
+                        notes TEXT,
+                        files TEXT
+                    )`);
+                    db.run(`INSERT INTO equipment_new (name, serialNumber, status, location, notes) 
+                            SELECT name, serialNumber, status, location, notes FROM equipment`, (insErr) => {
+                        if (!insErr) {
+                            db.run(`DROP TABLE equipment`);
+                            db.run(`ALTER TABLE equipment_new RENAME TO equipment`);
+                            console.log('✅ Таблица equipment успешно обновлена, ID добавлены!');
+                        }
+                    });
                 });
+            } else if (!rows || rows.length === 0) {
+                db.run(`CREATE TABLE IF NOT EXISTS equipment (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT,
+                    serialNumber TEXT,
+                    verificationDate TEXT,
+                    nextVerificationDate TEXT,
+                    status TEXT,
+                    location TEXT,
+                    notes TEXT,
+                    files TEXT
+                )`);
             }
         });
 
