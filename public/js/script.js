@@ -505,7 +505,7 @@ function renderFoldersAndFiles(folders, files) {
         });
     }
 
-    // Рендер файлов
+    // Рендер файлов с кнопкой скачивания и правильной иконкой
     const filesContainer = document.getElementById('filesContainer');
     if (!filesContainer) return;
 
@@ -521,13 +521,19 @@ function renderFoldersAndFiles(folders, files) {
             const div = document.createElement('div');
             div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
             
-            const isImage = file.type === 'image' || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
+            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
+            const isWord = /\.(docx|doc)$/i.test(file.name);
+            const isExcel = /\.(xlsx|xls|csv)$/i.test(file.name);
             
             let previewHtml = '';
             if (isImage) {
                 previewHtml = `<a href="/uploads/${file.filename}" target="_blank"><img src="/uploads/${file.filename}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px;"></a>`;
+            } else if (isWord) {
+                previewHtml = `<span style="font-size: 24px; margin-right: 10px;">📝</span>`;
+            } else if (isExcel) {
+                previewHtml = `<span style="font-size: 24px; margin-right: 10px;">📊</span>`;
             } else {
-                previewHtml = `<span style="font-size: 20px; margin-right: 10px;">📄</span>`;
+                previewHtml = `<span style="font-size: 24px; margin-right: 10px;">📄</span>`;
             }
 
             const infoDiv = document.createElement('div');
@@ -535,15 +541,26 @@ function renderFoldersAndFiles(folders, files) {
             infoDiv.innerHTML = `
                 ${previewHtml}
                 <div>
-                    <a href="/uploads/${file.filename}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 14px; display: block;">${file.name}</a>
+                    <a href="/uploads/${file.filename}" target="_blank" download="${file.name}" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 14px; display: block;">${file.name}</a>
                     <span style="font-size: 11px; color: #94a3b8;">${file.date || ''}</span>
                 </div>
             `;
 
+            const btnContainer = document.createElement('div');
+            btnContainer.style.display = 'flex';
+            btnContainer.style.gap = '6px';
+
+            const downloadBtn = document.createElement('a');
+            downloadBtn.href = `/uploads/${file.filename}`;
+            downloadBtn.download = file.name;
+            downloadBtn.className = 'btn';
+            downloadBtn.style.cssText = 'background: #3b82f6; color: white; padding: 6px 10px; border-radius: 4px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center;';
+            downloadBtn.textContent = '📥 Скачать';
+
             const deleteBtn = document.createElement('button');
             deleteBtn.type = 'button';
             deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
-            deleteBtn.textContent = 'Удалить';
+            deleteBtn.textContent = '🗑️ Удалить';
             deleteBtn.onclick = async () => {
                 if (!confirm(`Удалить файл "${file.name}"?`)) return;
                 const user = getCurrentUser();
@@ -559,8 +576,11 @@ function renderFoldersAndFiles(folders, files) {
                 }
             };
 
+            btnContainer.appendChild(downloadBtn);
+            btnContainer.appendChild(deleteBtn);
+
             div.appendChild(infoDiv);
-            div.appendChild(deleteBtn);
+            div.appendChild(btnContainer);
             filesContainer.appendChild(div);
         });
     }
