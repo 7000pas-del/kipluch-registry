@@ -276,9 +276,8 @@ async function deleteEquipment(event, id) {
     }
 }
 
-// --- Управление вкладками архива ---
+// --- Управление вкладками архива и кнопка Загрузить ---
 function selectTab(tabName) {
-    // Жестко фиксируем вкладку, сбрасывая вложенность при переключении
     window.currentTab = tabName;
     window.currentFolderId = null;
 
@@ -302,6 +301,7 @@ function selectTab(tabName) {
             if (tabName === 'note') titleEl.textContent = '📝 Заметки';
         }
 
+        ensureUploadButtonExists();
         loadArchiveContent();
     } else {
         if (welcomeScreen) welcomeScreen.style.display = 'block';
@@ -312,11 +312,65 @@ function goHome() {
     selectTab('home');
 }
 
+function ensureUploadButtonExists() {
+    const actionContainer = document.querySelector('.content-actions') || document.querySelector('#contentSection .actions') || document.querySelector('#contentSection');
+    if (!actionContainer) return;
+
+    let uploadBtn = document.getElementById('dynamicUploadBtn');
+    if (!uploadBtn) {
+        uploadBtn = document.createElement('button');
+        uploadBtn.id = 'dynamicUploadBtn';
+        uploadBtn.className = 'btn';
+        uploadBtn.style.cssText = 'background: #10b981; color: white; padding: 6px 12px; font-size: 13px; border-radius: 6px; margin-right: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;';
+        uploadBtn.innerHTML = '📤 Загрузить файл';
+        
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'dynamicFileInput';
+        fileInput.style.display = 'none';
+        fileInput.onchange = (e) => handleFileUpload(e);
+
+        document.body.appendChild(fileInput);
+        uploadBtn.onclick = () => fileInput.click();
+
+        actionContainer.insertBefore(uploadBtn, actionContainer.firstChild);
+    }
+}
+
+async function handleFileUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const user = getCurrentUser();
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    formData.append('name', files[0].name);
+    formData.append('location', window.currentFolderId ? `Папка ID: ${window.currentFolderId}` : 'Корень');
+    formData.append('status', 'Архив');
+
+    try {
+        const res = await fetch('/api/equipment', {
+            method: 'POST',
+            headers: { 'x-auth-user': JSON.stringify(user) },
+            body: formData
+        });
+
+        if (!res.ok) throw new Error('Ошибка загрузки файла');
+
+        alert('Файл успешно загружен!');
+        event.target.value = '';
+        loadArchiveContent();
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+}
+
 async function loadArchiveContent() {
     const user = getCurrentUser();
     if (!user) return;
 
-    // Если открыты заметки — папки не грузим
     if (window.currentTab === 'note') {
         loadNotes();
         return;
@@ -338,7 +392,7 @@ async function loadArchiveContent() {
             renderFolders(folders);
         }
     } catch (err) {
-        console.error('Ошибка загрузки папок:', err);
+        console.error(err);
     }
 }
 
@@ -366,7 +420,7 @@ async function promptCreateFolder() {
             },
             body: JSON.stringify({ 
                 name: folderName.trim(), 
-                type: window.currentTab, // Строго передаем текущий тип (doc или image)
+                type: window.currentTab, 
                 parentId: window.currentFolderId || null
             })
         });
@@ -396,10 +450,9 @@ function renderFolders(folders) {
 
     if (window.currentFolderId) {
         const backDiv = document.createElement('div');
-        backDiv.style.cssText = 'background: #334155; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; display: flex; align-items: center; margin-bottom: 6px; cursor: pointer; color: #38bdf8; font-weight: bold; pointer-events: auto;';
-        backDiv.innerHTML = `<span>⬅️ Назад</span>`;
-        backDiv.onclick = (e) => {
-            e.preventDefault();
+        backDiv.style.cssText = 'background: #334155; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 8px; color: #38bdf8; font-weight: bold; text-align: center; cursor: pointer;';
+        backDiv.innerHTML = '⬅️ Назад в корень';
+        backDiv.onclick = () => {
             window.currentFolderId = null;
             loadArchiveContent();
         };
@@ -407,38 +460,35 @@ function renderFolders(folders) {
     }
 
     if (folders.length === 0 && !window.currentFolderId) {
-        container.innerHTML = '<div style="color: #94a3b8; font-size: 13px; padding: 10px;">Папок пока нет</div>';
+        container.innerHTML = '<div style="color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;">Папок пока нет</div>';
         return;
     }
 
     folders.forEach(folder => {
         const div = document.createElement('div');
-        // Принудительно включаем pointer-events и надежный стиль
-        div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer; pointer-events: auto;';
+        div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
         
         div.innerHTML = `
-            <span style="pointer-events: none; color: #fff;">📁 ${folder.name}</span>
-            <button class="btn delete-folder-btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; pointer-events: auto;">🗑️</button>
+            <span style="color: #fff; cursor: pointer; flex-grow: 1;" onclick="openFolderDirect(${folder.id})">
+                📁 <b>${folder.name}</b>
+            </span>
+            <div>
+                <button type="button" style="background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;" onclick="openFolderDirect(${folder.id})">Открыть</button>
+                <button type="button" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="deleteFolderDirect(${folder.id})">Удалить</button>
+            </div>
         `;
-
-        const deleteBtn = div.querySelector('.delete-folder-btn');
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            deleteFolder(folder.id);
-        };
-
-        div.onclick = (e) => {
-            e.stopPropagation();
-            window.currentFolderId = folder.id;
-            loadArchiveContent();
-        };
 
         container.appendChild(div);
     });
 }
 
-async function deleteFolder(id) {
-    if (!confirm('Вы уверены, что хотите удалить эту папку?')) return;
+window.openFolderDirect = function(id) {
+    window.currentFolderId = id;
+    loadArchiveContent();
+};
+
+window.deleteFolderDirect = async function(id) {
+    if (!confirm('Удалить эту папку и всё её содержимое?')) return;
     const user = getCurrentUser();
     
     try {
@@ -447,16 +497,16 @@ async function deleteFolder(id) {
             headers: { 'x-auth-user': JSON.stringify(user) }
         });
 
-        const result = await res.json().catch(() => ({}));
         if (!res.ok) {
-            throw new Error(result.error || 'Ошибка удаления папки');
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || 'Ошибка удаления на сервере');
         }
 
         loadArchiveContent();
     } catch (err) {
-        alert(err.message);
+        alert('Не удалось удалить: ' + err.message);
     }
-}
+};
 
 // --- Заметки ---
 function openNoteModal() {
