@@ -267,6 +267,16 @@ function selectTab(tabName) {
     if (adminSection) adminSection.style.display = 'none';
     if (contentSection) contentSection.style.display = 'none';
 
+    // Меняем текст кнопки создания папки / заметки в зависимости от вкладки
+    const createBtn = document.querySelector('button[onclick*="promptCreateFolder"]');
+    if (createBtn) {
+        if (tabName === 'note') {
+            createBtn.innerHTML = '➕ Создать заметку';
+        } else {
+            createBtn.innerHTML = '➕ Создать папку';
+        }
+    }
+
     if (tabName === 'admin') {
         if (adminSection) adminSection.style.display = 'flex';
     } else if (tabName === 'doc' || tabName === 'image' || tabName === 'note') {
@@ -560,7 +570,7 @@ function renderNotes(notes) {
     container.innerHTML = '';
     notes.forEach(note => {
         const card = document.createElement('div');
-        card.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px;';
+        card.style.cssText = 'background: «1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px;';
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
