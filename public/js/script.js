@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (getCurrentUser()) {
         loadEquipment();
         loadArchiveContent();
-        updateCounters(); // Автоматически обновляем счетчики при загрузке
+        updateCounters();
     }
 
     const authForm = document.getElementById('authForm');
@@ -90,22 +90,22 @@ function logoutSystem() {
 window.currentTab = 'doc';
 window.currentFolderId = null;
 
-// --- Обновление счетчиков на главном экране ---
+// --- Обновление счетчиков на главном экране (с учетом всех папок) ---
 async function updateCounters() {
     const user = getCurrentUser();
     if (!user) return;
 
     try {
-        // Документы
-        const docRes = await fetch('/api/files?type=doc', { headers: { 'x-auth-user': JSON.stringify(user) } });
+        // Документы (все, включая вложенные папки)
+        const docRes = await fetch('/api/files?type=doc&all=true', { headers: { 'x-auth-user': JSON.stringify(user) } });
         if (docRes.ok) {
             const docs = await docRes.json();
             const countDoc = document.getElementById('countDoc');
             if (countDoc) countDoc.textContent = docs.length;
         }
 
-        // Фотографии
-        const imgRes = await fetch('/api/files?type=image', { headers: { 'x-auth-user': JSON.stringify(user) } });
+        // Фотографии (все, включая вложенные папки)
+        const imgRes = await fetch('/api/files?type=image&all=true', { headers: { 'x-auth-user': JSON.stringify(user) } });
         if (imgRes.ok) {
             const images = await imgRes.json();
             const countImage = document.getElementById('countImage');
