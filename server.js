@@ -67,7 +67,6 @@ function initDatabase() {
             parentId INTEGER,
             type TEXT
         )`, () => {
-            // Миграция колонок на всякий случай
             db.run(`ALTER TABLE folders ADD COLUMN parentId INTEGER`, () => {});
             db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
         });
@@ -138,7 +137,7 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки (Строго изолированные по типам и parentId) ---
+// --- Папки ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const parentId = req.query.parentId;
@@ -172,8 +171,7 @@ app.post('/api/folders', requireAuth, (req, res) => {
 
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
     const folderId = req.params.id;
-    // Каскадное удаление подпапок и самой папки
-    db.run("DELETE FROM folders WHERE id = ? OR parentId = ?", [folderId, folderId], function(err) {
+    db.run("DELETE FROM folders WHERE id = ?", [folderId], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
