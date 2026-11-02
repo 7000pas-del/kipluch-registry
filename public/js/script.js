@@ -556,6 +556,7 @@ async function loadNotes() {
         const notes = await res.json();
         renderNotes(notes);
         
+        window.allNotes = notes; // Сохраняем в память для открытия
         const countNote = document.getElementById('countNote');
         if (countNote) countNote.textContent = notes.length;
     } catch (err) {
@@ -570,17 +571,30 @@ function renderNotes(notes) {
     container.innerHTML = '';
     notes.forEach(note => {
         const card = document.createElement('div');
-        card.style.cssText = 'background: «1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px;';
+        // Исправлена опечатка в стилях
+        card.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer;';
+        
+        // Клик по карточке открывает просмотр заметки
+        card.onclick = (e) => {
+            if (!e.target.closest('button')) {
+                viewNote(note);
+            }
+        };
+
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
                 <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="deleteNote(${note.id})">🗑️</button>
             </div>
-            <div style="font-size: 13px; color: #cbd5e1; white-space: pre-wrap; margin-bottom: 6px;">${note.content || ''}</div>
+            <div style="font-size: 13px; color: #cbd5e1; white-space: pre-wrap; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${note.content || ''}</div>
             <div style="font-size: 10px; color: #94a3b8;">${note.date || ''}</div>
         `;
         container.appendChild(card);
     });
+}
+
+function viewNote(note) {
+    alert(`📝 ${note.title || 'Без названия'}\n\n${note.content || ''}\n\nДата: ${note.date || ''}`);
 }
 
 async function deleteNote(id) {
