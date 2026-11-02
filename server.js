@@ -61,15 +61,14 @@ function initDatabase() {
             });
         });
 
+        // Принудительно пересоздаем таблицу папок, очищая старый мусор и битые связи
+        db.run(`DROP TABLE IF EXISTS folders`);
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             parentId INTEGER,
             type TEXT
-        )`, () => {
-            db.run(`ALTER TABLE folders ADD COLUMN parentId INTEGER`, () => {});
-            db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
-        });
+        )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -161,7 +160,6 @@ app.get('/api/folders', requireAuth, (req, res) => {
 app.post('/api/folders', requireAuth, (req, res) => {
     const { name, parentId, type } = req.body;
     
-    // Жестко очищаем parentId, чтобы текстовые 'null', 'undefined' или '' превращались в настоящий SQL NULL
     let pId = parentId;
     if (!pId || pId === 'root' || pId === 'null' || pId === 'undefined' || pId === '' || pId === 0) {
         pId = null;
