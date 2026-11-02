@@ -90,7 +90,7 @@ function logoutSystem() {
 window.currentTab = 'doc';
 window.currentFolderId = null;
 
-// --- Обновление счетчиков ---
+// --- Обновление счетчиков на главном экране ---
 async function updateCounters() {
     const user = getCurrentUser();
     if (!user) return;
@@ -179,8 +179,6 @@ function viewEquipmentPassport(id) {
     document.getElementById('viewEqNextVer').textContent = item.nextVerificationDate || '-';
     document.getElementById('viewEqNotes').textContent = item.notes || '-';
     
-    window.currentViewingId = item.id; // Запоминаем для паспорта
-
     const btnEdit = document.getElementById('btnEditFromView');
     if (btnEdit) {
         btnEdit.onclick = () => {
@@ -209,21 +207,24 @@ function openEquipmentModal(editData = null) {
     document.getElementById('eqNextVer').value = editData ? editData.nextVerificationDate || '' : '';
     document.getElementById('eqNotes').value = editData ? editData.notes || '' : '';
 
-    if (editData && editData.id) {
-        if (title) title.textContent = '✏️ Редактировать оборудование';
-        window.currentEditId = Number(editData.id);
-    } else {
-        if (title) title.textContent = '➕ Добавить оборудование';
-        window.currentEditId = null;
+    if (modal) {
+        if (editData && editData.id) {
+            if (title) title.textContent = '✏️ Редактировать оборудование';
+            modal.dataset.editId = editData.id; // Надежно сохраняем ID прямо в модальном окне
+        } else {
+            if (title) title.textContent = '➕ Добавить оборудование';
+            delete modal.dataset.editId; // Очищаем ID для режима создания
+        }
+        modal.style.display = 'flex';
     }
-
-    if (modal) modal.style.display = 'flex';
 }
 
 function closeEquipmentModal() {
     const modal = document.getElementById('equipmentModal');
-    if (modal) modal.style.display = 'none';
-    window.currentEditId = null;
+    if (modal) {
+        modal.style.display = 'none';
+        delete modal.dataset.editId;
+    }
 }
 
 function editEquipmentFromButton(event, encodedItem) {
@@ -252,9 +253,10 @@ async function saveEquipment(event) {
         return;
     }
 
-    const editId = window.currentEditId;
-    const isEdit = editId !== null && editId !== undefined && !isNaN(editId);
+    const modal = document.getElementById('equipmentModal');
+    const editId = modal ? modal.dataset.editId : null;
     
+    const isEdit = editId !== null && editId !== undefined && editId !== '';
     const url = isEdit ? `/api/equipment/${editId}` : '/api/equipment';
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -264,13 +266,14 @@ async function saveEquipment(event) {
             headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
             body: JSON.stringify({ name, serialNumber, nextVerificationDate, status, location, notes })
         });
-        if (!res.ok) throw new Error('Ошибка сохранения');
+        
+        const responseData = await res.json();
+        if (!res.ok) throw new Error(responseData.error || 'Ошибка сохранения');
 
         closeEquipmentModal();
-        window.currentEditId = null;
         loadEquipment();
     } catch (err) {
-        alert(err.message);
+        alert('Ошибка: ' + err.message);
     }
 }
 
@@ -290,6 +293,7 @@ async function deleteEquipment(event, id) {
             method: 'DELETE', 
             headers: { 'x-auth-user': JSON.stringify(user) } 
         });
+        
         if (!res.ok) throw new Error('Ошибка удаления с сервера');
         
         loadEquipment();
