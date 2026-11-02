@@ -61,8 +61,6 @@ function initDatabase() {
             });
         });
 
-        // Принудительно пересоздаем таблицу папок, очищая старый мусор и битые связи
-        db.run(`DROP TABLE IF EXISTS folders`);
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -198,6 +196,14 @@ app.post('/api/notes', requireAuth, (req, res) => {
     db.run("INSERT INTO notes (title, content, date) VALUES (?, ?, ?)", [title || 'Без названия', content || '', date], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
+    });
+});
+
+app.put('/api/notes/:id', requireAuth, (req, res) => {
+    const { title, content } = req.body;
+    db.run("UPDATE notes SET title = ?, content = ? WHERE id = ?", [title || 'Без названия', content || '', req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
     });
 });
 
