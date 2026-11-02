@@ -61,12 +61,16 @@ function initDatabase() {
             });
         });
 
+        // Создаем таблицу folders и гарантированно добавляем недостающие колонки
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             parentId INTEGER,
             type TEXT
-        )`);
+        )`, () => {
+            db.run(`ALTER TABLE folders ADD COLUMN parentId INTEGER`, () => {});
+            db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
+        });
 
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
