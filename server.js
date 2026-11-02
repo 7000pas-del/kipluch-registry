@@ -61,6 +61,8 @@ function initDatabase() {
             });
         });
 
+        // Принудительно сбрасываем таблицу папок, чтобы она ВСЕГДА создавалась с правильными колонками parentId и type
+        db.run(`DROP TABLE IF EXISTS folders`);
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
