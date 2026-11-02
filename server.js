@@ -61,7 +61,6 @@ function initDatabase() {
             });
         });
 
-        // Принудительно сбрасываем таблицу папок, чтобы она ВСЕГДА создавалась с правильными колонками parentId и type
         db.run(`DROP TABLE IF EXISTS folders`);
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,6 +73,15 @@ function initDatabase() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
             content TEXT,
+            date TEXT
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            filename TEXT,
+            folderId INTEGER,
+            type TEXT,
             date TEXT
         )`);
 
@@ -179,6 +187,56 @@ app.post('/api/folders', requireAuth, (req, res) => {
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
     const folderId = req.params.id;
     db.run("DELETE FROM folders WHERE id = ?", [folderId], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// --- Файлы и Фото ---
+app.get('/api/files', requireAuth, (req, res) => {
+    const type = req.query.type || 'doc';
+    const folderId = req.query.folderId;
+
+    let query = "SELECT * FROM files WHERE type = ?";
+    let params = [type];
+
+    if (folderId && folderId !== 'null' && folderId !== 'undefined' && folderId !== '' && folderId !== '0') {
+        query += " AND folderId = ?";
+        params.push(folderId);
+    } else {
+        query += " AND (folderId IS NULL OR folderId = '' OR folderId = 0)";
+    }
+
+    db.all(query, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+app.post('/api/files', requireAuth, upload.array('files'), (req, res) => {
+    const { type, folderId } = req.body;
+    const fType = type || 'doc';
+    const fId = (!folderId || folderId === 'null' || folderId === 'undefined' || folderId === '' || folderId === 0) ? null : folderId;
+    const date = new Date().toLocaleDateString('ru-RU');
+
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'Файлы не переданы' });
+    }
+
+    let insertedCount = 0;
+    req.files.forEach(file => {
+        const query = `INSERT INTO files (name, filename, folderId, type, date) VALUES (?, ?, ?, ?, ?)`;
+        db.run(query, [file.originalname, file.filename, fId, fType, date], function(err) {
+            if (!err) insertedCount++;
+            if (insertedCount === req.files.length) {
+                res.json({ success: true });
+            }
+        });
+    });
+});
+
+app.delete('/api/files/:id', requireAuth, (req, res) => {
+    db.run("DELETE FROM files WHERE id = ?", [req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
