@@ -196,15 +196,24 @@ app.delete('/api/folders/:id', requireAuth, (req, res) => {
 app.get('/api/files', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const folderId = req.query.folderId;
+    const all = req.query.all; // Если передан параметр all=true, возвращаем ВСЕ файлы этого типа (для счетчиков)
 
     let query = "SELECT * FROM files WHERE type = ?";
     let params = [type];
+
+    if (all === 'true') {
+        // Возвращаем вообще все файлы раздела для правильного подсчета на главной
+        db.all(query, params, (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows || []);
+        });
+        return;
+    }
 
     if (folderId && folderId !== 'null' && folderId !== 'undefined' && folderId !== '' && folderId !== '0') {
         query += " AND folderId = ?";
         params.push(folderId);
     } else {
-        // Исправлено: проверяем правильное поле folderId вместо несуществующего parentId
         query += " AND (folderId IS NULL OR folderId = '' OR folderId = 0)";
     }
 
