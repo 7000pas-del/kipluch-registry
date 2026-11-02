@@ -267,7 +267,6 @@ function selectTab(tabName) {
     if (adminSection) adminSection.style.display = 'none';
     if (contentSection) contentSection.style.display = 'none';
 
-    // Меняем текст кнопки создания папки / заметки в зависимости от вкладки
     const createBtn = document.querySelector('button[onclick*="promptCreateFolder"]');
     if (createBtn) {
         if (tabName === 'note') {
@@ -507,11 +506,19 @@ function renderFolders(folders) {
 }
 
 // --- Заметки ---
-function openNoteModal() {
+function openNoteModal(editNote = null) {
     const nameInput = document.getElementById('noteNameInput');
     const contentInput = document.getElementById('noteContentInput');
-    if (nameInput) nameInput.value = '';
-    if (contentInput) contentInput.value = '';
+    
+    if (editNote) {
+        if (nameInput) nameInput.value = editNote.title || '';
+        if (contentInput) contentInput.value = editNote.content || '';
+        window.currentEditNoteId = editNote.id;
+    } else {
+        if (nameInput) nameInput.value = '';
+        if (contentInput) contentInput.value = '';
+        window.currentEditNoteId = null;
+    }
 
     const modal = document.getElementById('noteModal');
     if (modal) modal.style.display = 'flex';
@@ -529,14 +536,20 @@ async function saveNote(event) {
         return;
     }
 
+    const editId = window.currentEditNoteId;
+    const isEdit = editId !== null && editId !== undefined && editId !== '';
+    const url = isEdit ? `/api/notes/${editId}` : '/api/notes';
+    const method = isEdit ? 'PUT' : 'POST';
+
     try {
-        const res = await fetch('/api/notes', {
-            method: 'POST',
+        const res = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
             body: JSON.stringify({ title, content })
         });
         if (!res.ok) throw new Error('Ошибка сохранения');
 
+        window.currentEditNoteId = null;
         closeModals();
         loadNotes();
     } catch (err) {
@@ -556,7 +569,7 @@ async function loadNotes() {
         const notes = await res.json();
         renderNotes(notes);
         
-        window.allNotes = notes; // Сохраняем в память для открытия
+        window.allNotes = notes;
         const countNote = document.getElementById('countNote');
         if (countNote) countNote.textContent = notes.length;
     } catch (err) {
@@ -571,20 +584,24 @@ function renderNotes(notes) {
     container.innerHTML = '';
     notes.forEach(note => {
         const card = document.createElement('div');
-        // Исправлена опечатка в стилях
         card.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer;';
         
-        // Клик по карточке открывает просмотр заметки
         card.onclick = (e) => {
+            // Открываем заметку только если кликнули не по кнопкам
             if (!e.target.closest('button')) {
                 viewNote(note);
             }
         };
 
+        const noteJson = encodeURIComponent(JSON.stringify(note));
+
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
-                <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="deleteNote(${note.id})">🗑️</button>
+                <div>
+                    <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #334155; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px;" onclick="editNoteFromButton(event, '${noteJson}')">✏️</button>
+                    <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="deleteNote(event, ${note.id})">🗑️</button>
+                </div>
             </div>
             <div style="font-size: 13px; color: #cbd5e1; white-space: pre-wrap; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${note.content || ''}</div>
             <div style="font-size: 10px; color: #94a3b8;">${note.date || ''}</div>
@@ -597,7 +614,18 @@ function viewNote(note) {
     alert(`📝 ${note.title || 'Без названия'}\n\n${note.content || ''}\n\nДата: ${note.date || ''}`);
 }
 
-async function deleteNote(id) {
+function editNoteFromButton(event, encodedNote) {
+    if (event) event.stopPropagation();
+    try {
+        const note = JSON.parse(decodeURIComponent(encodedNote));
+        openNoteModal(note);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function deleteNote(event, id) {
+    if (event) event.stopPropagation();
     if (!confirm('Удалить эту заметку?')) return;
     const user = getCurrentUser();
     try {
