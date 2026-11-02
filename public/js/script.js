@@ -380,7 +380,10 @@ async function promptCreateFolder() {
     if (!folderName || !folderName.trim()) return;
 
     const user = getCurrentUser();
-    if (!user) return;
+    if (!user) {
+        alert('Ошибка: пользователь не авторизован');
+        return;
+    }
 
     const payload = { 
         name: folderName.trim(), 
@@ -395,10 +398,21 @@ async function promptCreateFolder() {
             body: JSON.stringify(payload)
         });
 
-        if (!res.ok) throw new Error('Не удалось создать папку');
+        const textResponse = await res.text();
+        let data = {};
+        try {
+            data = JSON.parse(textResponse);
+        } catch (e) {
+            data = { error: textResponse || 'Неизвестный ответ сервера' };
+        }
+
+        if (!res.ok) {
+            throw new Error(data.error || `Ошибка сервера (код ${res.status})`);
+        }
+        
         loadArchiveContent();
     } catch (err) {
-        alert('Ошибка: ' + err.message);
+        alert('Точная ошибка: ' + err.message);
     }
 }
 
