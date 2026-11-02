@@ -281,6 +281,12 @@ function selectTab(tabName) {
     window.currentTab = tabName;
     window.currentFolderId = null;
 
+    // Принудительно очищаем контейнеры при переключении вкладок, чтобы не было наложения папок
+    const fc = document.getElementById('foldersContainer');
+    if (fc) fc.innerHTML = '';
+    const fic = document.getElementById('filesContainer');
+    if (fic) fic.innerHTML = '';
+
     const welcomeScreen = document.getElementById('welcomeScreen');
     const adminSection = document.getElementById('adminSection');
     const contentSection = document.getElementById('contentSection');
@@ -470,8 +476,9 @@ function renderFolders(folders) {
         
         const titleSpan = document.createElement('span');
         titleSpan.style.cssText = 'color: #fff; cursor: pointer; flex-grow: 1;';
-        titleSpan.innerHTML = `📁 <b>${folder.name}</b>`;
+        titleSpan.innerHTML = `📁 <b>${folder.name}</b> (ID: ${folder.id})`;
         titleSpan.addEventListener('click', () => {
+            console.log('Клик по названию папки ID:', folder.id);
             window.currentFolderId = folder.id;
             loadArchiveContent();
         });
@@ -483,6 +490,7 @@ function renderFolders(folders) {
         openBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;';
         openBtn.textContent = 'Открыть';
         openBtn.addEventListener('click', () => {
+            console.log('Клик по кнопке Открыть для папки ID:', folder.id);
             window.currentFolderId = folder.id;
             loadArchiveContent();
         });
@@ -492,6 +500,7 @@ function renderFolders(folders) {
         deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
         deleteBtn.textContent = 'Удалить';
         deleteBtn.addEventListener('click', () => {
+            console.log('Клик по кнопке Удалить для папки ID:', folder.id);
             deleteFolderDirect(folder.id);
         });
 
