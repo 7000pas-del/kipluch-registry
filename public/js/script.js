@@ -40,13 +40,9 @@ async function performLogin() {
         });
 
         const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Неверный логин или пароль');
-        }
+        if (!response.ok) throw new Error(data.error || 'Неверный логин или пароль');
 
         localStorage.setItem('currentUser', JSON.stringify(data.user));
-        
         usernameInput.value = '';
         passwordInput.value = '';
         if (errorDiv) errorDiv.style.display = 'none';
@@ -92,7 +88,7 @@ function logoutSystem() {
 window.currentTab = 'doc';
 window.currentFolderId = null;
 
-// --- Оборудование ---
+// --- Реестр оборудования ---
 async function loadEquipment() {
     const user = getCurrentUser();
     if (!user) return;
@@ -119,9 +115,7 @@ function renderEquipment(data) {
         const row = document.createElement('tr');
         row.style.cursor = 'pointer';
         row.onclick = (e) => {
-            if (!e.target.closest('button')) {
-                viewEquipmentPassport(item.id);
-            }
+            if (!e.target.closest('button')) viewEquipmentPassport(item.id);
         };
 
         const itemJson = encodeURIComponent(JSON.stringify(item));
@@ -129,7 +123,7 @@ function renderEquipment(data) {
         row.innerHTML = `
             <td>${item.name || ''}</td>
             <td>${item.serialNumber || ''}</td>
-            <td>${item.ownerName || item.location || ''}</td>
+            <td>${item.location || ''}</td>
             <td>${item.location || ''}</td>
             <td>${item.nextVerificationDate || ''}</td>
             <td>${item.status || ''}</td>
@@ -203,7 +197,7 @@ function editEquipmentFromButton(event, encodedItem) {
         const item = JSON.parse(decodeURIComponent(encodedItem));
         openEquipmentModal(item);
     } catch (err) {
-        console.error('Ошибка открытия редактора:', err);
+        console.error(err);
     }
 }
 
@@ -219,38 +213,21 @@ async function saveEquipment(event) {
     const notes = document.getElementById('eqNotes')?.value || '';
 
     if (!name) {
-        alert('Введите наименование оборудования!');
+        alert('Введите наименование!');
         return;
     }
 
     const editId = window.currentEditId;
     const isEdit = editId !== null && editId !== undefined && editId !== '';
     const url = isEdit ? `/api/equipment/${editId}` : '/api/equipment';
-    const method = isEdit ? 'PUT' : 'POST';
 
     try {
         const res = await fetch(url, {
-            method: method,
-            headers: { 
-                'Content-Type': 'application/json',
-                'x-auth-user': JSON.stringify(user)
-            },
-            body: JSON.stringify({ 
-                name, 
-                serialNumber, 
-                verificationDate: '', 
-                nextVerificationDate, 
-                status, 
-                location, 
-                notes 
-            })
+            method: isEdit ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
+            body: JSON.stringify({ name, serialNumber, nextVerificationDate, status, location, notes })
         });
-
-        const resultData = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-            throw new Error(resultData.error || 'Ошибка сохранения на сервере');
-        }
+        if (!res.ok) throw new Error('Ошибка сохранения');
 
         closeEquipmentModal();
         window.currentEditId = null;
@@ -262,26 +239,22 @@ async function saveEquipment(event) {
 
 async function deleteEquipment(event, id) {
     if (event) event.stopPropagation();
-    if (!confirm('Удалить эту запись?')) return;
+    if (!confirm('Удалить запись?')) return;
     const user = getCurrentUser();
     try {
-        const res = await fetch(`/api/equipment/${id}`, { 
-            method: 'DELETE',
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
-        if (!res.ok) throw new Error('Ошибка удаления');
+        await fetch(`/api/equipment/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
         loadEquipment();
     } catch (err) {
         alert(err.message);
     }
 }
 
-// --- Управление вкладками архива и кнопка Загрузить ---
+// --- Управление вкладками и контентом ---
 function selectTab(tabName) {
     window.currentTab = tabName;
     window.currentFolderId = null;
 
-    // Принудительно очищаем контейнеры при переключении вкладок, чтобы не было наложения папок
+    // Полная очистка контейнеров
     const fc = document.getElementById('foldersContainer');
     if (fc) fc.innerHTML = '';
     const fic = document.getElementById('filesContainer');
@@ -362,12 +335,10 @@ async function handleFileUpload(event) {
             headers: { 'x-auth-user': JSON.stringify(user) },
             body: formData
         });
-
         if (!res.ok) throw new Error('Ошибка загрузки файла');
 
         alert('Файл успешно загружен!');
         event.target.value = '';
-        loadArchiveContent();
     } catch (err) {
         alert('Ошибка: ' + err.message);
     }
@@ -386,8 +357,6 @@ async function loadArchiveContent() {
         let url = `/api/folders?type=${window.currentTab}`;
         if (window.currentFolderId) {
             url += `&parentId=${window.currentFolderId}`;
-        } else {
-            url += `&parentId=root`;
         }
 
         const res = await fetch(url, {
@@ -412,18 +381,12 @@ async function promptCreateFolder() {
     if (!folderName || !folderName.trim()) return;
 
     const user = getCurrentUser();
-    if (!user) {
-        alert('Пользователь не авторизован!');
-        return;
-    }
+    if (!user) return;
 
     try {
         const res = await fetch('/api/folders', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-user': JSON.stringify(user)
-            },
+            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
             body: JSON.stringify({ 
                 name: folderName.trim(), 
                 type: window.currentTab, 
@@ -431,15 +394,9 @@ async function promptCreateFolder() {
             })
         });
 
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-            throw new Error(data.error || 'Не удалось создать папку на сервере');
-        }
-
+        if (!res.ok) throw new Error('Не удалось создать папку');
         loadArchiveContent();
     } catch (err) {
-        console.error('Ошибка создания папки:', err);
         alert('Ошибка: ' + err.message);
     }
 }
@@ -457,7 +414,7 @@ function renderFolders(folders) {
     if (window.currentFolderId) {
         const backDiv = document.createElement('div');
         backDiv.style.cssText = 'background: #334155; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 8px; color: #38bdf8; font-weight: bold; text-align: center; cursor: pointer;';
-        backDiv.innerHTML = '⬅️ Назад в корень';
+        backDiv.innerHTML = '⬅️ Назад';
         backDiv.addEventListener('click', () => {
             window.currentFolderId = null;
             loadArchiveContent();
@@ -465,8 +422,10 @@ function renderFolders(folders) {
         container.appendChild(backDiv);
     }
 
-    if (folders.length === 0 && !window.currentFolderId) {
-        container.innerHTML = '<div style="color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;">Папок пока нет</div>';
+    if (!folders || folders.length === 0) {
+        if (!window.currentFolderId) {
+            container.innerHTML = '<div style="color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;">Папок пока нет</div>';
+        }
         return;
     }
 
@@ -476,9 +435,8 @@ function renderFolders(folders) {
         
         const titleSpan = document.createElement('span');
         titleSpan.style.cssText = 'color: #fff; cursor: pointer; flex-grow: 1;';
-        titleSpan.innerHTML = `📁 <b>${folder.name}</b> (ID: ${folder.id})`;
+        titleSpan.innerHTML = `📁 <b>${folder.name}</b>`;
         titleSpan.addEventListener('click', () => {
-            console.log('Клик по названию папки ID:', folder.id);
             window.currentFolderId = folder.id;
             loadArchiveContent();
         });
@@ -490,7 +448,6 @@ function renderFolders(folders) {
         openBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;';
         openBtn.textContent = 'Открыть';
         openBtn.addEventListener('click', () => {
-            console.log('Клик по кнопке Открыть для папки ID:', folder.id);
             window.currentFolderId = folder.id;
             loadArchiveContent();
         });
@@ -499,41 +456,31 @@ function renderFolders(folders) {
         deleteBtn.type = 'button';
         deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
         deleteBtn.textContent = 'Удалить';
-        deleteBtn.addEventListener('click', () => {
-            console.log('Клик по кнопке Удалить для папки ID:', folder.id);
-            deleteFolderDirect(folder.id);
-        });
+        deleteBtn.addEventListener('click', () => deleteFolderDirect(folder.id));
 
         btnContainer.appendChild(openBtn);
         btnContainer.appendChild(deleteBtn);
 
         div.appendChild(titleSpan);
         div.appendChild(btnContainer);
-
         container.appendChild(div);
     });
 }
 
-window.deleteFolderDirect = async function(id) {
-    if (!confirm('Удалить эту папку и всё её содержимое?')) return;
+async function deleteFolderDirect(id) {
+    if (!confirm('Удалить папку и всё её содержимое?')) return;
     const user = getCurrentUser();
-    
     try {
         const res = await fetch(`/api/folders/${id}`, {
             method: 'DELETE',
             headers: { 'x-auth-user': JSON.stringify(user) }
         });
-
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.error || 'Ошибка удаления на сервере');
-        }
-
+        if (!res.ok) throw new Error('Ошибка удаления');
         loadArchiveContent();
     } catch (err) {
         alert('Не удалось удалить: ' + err.message);
     }
-};
+}
 
 // --- Заметки ---
 function openNoteModal() {
@@ -561,14 +508,10 @@ async function saveNote(event) {
     try {
         const res = await fetch('/api/notes', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-user': JSON.stringify(user)
-            },
+            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
             body: JSON.stringify({ title, content })
         });
-
-        if (!res.ok) throw new Error('Ошибка сохранения заметки');
+        if (!res.ok) throw new Error('Ошибка сохранения');
 
         closeModals();
         loadNotes();
@@ -620,11 +563,7 @@ async function deleteNote(id) {
     if (!confirm('Удалить эту заметку?')) return;
     const user = getCurrentUser();
     try {
-        const res = await fetch(`/api/notes/${id}`, {
-            method: 'DELETE',
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
-        if (!res.ok) throw new Error('Ошибка удаления');
+        await fetch(`/api/notes/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
         loadNotes();
     } catch (err) {
         alert(err.message);
