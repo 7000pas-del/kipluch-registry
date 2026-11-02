@@ -61,7 +61,6 @@ function initDatabase() {
             });
         });
 
-        // Создаем таблицу folders и гарантированно добавляем недостающие колонки
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -146,7 +145,7 @@ app.get('/api/folders', requireAuth, (req, res) => {
     let query = "SELECT * FROM folders WHERE type = ?";
     let params = [type];
 
-    if (parentId && parentId !== 'root' && parentId !== 'null' && parentId !== 'undefined' && parentId !== '') {
+    if (parentId && parentId !== 'root' && parentId !== 'null' && parentId !== 'undefined' && parentId !== '' && parentId !== '0') {
         query += " AND parentId = ?";
         params.push(parentId);
     } else {
@@ -161,7 +160,13 @@ app.get('/api/folders', requireAuth, (req, res) => {
 
 app.post('/api/folders', requireAuth, (req, res) => {
     const { name, parentId, type } = req.body;
-    const pId = (!parentId || parentId === 'root' || parentId === 'null' || parentId === 'undefined' || parentId === '') ? null : parentId;
+    
+    // Жестко очищаем parentId, чтобы текстовые 'null', 'undefined' или '' превращались в настоящий SQL NULL
+    let pId = parentId;
+    if (!pId || pId === 'root' || pId === 'null' || pId === 'undefined' || pId === '' || pId === 0) {
+        pId = null;
+    }
+    
     const fType = type || 'doc';
 
     db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, fType], function(err) {
