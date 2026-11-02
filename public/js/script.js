@@ -90,13 +90,12 @@ function logoutSystem() {
 window.currentTab = 'doc';
 window.currentFolderId = null;
 
-// --- Обновление счетчиков на главном экране (с учетом всех папок) ---
+// --- Обновление счетчиков на главном экране ---
 async function updateCounters() {
     const user = getCurrentUser();
     if (!user) return;
 
     try {
-        // Документы (все, включая вложенные папки)
         const docRes = await fetch('/api/files?type=doc&all=true', { headers: { 'x-auth-user': JSON.stringify(user) } });
         if (docRes.ok) {
             const docs = await docRes.json();
@@ -104,7 +103,6 @@ async function updateCounters() {
             if (countDoc) countDoc.textContent = docs.length;
         }
 
-        // Фотографии (все, включая вложенные папки)
         const imgRes = await fetch('/api/files?type=image&all=true', { headers: { 'x-auth-user': JSON.stringify(user) } });
         if (imgRes.ok) {
             const images = await imgRes.json();
@@ -112,7 +110,6 @@ async function updateCounters() {
             if (countImage) countImage.textContent = images.length;
         }
 
-        // Заметки
         const noteRes = await fetch('/api/notes', { headers: { 'x-auth-user': JSON.stringify(user) } });
         if (noteRes.ok) {
             const notes = await noteRes.json();
@@ -210,7 +207,7 @@ function openEquipmentModal(editData = null) {
     document.getElementById('eqNextVer').value = editData ? editData.nextVerificationDate || '' : '';
     document.getElementById('eqNotes').value = editData ? editData.notes || '' : '';
 
-    if (editData && editData.id) {
+    if (editData && editData.id !== undefined && editData.id !== null) {
         if (title) title.textContent = '✏️ Редактировать оборудование';
         window.currentEditId = editData.id;
     } else {
@@ -256,10 +253,11 @@ async function saveEquipment(event) {
     const editId = window.currentEditId;
     const isEdit = editId !== null && editId !== undefined && editId !== '';
     const url = isEdit ? `/api/equipment/${editId}` : '/api/equipment';
+    const method = isEdit ? 'PUT' : 'POST';
 
     try {
         const res = await fetch(url, {
-            method: isEdit ? 'PUT' : 'POST',
+            method: method,
             headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
             body: JSON.stringify({ name, serialNumber, nextVerificationDate, status, location, notes })
         });
@@ -275,13 +273,25 @@ async function saveEquipment(event) {
 
 async function deleteEquipment(event, id) {
     if (event) event.stopPropagation();
-    if (!confirm('Удалить запись?')) return;
+    
+    if (!id) {
+        alert('Ошибка: не удалось определить ID записи для удаления');
+        return;
+    }
+
+    if (!confirm('Удалить эту запись?')) return;
     const user = getCurrentUser();
+    
     try {
-        await fetch(`/api/equipment/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
+        const res = await fetch(`/api/equipment/${id}`, { 
+            method: 'DELETE', 
+            headers: { 'x-auth-user': JSON.stringify(user) } 
+        });
+        if (!res.ok) throw new Error('Ошибка удаления с сервера');
+        
         loadEquipment();
     } catch (err) {
-        alert(err.message);
+        alert('Не удалось удалить: ' + err.message);
     }
 }
 
