@@ -134,7 +134,7 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки (Прямой SQL-доступ) ---
+// --- Папки ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const parentId = req.query.parentId;
@@ -161,15 +161,17 @@ app.post('/api/folders', requireAuth, (req, res) => {
     const fType = type || 'doc';
 
     db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, fType], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            console.error('❌ Ошибка SQLite при создании папки:', err.message);
+            return res.status(500).json({ error: 'Ошибка БД: ' + err.message });
+        }
         res.json({ id: this.lastID, success: true });
     });
 });
 
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
     const folderId = req.params.id;
-    // Удаляем саму папку и всё, что внутри неё лежит
-    db.run("DELETE FROM folders WHERE id = ? OR parentId = ?", [folderId, folderId], function(err) {
+    db.run("DELETE FROM folders WHERE id = ?", [folderId], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
