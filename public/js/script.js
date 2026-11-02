@@ -452,10 +452,10 @@ function renderFolders(folders) {
         const backDiv = document.createElement('div');
         backDiv.style.cssText = 'background: #334155; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 8px; color: #38bdf8; font-weight: bold; text-align: center; cursor: pointer;';
         backDiv.innerHTML = '⬅️ Назад в корень';
-        backDiv.onclick = () => {
+        backDiv.addEventListener('click', () => {
             window.currentFolderId = null;
             loadArchiveContent();
-        };
+        });
         container.appendChild(backDiv);
     }
 
@@ -468,24 +468,42 @@ function renderFolders(folders) {
         const div = document.createElement('div');
         div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
         
-        div.innerHTML = `
-            <span style="color: #fff; cursor: pointer; flex-grow: 1;" onclick="openFolderDirect(${folder.id})">
-                📁 <b>${folder.name}</b>
-            </span>
-            <div>
-                <button type="button" style="background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;" onclick="openFolderDirect(${folder.id})">Открыть</button>
-                <button type="button" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="deleteFolderDirect(${folder.id})">Удалить</button>
-            </div>
-        `;
+        const titleSpan = document.createElement('span');
+        titleSpan.style.cssText = 'color: #fff; cursor: pointer; flex-grow: 1;';
+        titleSpan.innerHTML = `📁 <b>${folder.name}</b>`;
+        titleSpan.addEventListener('click', () => {
+            window.currentFolderId = folder.id;
+            loadArchiveContent();
+        });
+
+        const btnContainer = document.createElement('div');
+
+        const openBtn = document.createElement('button');
+        openBtn.type = 'button';
+        openBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;';
+        openBtn.textContent = 'Открыть';
+        openBtn.addEventListener('click', () => {
+            window.currentFolderId = folder.id;
+            loadArchiveContent();
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
+        deleteBtn.textContent = 'Удалить';
+        deleteBtn.addEventListener('click', () => {
+            deleteFolderDirect(folder.id);
+        });
+
+        btnContainer.appendChild(openBtn);
+        btnContainer.appendChild(deleteBtn);
+
+        div.appendChild(titleSpan);
+        div.appendChild(btnContainer);
 
         container.appendChild(div);
     });
 }
-
-window.openFolderDirect = function(id) {
-    window.currentFolderId = id;
-    loadArchiveContent();
-};
 
 window.deleteFolderDirect = async function(id) {
     if (!confirm('Удалить эту папку и всё её содержимое?')) return;
