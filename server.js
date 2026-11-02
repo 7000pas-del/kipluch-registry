@@ -119,7 +119,7 @@ const requireAuth = (req, res, next) => {
     res.status(401).json({ error: 'Недействительная сессия' });
 };
 
-// --- Оборудование (Реестр / Весы) ---
+// --- Оборудование ---
 app.get('/api/equipment', requireAuth, (req, res) => {
     db.all("SELECT * FROM equipment", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -129,18 +129,19 @@ app.get('/api/equipment', requireAuth, (req, res) => {
 
 app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
-    const files = req.files ? req.files.map(f => f.filename) : [];
-    const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes, files) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    db.run(query, [name || 'Без названия', serialNumber || '', verificationDate || '', nextVerificationDate || '', status || 'В эксплуатации', location || '', notes || '', JSON.stringify(files)], function(err) {
+    const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    db.run(query, [name || 'Без названия', serialNumber || '', verificationDate || '', nextVerificationDate || '', status || 'В эксплуатации', location || '', notes || ''], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID, success: true });
     });
 });
 
 app.put('/api/equipment/:id', requireAuth, upload.array('files'), (req, res) => {
+    const id = req.params.id;
     const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
+    
     const query = `UPDATE equipment SET name = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
-    db.run(query, [name || 'Без названия', serialNumber || '', verificationDate || '', nextVerificationDate || '', status || 'В эксплуатации', location || '', notes || '', req.params.id], function(err) {
+    db.run(query, [name || 'Без названия', serialNumber || '', verificationDate || '', nextVerificationDate || '', status || 'В эксплуатации', location || '', notes || '', id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
@@ -177,27 +178,18 @@ app.get('/api/folders', requireAuth, (req, res) => {
 
 app.post('/api/folders', requireAuth, (req, res) => {
     const { name, parentId, type } = req.body;
+    let pId = (!parentId || parentId === 'root' || parentId === 'null' || parentId === 'undefined' || parentId === '' || parentId === 0) ? null : parentId;
     
-    let pId = parentId;
-    if (!pId || pId === 'root' || pId === 'null' || pId === 'undefined' || pId === '' || pId === 0) {
-        pId = null;
-    }
-    
-    const fType = type || 'doc';
-
-    db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, fType], function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Ошибка БД: ' + err.message });
-        }
+    db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, type || 'doc'], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID, success: true });
     });
 });
 
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
     const folderId = req.params.id;
-    
     db.serialize(() => {
-        db.run("DELETE FROM files WHERE folderId = ?", [folderId], (err) => {});
+        db.run("DELETE FROM files WHERE folderId = ?", [folderId], () => {});
         db.run("DELETE FROM folders WHERE id = ?", [folderId], function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ success: true });
@@ -237,7 +229,6 @@ app.get('/api/files', requireAuth, (req, res) => {
 
 app.post('/api/files', requireAuth, upload.array('files'), (req, res) => {
     const { type, folderId } = req.body;
-    const fType = type || 'doc';
     const fId = (!folderId || folderId === 'null' || folderId === 'undefined' || folderId === '' || folderId === 0) ? null : folderId;
     const date = new Date().toLocaleDateString('ru-RU');
 
@@ -248,13 +239,9 @@ app.post('/api/files', requireAuth, upload.array('files'), (req, res) => {
     let insertedCount = 0;
     req.files.forEach(file => {
         const fixedOriginalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-
-        const query = `INSERT INTO files (name, filename, folderId, type, date) VALUES (?, ?, ?, ?, ?)`;
-        db.run(query, [fixedOriginalName, file.filename, fId, fType, date], function(err) {
+        db.run(`INSERT INTO files (name, filename, folderId, type, date) VALUES (?, ?, ?, ?, ?)`, [fixedOriginalName, file.filename, fId, type || 'doc', date], function(err) {
             if (!err) insertedCount++;
-            if (insertedCount === req.files.length) {
-                res.json({ success: true });
-            }
+            if (insertedCount === req.files.length) res.json({ success: true });
         });
     });
 });
@@ -277,7 +264,6 @@ app.get('/api/notes', requireAuth, (req, res) => {
 app.post('/api/notes', requireAuth, (req, res) => {
     const { title, content } = req.body;
     const date = new Date().toLocaleDateString('ru-RU');
-    db.run("SELECT * FROM notes", [], () => {}); // noop
     db.run("INSERT INTO notes (title, content, date) VALUES (?, ?, ?)", [title || 'Без названия', content || '', date], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
