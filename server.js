@@ -66,10 +66,7 @@ function initDatabase() {
             name TEXT,
             parentId INTEGER,
             type TEXT
-        )`, () => {
-            db.run(`ALTER TABLE folders ADD COLUMN parentId INTEGER`, () => {});
-            db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
-        });
+        )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,7 +134,7 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки ---
+// --- Папки (Прямой SQL-доступ) ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const parentId = req.query.parentId;
@@ -160,18 +157,19 @@ app.get('/api/folders', requireAuth, (req, res) => {
 
 app.post('/api/folders', requireAuth, (req, res) => {
     const { name, parentId, type } = req.body;
-    const pId = (!parentId || parentId === 'root' || parentId === 'null' || parentId === 'undefined') ? null : parentId;
+    const pId = (!parentId || parentId === 'root' || parentId === 'null' || parentId === 'undefined' || parentId === '') ? null : parentId;
     const fType = type || 'doc';
 
     db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, fType], function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ id: this.lastID });
+        res.json({ id: this.lastID, success: true });
     });
 });
 
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
     const folderId = req.params.id;
-    db.run("DELETE FROM folders WHERE id = ?", [folderId], function(err) {
+    // Удаляем саму папку и всё, что внутри неё лежит
+    db.run("DELETE FROM folders WHERE id = ? OR parentId = ?", [folderId, folderId], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
