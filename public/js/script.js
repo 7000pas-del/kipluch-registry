@@ -334,6 +334,7 @@ async function handleFileUpload(event) {
         formData.append('files', files[i]);
     }
     formData.append('name', files[0].name);
+    // Теперь локация корректно указывает ID текущей папки, если вы находитесь внутри неё
     formData.append('location', window.currentFolderId ? `Папка ID: ${window.currentFolderId}` : 'Корень');
     formData.append('status', 'Архив');
 
@@ -587,7 +588,6 @@ function renderNotes(notes) {
         card.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer;';
         
         card.onclick = (e) => {
-            // Открываем заметку только если кликнули не по кнопкам
             if (!e.target.closest('button')) {
                 viewNote(note);
             }
