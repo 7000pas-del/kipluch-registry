@@ -90,7 +90,7 @@ function logoutSystem() {
 window.currentTab = 'doc';
 window.currentFolderId = null;
 
-// --- Обновление счетчиков на главном экране ---
+// --- Обновление счетчиков ---
 async function updateCounters() {
     const user = getCurrentUser();
     if (!user) return;
@@ -210,10 +210,10 @@ function openEquipmentModal(editData = null) {
     if (modal) {
         if (editData && editData.id) {
             if (title) title.textContent = '✏️ Редактировать оборудование';
-            modal.dataset.editId = editData.id; // Надежно сохраняем ID прямо в модальном окне
+            modal.dataset.editId = editData.id;
         } else {
             if (title) title.textContent = '➕ Добавить оборудование';
-            delete modal.dataset.editId; // Очищаем ID для режима создания
+            delete modal.dataset.editId;
         }
         modal.style.display = 'flex';
     }
@@ -280,8 +280,8 @@ async function saveEquipment(event) {
 async function deleteEquipment(event, id) {
     if (event) event.stopPropagation();
     
-    if (!id || isNaN(id)) {
-        alert('Ошибка: неверный ID записи для удаления');
+    if (!id || isNaN(Number(id))) {
+        alert('Ошибка: неверный ID записи для удаления (ID = ' + id + ')');
         return;
     }
 
