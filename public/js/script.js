@@ -90,7 +90,7 @@ function logoutSystem() {
 window.currentTab = 'doc';
 window.currentFolderId = null;
 
-// --- Обновление счетчиков на главном экране ---
+// --- Обновление счетчиков ---
 async function updateCounters() {
     const user = getCurrentUser();
     if (!user) return;
@@ -179,6 +179,8 @@ function viewEquipmentPassport(id) {
     document.getElementById('viewEqNextVer').textContent = item.nextVerificationDate || '-';
     document.getElementById('viewEqNotes').textContent = item.notes || '-';
     
+    window.currentViewingId = item.id; // Запоминаем для паспорта
+
     const btnEdit = document.getElementById('btnEditFromView');
     if (btnEdit) {
         btnEdit.onclick = () => {
@@ -207,9 +209,9 @@ function openEquipmentModal(editData = null) {
     document.getElementById('eqNextVer').value = editData ? editData.nextVerificationDate || '' : '';
     document.getElementById('eqNotes').value = editData ? editData.notes || '' : '';
 
-    if (editData && editData.id !== undefined && editData.id !== null) {
+    if (editData && editData.id) {
         if (title) title.textContent = '✏️ Редактировать оборудование';
-        window.currentEditId = editData.id;
+        window.currentEditId = Number(editData.id);
     } else {
         if (title) title.textContent = '➕ Добавить оборудование';
         window.currentEditId = null;
@@ -251,7 +253,8 @@ async function saveEquipment(event) {
     }
 
     const editId = window.currentEditId;
-    const isEdit = editId !== null && editId !== undefined && editId !== '';
+    const isEdit = editId !== null && editId !== undefined && !isNaN(editId);
+    
     const url = isEdit ? `/api/equipment/${editId}` : '/api/equipment';
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -274,8 +277,8 @@ async function saveEquipment(event) {
 async function deleteEquipment(event, id) {
     if (event) event.stopPropagation();
     
-    if (!id) {
-        alert('Ошибка: не удалось определить ID записи для удаления');
+    if (!id || isNaN(id)) {
+        alert('Ошибка: неверный ID записи для удаления');
         return;
     }
 
@@ -462,21 +465,10 @@ async function promptCreateFolder() {
             body: JSON.stringify(payload)
         });
 
-        const textResponse = await res.text();
-        let data = {};
-        try {
-            data = JSON.parse(textResponse);
-        } catch (e) {
-            data = { error: textResponse || 'Неизвестный ответ сервера' };
-        }
-
-        if (!res.ok) {
-            throw new Error(data.error || `Ошибка сервера (код ${res.status})`);
-        }
-        
+        if (!res.ok) throw new Error('Ошибка создания папки');
         loadArchiveContent();
     } catch (err) {
-        alert('Точная ошибка: ' + err.message);
+        alert('Ошибка: ' + err.message);
     }
 }
 
