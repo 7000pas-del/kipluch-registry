@@ -43,7 +43,6 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Оборудование + автомиграция колонок
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT
@@ -62,7 +61,6 @@ function initDatabase() {
             });
         });
 
-        // Папки + автомиграция колонок
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT
         )`, () => {
@@ -76,7 +74,6 @@ function initDatabase() {
             });
         });
 
-        // Заметки
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
@@ -156,7 +153,7 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки (с поддержкой вложенности) ---
+// --- Папки ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const parentId = req.query.parentId;
@@ -164,11 +161,11 @@ app.get('/api/folders', requireAuth, (req, res) => {
     let query = "SELECT * FROM folders WHERE type = ?";
     let params = [type];
 
-    if (parentId && parentId !== 'root') {
+    if (parentId && parentId !== 'root' && parentId !== 'null') {
         query += " AND parentId = ?";
         params.push(parentId);
     } else {
-        query += " AND (parentId IS NULL OR parentId = '')";
+        query += " AND (parentId IS NULL OR parentId = '' OR parentId = 'null')";
     }
 
     db.all(query, params, (err, rows) => {
@@ -179,14 +176,15 @@ app.get('/api/folders', requireAuth, (req, res) => {
 
 app.post('/api/folders', requireAuth, (req, res) => {
     const { name, parentId, type } = req.body;
-    db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, parentId || null, type || 'doc'], function(err) {
+    const pId = (!parentId || parentId === 'null') ? null : parentId;
+    db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, type || 'doc'], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
     });
 });
 
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
-    db.run("DELETE FROM folders WHERE id = ?", [req.params.id], function(err) {
+    db.run("DELETE FROM folders WHERE id = ? OR parentId = ?", [req.params.id, req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
