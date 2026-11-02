@@ -62,16 +62,14 @@ function initDatabase() {
         });
 
         db.run(`CREATE TABLE IF NOT EXISTS folders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            parentId INTEGER,
+            type TEXT
         )`, () => {
-            const folderColumns = [
-                'name TEXT',
-                'parentId INTEGER',
-                'type TEXT'
-            ];
-            folderColumns.forEach(colDef => {
-                db.run(`ALTER TABLE folders ADD COLUMN ${colDef}`, () => {});
-            });
+            // Миграция колонок на всякий случай
+            db.run(`ALTER TABLE folders ADD COLUMN parentId INTEGER`, () => {});
+            db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
         });
 
         db.run(`CREATE TABLE IF NOT EXISTS notes (
@@ -107,14 +105,10 @@ app.post('/api/login', (req, res) => {
 
 const requireAuth = (req, res, next) => {
     const authHeader = req.headers['x-auth-user'];
-    if (!authHeader) {
-        return res.status(401).json({ error: 'Требуется авторизация' });
-    }
+    if (!authHeader) return res.status(401).json({ error: 'Требуется авторизация' });
     try {
         const user = JSON.parse(authHeader);
-        if (user && user.username) {
-            return next();
-        }
+        if (user && user.username) return next();
     } catch (e) {}
     res.status(401).json({ error: 'Недействительная сессия' });
 };
@@ -137,15 +131,6 @@ app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     });
 });
 
-app.put('/api/equipment/:id', requireAuth, (req, res) => {
-    const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
-    const query = `UPDATE equipment SET name = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
-    db.run(query, [name, serialNumber || '', verificationDate || '', nextVerificationDate || '', status || '', location || '', notes || '', req.params.id], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true });
-    });
-});
-
 app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     db.run("DELETE FROM equipment WHERE id = ?", [req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
@@ -153,7 +138,7 @@ app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки (Стабильный базовый вариант удаления и открытия) ---
+// --- Папки (Строго изолированные по типам и parentId) ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const parentId = req.query.parentId;
@@ -161,7 +146,7 @@ app.get('/api/folders', requireAuth, (req, res) => {
     let query = "SELECT * FROM folders WHERE type = ?";
     let params = [type];
 
-    if (parentId && parentId !== 'root' && parentId !== 'null' && parentId !== 'undefined') {
+    if (parentId && parentId !== 'root' && parentId !== 'null' && parentId !== 'undefined' && parentId !== '') {
         query += " AND parentId = ?";
         params.push(parentId);
     } else {
@@ -170,21 +155,25 @@ app.get('/api/folders', requireAuth, (req, res) => {
 
     db.all(query, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
+        res.json(rows || []);
     });
 });
 
 app.post('/api/folders', requireAuth, (req, res) => {
     const { name, parentId, type } = req.body;
-    const pId = (!parentId || parentId === 'null' || parentId === 'undefined') ? null : parentId;
-    db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, type || 'doc'], function(err) {
+    const pId = (!parentId || parentId === 'root' || parentId === 'null' || parentId === 'undefined') ? null : parentId;
+    const fType = type || 'doc';
+
+    db.run("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, fType], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
     });
 });
 
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
-    db.run("DELETE FROM folders WHERE id = ?", [req.params.id], function(err) {
+    const folderId = req.params.id;
+    // Каскадное удаление подпапок и самой папки
+    db.run("DELETE FROM folders WHERE id = ? OR parentId = ?", [folderId, folderId], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
@@ -194,7 +183,7 @@ app.delete('/api/folders/:id', requireAuth, (req, res) => {
 app.get('/api/notes', requireAuth, (req, res) => {
     db.all("SELECT * FROM notes", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
+        res.json(rows || []);
     });
 });
 
