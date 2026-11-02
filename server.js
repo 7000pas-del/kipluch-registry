@@ -119,7 +119,7 @@ const requireAuth = (req, res, next) => {
     res.status(401).json({ error: 'Недействительная сессия' });
 };
 
-// --- Оборудование ---
+// --- Оборудование (Реестр / Весы) ---
 app.get('/api/equipment', requireAuth, (req, res) => {
     db.all("SELECT * FROM equipment", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -134,6 +134,16 @@ app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
     db.run(query, [name, serialNumber || '', verificationDate || '', nextVerificationDate || '', status || '', location || '', notes || '', JSON.stringify(files)], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID });
+    });
+});
+
+// Добавлено: Эндпоинт для редактирования оборудования ( PUT )
+app.put('/api/equipment/:id', requireAuth, upload.array('files'), (req, res) => {
+    const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
+    const query = `UPDATE equipment SET name = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
+    db.run(query, [name, serialNumber || '', verificationDate || '', nextVerificationDate || '', status || '', location || '', notes || '', req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
     });
 });
 
@@ -184,17 +194,14 @@ app.post('/api/folders', requireAuth, (req, res) => {
     });
 });
 
-// ИСПРАВЛЕНО: При удалении папки теперь также удаляются все файлы, находившиеся внутри неё
 app.delete('/api/folders/:id', requireAuth, (req, res) => {
     const folderId = req.params.id;
     
     db.serialize(() => {
-        // Сначала удаляем файлы внутри этой папки
         db.run("DELETE FROM files WHERE folderId = ?", [folderId], (err) => {
             if (err) console.error('Ошибка при удалении файлов папки:', err.message);
         });
 
-        // Затем удаляем саму папку
         db.run("DELETE FROM folders WHERE id = ?", [folderId], function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ success: true });
