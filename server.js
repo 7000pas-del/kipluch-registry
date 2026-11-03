@@ -43,44 +43,43 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Жесткая проверка структуры оборудования и гарантированное добавление ID
-        db.all("PRAGMA table_info(equipment)", [], (err, rows) => {
-            const hasId = rows && rows.some(r => r.name === 'id');
-            if (rows && rows.length > 0 && !hasId) {
-                console.log('🔄 Обнаружена таблица equipment без ID. Выполняем автомиграцию...');
-                db.serialize(() => {
-                    db.run(`CREATE TABLE equipment_new (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT,
-                        serialNumber TEXT,
-                        verificationDate TEXT,
-                        nextVerificationDate TEXT,
-                        status TEXT,
-                        location TEXT,
-                        notes TEXT,
-                        files TEXT
-                    )`);
-                    db.run(`INSERT INTO equipment_new (name, serialNumber, status, location, notes) 
-                            SELECT name, serialNumber, status, location, notes FROM equipment`, (insErr) => {
-                        if (!insErr) {
-                            db.run(`DROP TABLE equipment`);
-                            db.run(`ALTER TABLE equipment_new RENAME TO equipment`);
-                            console.log('✅ Таблица equipment успешно обновлена, ID добавлены!');
-                        }
-                    });
+        // Создаем таблицу, если ее нет вообще
+        db.run(`CREATE TABLE IF NOT EXISTS equipment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            serialNumber TEXT,
+            verificationDate TEXT,
+            nextVerificationDate TEXT,
+            status TEXT,
+            location TEXT,
+            notes TEXT,
+            files TEXT
+        )`, (err) => {
+            if (!err) {
+                // Если таблица уже существовала, проверяем и добавляем все недостающие колонки по одной
+                const requiredColumns = [
+                    'serialNumber TEXT',
+                    'verificationDate TEXT',
+                    'nextVerificationDate TEXT',
+                    'status TEXT',
+                    'location TEXT',
+                    'notes TEXT',
+                    'files TEXT'
+                ];
+                
+                db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
+                    if (!pragmaErr && rows) {
+                        const existingColumns = rows.map(r => r.name);
+                        requiredColumns.forEach(colDef => {
+                            const colName = colDef.split(' ')[0];
+                            if (!existingColumns.includes(colName)) {
+                                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, (alterErr) => {
+                                    if (!alterErr) console.log(`➕ Добавлена недостающая колонка: ${colName}`);
+                                });
+                            }
+                        });
+                    }
                 });
-            } else if (!rows || rows.length === 0) {
-                db.run(`CREATE TABLE IF NOT EXISTS equipment (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT,
-                    serialNumber TEXT,
-                    verificationDate TEXT,
-                    nextVerificationDate TEXT,
-                    status TEXT,
-                    location TEXT,
-                    notes TEXT,
-                    files TEXT
-                )`);
             }
         });
 
