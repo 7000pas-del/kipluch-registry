@@ -43,31 +43,49 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Таблица оборудования со всеми полями паспорта
+        // Базовая таблица оборудования со стандартными полями
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             serialNumber TEXT,
-            gsiNumber TEXT,
-            ownerName TEXT,
-            location TEXT,
-            installationDate TEXT,
-            capacity TEXT,
-            minCapacity TEXT,
-            discrete TEXT,
-            adcType TEXT,
-            sensorType TEXT,
-            platformCount TEXT,
-            weighingMode TEXT,
-            certNumber TEXT,
-            lastVer TEXT,
-            nextVer TEXT,
             status TEXT,
-            phone TEXT,
-            email TEXT,
-            notes TEXT,
-            files TEXT
-        )`);
+            location TEXT,
+            notes TEXT
+        )`, () => {
+            // АВТО-МИГРАЦИЯ: проверяем и добавляем все недостающие колонки паспорта весов
+            const requiredColumns = [
+                'gsiNumber TEXT',
+                'ownerName TEXT',
+                'installationDate TEXT',
+                'capacity TEXT',
+                'minCapacity TEXT',
+                'discrete TEXT',
+                'adcType TEXT',
+                'sensorType TEXT',
+                'platformCount TEXT',
+                'weighingMode TEXT',
+                'certNumber TEXT',
+                'lastVer TEXT',
+                'nextVer TEXT',
+                'phone TEXT',
+                'email TEXT',
+                'files TEXT'
+            ];
+
+            db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
+                if (!pragmaErr && rows) {
+                    const existingColumns = rows.map(r => r.name);
+                    requiredColumns.forEach(colDef => {
+                        const colName = colDef.split(' ')[0];
+                        if (!existingColumns.includes(colName)) {
+                            db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, (alterErr) => {
+                                if (!alterErr) console.log(`➕ Добавлена колонка: ${colName}`);
+                            });
+                        }
+                    });
+                }
+            });
+        });
 
         // Таблица журнала обслуживания
         db.run(`CREATE TABLE IF NOT EXISTS maintenance (
