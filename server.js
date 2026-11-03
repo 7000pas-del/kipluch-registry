@@ -212,7 +212,7 @@ app.post('/api/equipment', requireAuth, upload.array('files'), async (req, res) 
         : `INSERT INTO equipment (name, serialNumber, gsiNumber, ownerName, location, installationDate, capacity, minCapacity, discrete, adcType, sensorType, platformCount, weighingMode, certNumber, lastVer, nextVer, status, phone, email, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
-        name || 'Без названия', serialNumber || '', gsiNumber || '', ownerName || '', 
+        name || '', serialNumber || '', gsiNumber || '', ownerName || '', 
         location || '', installationDate || '', capacity || '', minCapacity || '', 
         discrete || '', adcType || '', sensorType || '', platformCount || '', 
         weighingMode || '', certNumber || '', lastVer || '', nextVer || '', 
@@ -242,7 +242,7 @@ app.put('/api/equipment/:id', requireAuth, upload.array('files'), async (req, re
         WHERE id = ?`;
 
     const params = [
-        name || 'Без названия', serialNumber || '', gsiNumber || '', ownerName || '', 
+        name || '', serialNumber || '', gsiNumber || '', ownerName || '', 
         location || '', installationDate || '', capacity || '', minCapacity || '', 
         discrete || '', adcType || '', sensorType || '', platformCount || '', 
         weighingMode || '', certNumber || '', lastVer || '', nextVer || '', 
@@ -447,9 +447,9 @@ app.put('/api/notes/:id', requireAuth, async (req, res) => {
     }
 });
 
-app.delete('/api/notes/:id', requireAuth, async (resId, res) => {
+app.delete('/api/notes/:id', requireAuth, async (req, res) => {
     try {
-        await runQuery("DELETE FROM notes WHERE id = ?", [resId.params.id], 'run');
+        await runQuery("DELETE FROM notes WHERE id = ?", [req.params.id], 'run');
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
