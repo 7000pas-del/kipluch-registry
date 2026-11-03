@@ -29,17 +29,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// РАЗОВОЕ СТИРАНИЕ СТАРОЙ БИТОЙ БАЗЫ ПРИ КАЖДОМ СТАРТЕ ПОКА НЕ ОБНОВИМ
-// (Потом мы уберем эту строчку, а пока она гарантированно сотрет старый файл со старыми ID)
-if (fs.existsSync(DB_PATH)) {
-    try {
-        fs.unlinkSync(DB_PATH);
-        console.log('🗑️ Старый файл базы данных успешно удален!');
-    } catch (e) {
-        console.error('Не удалось удалить файл БД:', e);
-    }
-}
-
 let db = new sqlite3.Database(DB_PATH, (err) => {
     if (err) console.error('Ошибка подключения к БД:', err.message);
     else console.log('Успешное подключение к SQLite БД');
@@ -54,16 +43,40 @@ function initDatabase() {
             role TEXT
         )`);
 
+        // Таблица оборудования со всеми полями паспорта
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             serialNumber TEXT,
-            verificationDate TEXT,
-            nextVerificationDate TEXT,
-            status TEXT,
+            gsiNumber TEXT,
+            ownerName TEXT,
             location TEXT,
+            installationDate TEXT,
+            capacity TEXT,
+            minCapacity TEXT,
+            discrete TEXT,
+            adcType TEXT,
+            sensorType TEXT,
+            platformCount TEXT,
+            weighingMode TEXT,
+            certNumber TEXT,
+            lastVer TEXT,
+            nextVer TEXT,
+            status TEXT,
+            phone TEXT,
+            email TEXT,
             notes TEXT,
             files TEXT
+        )`);
+
+        // Таблица журнала обслуживания
+        db.run(`CREATE TABLE IF NOT EXISTS maintenance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            equipmentId INTEGER,
+            workType TEXT,
+            maintDate TEXT,
+            desc TEXT,
+            performedBy TEXT
         )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS folders (
@@ -132,9 +145,25 @@ app.get('/api/equipment', requireAuth, (req, res) => {
 });
 
 app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
-    const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
-    const query = `INSERT INTO equipment (name, serialNumber, verificationDate, nextVerificationDate, status, location, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    db.run(query, [name || 'Без названия', serialNumber || '', verificationDate || '', nextVerificationDate || '', status || 'В эксплуатации', location || '', notes || ''], function(err) {
+    const { 
+        name, serialNumber, gsiNumber, ownerName, location, installationDate, 
+        capacity, minCapacity, discrete, adcType, sensorType, platformCount, 
+        weighingMode, certNumber, lastVer, nextVer, status, phone, email, notes 
+    } = req.body;
+
+    const query = `INSERT INTO equipment (
+        name, serialNumber, gsiNumber, ownerName, location, installationDate, 
+        capacity, minCapacity, discrete, adcType, sensorType, platformCount, 
+        weighingMode, certNumber, lastVer, nextVer, status, phone, email, notes
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    db.run(query, [
+        name || 'Без названия', serialNumber || '', gsiNumber || '', ownerName || '', 
+        location || '', installationDate || '', capacity || '', minCapacity || '', 
+        discrete || '', adcType || '', sensorType || '', platformCount || '', 
+        weighingMode || '', certNumber || '', lastVer || '', nextVer || '', 
+        status || 'В эксплуатации', phone || '', email || '', notes || ''
+    ], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: this.lastID, success: true });
     });
@@ -142,10 +171,25 @@ app.post('/api/equipment', requireAuth, upload.array('files'), (req, res) => {
 
 app.put('/api/equipment/:id', requireAuth, upload.array('files'), (req, res) => {
     const id = req.params.id;
-    const { name, serialNumber, verificationDate, nextVerificationDate, status, location, notes } = req.body;
+    const { 
+        name, serialNumber, gsiNumber, ownerName, location, installationDate, 
+        capacity, minCapacity, discrete, adcType, sensorType, platformCount, 
+        weighingMode, certNumber, lastVer, nextVer, status, phone, email, notes 
+    } = req.body;
     
-    const query = `UPDATE equipment SET name = ?, serialNumber = ?, verificationDate = ?, nextVerificationDate = ?, status = ?, location = ?, notes = ? WHERE id = ?`;
-    db.run(query, [name || 'Без названия', serialNumber || '', verificationDate || '', nextVerificationDate || '', status || 'В эксплуатации', location || '', notes || '', id], function(err) {
+    const query = `UPDATE equipment SET 
+        name = ?, serialNumber = ?, gsiNumber = ?, ownerName = ?, location = ?, installationDate = ?, 
+        capacity = ?, minCapacity = ?, discrete = ?, adcType = ?, sensorType = ?, platformCount = ?, 
+        weighingMode = ?, certNumber = ?, lastVer = ?, nextVer = ?, status = ?, phone = ?, email = ?, notes = ? 
+        WHERE id = ?`;
+
+    db.run(query, [
+        name || 'Без названия', serialNumber || '', gsiNumber || '', ownerName || '', 
+        location || '', installationDate || '', capacity || '', minCapacity || '', 
+        discrete || '', adcType || '', sensorType || '', platformCount || '', 
+        weighingMode || '', certNumber || '', lastVer || '', nextVer || '', 
+        status || 'В эксплуатации', phone || '', email || '', notes || '', id
+    ], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
@@ -153,7 +197,41 @@ app.put('/api/equipment/:id', requireAuth, upload.array('files'), (req, res) => 
 
 app.delete('/api/equipment/:id', requireAuth, (req, res) => {
     const eqId = req.params.id;
-    db.run("DELETE FROM equipment WHERE id = ?", [eqId], function(err) {
+    db.serialize(() => {
+        db.run("DELETE FROM maintenance WHERE equipmentId = ?", [eqId], () => {});
+        db.run("DELETE FROM equipment WHERE id = ?", [eqId], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true });
+        });
+    });
+});
+
+// --- Журнал обслуживания ---
+app.get('/api/maintenance', requireAuth, (req, res) => {
+    const equipmentId = req.query.equipmentId;
+    let query = "SELECT * FROM maintenance";
+    let params = [];
+    if (equipmentId) {
+        query += " WHERE equipmentId = ?";
+        params.push(equipmentId);
+    }
+    db.all(query, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+app.post('/api/maintenance', requireAuth, (req, res) => {
+    const { equipmentId, workType, maintDate, desc, performedBy } = req.body;
+    const query = `INSERT INTO maintenance (equipmentId, workType, maintDate, desc, performedBy) VALUES (?, ?, ?, ?, ?)`;
+    db.run(query, [equipmentId, workType || 'Обслуживание', maintDate || '', desc || '', performedBy || ''], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, success: true });
+    });
+});
+
+app.delete('/api/maintenance/:id', requireAuth, (req, res) => {
+    db.run("DELETE FROM maintenance WHERE id = ?", [req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
