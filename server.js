@@ -134,6 +134,31 @@ const requireAuth = (req, res, next) => {
     res.status(401).json({ error: 'Недействительная сессия' });
 };
 
+// --- Админ-панель (пользователи) ---
+app.get('/api/users', requireAuth, (req, res) => {
+    db.all("SELECT id, username, role FROM users", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+app.post('/api/users', requireAuth, (req, res) => {
+    const { username, password, role } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Заполните логин и пароль' });
+
+    db.run("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", [username, password, role || 'user'], function(err) {
+        if (err) return res.status(500).json({ error: 'Пользователь уже существует' });
+        res.json({ id: this.lastID, success: true });
+    });
+});
+
+app.delete('/api/users/:id', requireAuth, (req, res) => {
+    db.run("DELETE FROM users WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
 // --- Оборудование ---
 app.get('/api/equipment', requireAuth, (req, res) => {
     db.all("SELECT * FROM equipment", [], (err, rows) => {
@@ -235,7 +260,7 @@ app.delete('/api/maintenance/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки (с четким разделением по типу) ---
+// --- Папки ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const parentId = req.query.parentId;
