@@ -33,14 +33,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 let db = null;
 let isPg = false;
 
-// Подключение к БД: PostgreSQL (Supabase) или локальный SQLite
 if (process.env.DATABASE_URL) {
     console.log("==> Найдена переменная DATABASE_URL. Подключаемся к Supabase PostgreSQL...");
     isPg = true;
     db = new Pool({
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false },
-        family: 4 // Принудительно используем IPv4 для обхода сетевых ограничений Render
+        family: 4
     });
 } else {
     console.log("⚠️ Переменная DATABASE_URL не найдена! Используем локальный SQLite...");
@@ -50,18 +49,15 @@ if (process.env.DATABASE_URL) {
     });
 }
 
-// Универсальный хелпер для выполнения запросов к любой БД (PostgreSQL / SQLite)
 async function runQuery(sql, params = [], mode = 'all') {
     if (isPg) {
-        // Конвертируем знаки вопросов (?) в долларовые параметры ($1, $2, ...) для Postgres
         let paramIndex = 1;
         const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
-        
         const res = await db.query(pgSql, params);
         if (mode === 'get') return res.rows[0];
         if (mode === 'insert') return { lastID: res.rows[0] ? res.rows[0].id : null, changes: res.rowCount };
         if (mode === 'run') return { changes: res.rowCount };
-        return res.rows; // mode === 'all'
+        return res.rows;
     } else {
         return new Promise((resolve, reject) => {
             if (mode === 'get') {
@@ -140,8 +136,6 @@ async function initDatabase() {
                     date TEXT
                 );
             `);
-
-            // Инициализация дефолтного администратора в PostgreSQL
             await db.query("DELETE FROM users WHERE username = 'admin'");
             await db.query("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')");
             console.log('✅ Таблицы и пользователь admin успешно инициализированы в Supabase PostgreSQL');
@@ -150,102 +144,22 @@ async function initDatabase() {
         }
     } else {
         db.serialize(() => {
-            db.run(`CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE,
-                password TEXT,
-                role TEXT
-            )`);
-
+            db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, role TEXT)`);
             db.run(`CREATE TABLE IF NOT EXISTS equipment (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT,
-                serialNumber TEXT,
-                status TEXT,
-                location TEXT,
-                notes TEXT
-            )`, () => {
-                const columnsToAdd = [
-                    'gsiNumber TEXT', 'ownerName TEXT', 'installationDate TEXT',
-                    'capacity TEXT', 'minCapacity TEXT', 'discrete TEXT',
-                    'adcType TEXT', 'sensorType TEXT', 'platformCount TEXT',
-                    'weighingMode TEXT', 'certNumber TEXT', 'lastVer TEXT',
-                    'nextVer TEXT', 'phone TEXT', 'email TEXT', 'files TEXT'
-                ];
-                db.all("PRAGMA table_info(equipment)", [], (err, rows) => {
-                    if (!err && rows) {
-                        const existing = rows.map(r => r.name);
-                        columnsToAdd.forEach(colDef => {
-                            const colName = colDef.split(' ')[0];
-                            if (!existing.includes(colName)) {
-                                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, () => {});
-                            }
-                        });
-                    }
-                });
-            });
-
-            db.run(`CREATE TABLE IF NOT EXISTS maintenance (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                equipmentId INTEGER,
-                workType TEXT,
-                maintDate TEXT,
-                description TEXT,
-                performedBy TEXT
-            )`, () => {
-                db.all("PRAGMA table_info(maintenance)", [], (err, rows) => {
-                    if (!err && rows) {
-                        const existing = rows.map(r => r.name);
-                        if (existing.includes('desc') && !existing.includes('description')) {
-                            db.run("ALTER TABLE maintenance RENAME COLUMN desc TO description", () => {});
-                        }
-                    }
-                });
-            });
-
-            db.run(`CREATE TABLE IF NOT EXISTS folders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT,
-                parentId INTEGER,
-                type TEXT
-            )`, () => {
-                db.all("PRAGMA table_info(folders)", [], (err, rows) => {
-                    if (!err && rows) {
-                        const existing = rows.map(r => r.name);
-                        if (!existing.includes('type')) db.run("ALTER TABLE folders ADD COLUMN type TEXT");
-                        if (!existing.includes('parentId')) db.run("ALTER TABLE folders ADD COLUMN parentId INTEGER");
-                    }
-                });
-            });
-
-            db.run(`CREATE TABLE IF NOT EXISTS notes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT,
-                content TEXT,
-                date TEXT
+                name TEXT, serialNumber TEXT, gsiNumber TEXT, ownerName TEXT,
+                status TEXT, location TEXT, installationDate TEXT, capacity TEXT,
+                minCapacity TEXT, discrete TEXT, adcType TEXT, sensorType TEXT,
+                platformCount TEXT, weighingMode TEXT, certNumber TEXT, lastVer TEXT,
+                nextVer TEXT, phone TEXT, email TEXT, notes TEXT
             )`);
-
-            db.run(`CREATE TABLE IF NOT EXISTS files (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT,
-                filename TEXT,
-                folderId INTEGER,
-                type TEXT,
-                date TEXT
-            )`, () => {
-                db.all("PRAGMA table_info(files)", [], (err, rows) => {
-                    if (!err && rows) {
-                        const existing = rows.map(r => r.name);
-                        if (!existing.includes('folderId')) db.run("ALTER TABLE files ADD COLUMN folderId INTEGER");
-                        if (!existing.includes('type')) db.run("ALTER TABLE files ADD COLUMN type TEXT");
-                    }
-                });
-            });
+            db.run(`CREATE TABLE IF NOT EXISTS maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, equipmentId INTEGER, workType TEXT, maintDate TEXT, description TEXT, performedBy TEXT)`);
+            db.run(`CREATE TABLE IF NOT EXISTS folders (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, parentId INTEGER, type TEXT)`);
+            db.run(`CREATE TABLE IF NOT EXISTS notes (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, date TEXT)`);
+            db.run(`CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, filename TEXT, folderId INTEGER, type TEXT, date TEXT)`);
 
             db.run("DELETE FROM users WHERE username = 'admin'", () => {
-                db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", (err) => {
-                    if (!err) console.log('Пользователь admin успешно инициализирован в SQLite');
-                });
+                db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", () => {});
             });
         });
     }
@@ -260,10 +174,7 @@ app.post('/api/login', async (req, res) => {
         if (!user || user.password !== password) {
             return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
-        res.json({
-            success: true,
-            user: { id: user.id, username: user.username, role: user.role }
-        });
+        res.json({ success: true, user: { id: user.id, username: user.username, role: user.role } });
     } catch (err) {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
@@ -278,37 +189,6 @@ const requireAuth = (req, res, next) => {
     } catch (e) {}
     res.status(401).json({ error: 'Недействительная сессия' });
 };
-
-// --- Админ-панель (пользователи) ---
-app.get('/api/users', requireAuth, async (req, res) => {
-    try {
-        const rows = await runQuery("SELECT id, username, role FROM users", [], 'all');
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.post('/api/users', requireAuth, async (req, res) => {
-    const { username, password, role } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'Заполните логин и пароль' });
-
-    try {
-        const result = await runQuery("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", [username, password, role || 'user'], 'insert');
-        res.json({ id: result.lastID, success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Пользователь уже существует' });
-    }
-});
-
-app.delete('/api/users/:id', requireAuth, async (req, res) => {
-    try {
-        await runQuery("DELETE FROM users WHERE id = ?", [req.params.id], 'run');
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // --- Оборудование ---
 app.get('/api/equipment', requireAuth, async (req, res) => {
@@ -327,11 +207,9 @@ app.post('/api/equipment', requireAuth, upload.array('files'), async (req, res) 
         weighingMode, certNumber, lastVer, nextVer, status, phone, email, notes 
     } = req.body;
 
-    const query = `INSERT INTO equipment (
-        name, serialNumber, gsiNumber, ownerName, location, installationDate, 
-        capacity, minCapacity, discrete, adcType, sensorType, platformCount, 
-        weighingMode, certNumber, lastVer, nextVer, status, phone, email, notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const query = isPg 
+        ? `INSERT INTO equipment (name, serialNumber, gsiNumber, ownerName, location, installationDate, capacity, minCapacity, discrete, adcType, sensorType, platformCount, weighingMode, certNumber, lastVer, nextVer, status, phone, email, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`
+        : `INSERT INTO equipment (name, serialNumber, gsiNumber, ownerName, location, installationDate, capacity, minCapacity, discrete, adcType, sensorType, platformCount, weighingMode, certNumber, lastVer, nextVer, status, phone, email, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
         name || 'Без названия', serialNumber || '', gsiNumber || '', ownerName || '', 
@@ -342,8 +220,8 @@ app.post('/api/equipment', requireAuth, upload.array('files'), async (req, res) 
     ];
 
     try {
-        const result = await runQuery(query, params, 'insert');
-        res.json({ id: result.lastID, success: true });
+        const result = await runQuery(query, params, isPg ? 'get' : 'insert');
+        res.json({ id: isPg ? result.id : result.lastID, success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -390,7 +268,57 @@ app.delete('/api/equipment/:id', requireAuth, async (req, res) => {
     }
 });
 
-// --- Журнал обслуживания ---
+// --- Папки ---
+app.get('/api/folders', requireAuth, async (req, res) => {
+    const type = req.query.type || 'doc';
+    const parentId = req.query.parentId;
+
+    let query = "SELECT * FROM folders WHERE type = ?";
+    let params = [type];
+
+    if (parentId && parentId !== 'root' && parentId !== 'null' && parentId !== 'undefined' && parentId !== '' && parentId !== '0') {
+        query += " AND parentId = ?";
+        params.push(parentId);
+    } else {
+        query += " AND (parentId IS NULL)";
+    }
+
+    try {
+        const rows = await runQuery(query, params, 'all');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/folders', requireAuth, async (req, res) => {
+    const { name, parentId, type } = req.body;
+    let pId = (!parentId || parentId === 'root' || parentId === 'null' || parentId === 'undefined' || parentId === '' || parentId === 0) ? null : parentId;
+    
+    const query = isPg
+        ? "INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?) RETURNING id"
+        : "INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)";
+
+    try {
+        const result = await runQuery(query, [name, pId, type || 'doc'], isPg ? 'get' : 'insert');
+        res.json({ id: isPg ? result.id : result.lastID, success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/folders/:id', requireAuth, async (req, res) => {
+    const folderId = req.params.id;
+    try {
+        await runQuery("DELETE FROM files WHERE folderId = ?", [folderId], 'run');
+        await runQuery("DELETE FROM folders WHERE id = ?", [folderId], 'run');
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- Журнал обслуживания, Файлы, Заметки и Бэкапы ---
 app.get('/api/maintenance', requireAuth, async (req, res) => {
     const equipmentId = req.query.equipmentId;
     let query = "SELECT * FROM maintenance";
@@ -410,11 +338,13 @@ app.get('/api/maintenance', requireAuth, async (req, res) => {
 app.post('/api/maintenance', requireAuth, async (req, res) => {
     const { equipmentId, workType, maintDate, desc, description, performedBy } = req.body;
     const finalDesc = description || desc || '';
-    const query = `INSERT INTO maintenance (equipmentId, workType, maintDate, description, performedBy) VALUES (?, ?, ?, ?, ?)`;
+    const query = isPg
+        ? "INSERT INTO maintenance (equipmentId, workType, maintDate, description, performedBy) VALUES (?, ?, ?, ?, ?) RETURNING id"
+        : "INSERT INTO maintenance (equipmentId, workType, maintDate, description, performedBy) VALUES (?, ?, ?, ?, ?)";
     const params = [equipmentId, workType || 'Обслуживание', maintDate || '', finalDesc, performedBy || ''];
     try {
-        const result = await runQuery(query, params, 'insert');
-        res.json({ id: result.lastID, success: true });
+        const result = await runQuery(query, params, isPg ? 'get' : 'insert');
+        res.json({ id: isPg ? result.id : result.lastID, success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -429,53 +359,6 @@ app.delete('/api/maintenance/:id', requireAuth, async (req, res) => {
     }
 });
 
-// --- Папки ---
-app.get('/api/folders', requireAuth, async (req, res) => {
-    const type = req.query.type || 'doc';
-    const parentId = req.query.parentId;
-
-    let query = "SELECT * FROM folders WHERE type = ?";
-    let params = [type];
-
-    if (parentId && parentId !== 'root' && parentId !== 'null' && parentId !== 'undefined' && parentId !== '' && parentId !== '0') {
-        query += " AND parentId = ?";
-        params.push(parentId);
-    } else {
-        query += " AND (parentId IS NULL OR parentId = '' OR parentId = 0)";
-    }
-
-    try {
-        const rows = await runQuery(query, params, 'all');
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.post('/api/folders', requireAuth, async (req, res) => {
-    const { name, parentId, type } = req.body;
-    let pId = (!parentId || parentId === 'root' || parentId === 'null' || parentId === 'undefined' || parentId === '' || parentId === 0) ? null : parentId;
-    
-    try {
-        const result = await runQuery("INSERT INTO folders (name, parentId, type) VALUES (?, ?, ?)", [name, pId, type || 'doc'], 'insert');
-        res.json({ id: result.lastID, success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.delete('/api/folders/:id', requireAuth, async (req, res) => {
-    const folderId = req.params.id;
-    try {
-        await runQuery("DELETE FROM files WHERE folderId = ?", [folderId], 'run');
-        await runQuery("DELETE FROM folders WHERE id = ?", [folderId], 'run');
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// --- Файлы и Фото ---
 app.get('/api/files', requireAuth, async (req, res) => {
     const type = req.query.type || 'doc';
     const folderId = req.query.folderId;
@@ -494,7 +377,7 @@ app.get('/api/files', requireAuth, async (req, res) => {
             query += " AND folderId = ?";
             params.push(folderId);
         } else {
-            query += " AND (folderId IS NULL OR folderId = '' OR folderId = 0)";
+            query += " AND (folderId IS NULL)";
         }
 
         const rows = await runQuery(query, params, 'all');
@@ -533,7 +416,6 @@ app.delete('/api/files/:id', requireAuth, async (req, res) => {
     }
 });
 
-// --- Заметки ---
 app.get('/api/notes', requireAuth, async (req, res) => {
     try {
         const rows = await runQuery("SELECT * FROM notes", [], 'all');
@@ -547,8 +429,9 @@ app.post('/api/notes', requireAuth, async (req, res) => {
     const { title, content } = req.body;
     const date = new Date().toLocaleDateString('ru-RU');
     try {
-        const result = await runQuery("INSERT INTO notes (title, content, date) VALUES (?, ?, ?)", [title || 'Без названия', content || '', date], 'insert');
-        res.json({ id: result.lastID });
+        const query = isPg ? "INSERT INTO notes (title, content, date) VALUES (?, ?, ?) RETURNING id" : "INSERT INTO notes (title, content, date) VALUES (?, ?, ?)";
+        const result = await runQuery(query, [title || 'Без названия', content || '', date], isPg ? 'get' : 'insert');
+        res.json({ id: isPg ? result.id : result.lastID });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -564,33 +447,20 @@ app.put('/api/notes/:id', requireAuth, async (req, res) => {
     }
 });
 
-app.delete('/api/notes/:id', requireAuth, async (req, res) => {
+app.delete('/api/notes/:id', requireAuth, async (resId, res) => {
     try {
-        await runQuery("DELETE FROM notes WHERE id = ?", [req.params.id], 'run');
+        await runQuery("DELETE FROM notes WHERE id = ?", [resId.params.id], 'run');
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// --- Бэкапы ---
 app.get('/api/backup', requireAuth, (req, res) => {
     if (isPg) {
-        return res.status(400).json({ error: 'Резервное копирование SQLite-файла недоступно при использовании PostgreSQL' });
+        return res.status(400).json({ error: 'Резервное копирование недоступно при использовании PostgreSQL' });
     }
     res.download(DB_PATH);
-});
-
-app.post('/api/restore', requireAuth, upload.array('backup'), (req, res) => {
-    if (isPg) {
-        return res.status(400).json({ error: 'Восстановление SQLite-файла недоступно при использовании PostgreSQL' });
-    }
-    if (!req.file) return res.status(400).json({ error: 'Файл бэкапа не передан' });
-    const tempPath = req.file.path;
-    fs.copyFile(tempPath, DB_PATH, (err) => {
-        if (err) return res.status(500).json({ error: 'Ошибка восстановления базы данных' });
-        res.json({ success: true });
-    });
 });
 
 app.listen(PORT, () => {
