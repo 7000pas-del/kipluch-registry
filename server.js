@@ -43,7 +43,7 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Базовая таблица оборудования со стандартными полями
+        // Оборудование
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -52,42 +52,27 @@ function initDatabase() {
             location TEXT,
             notes TEXT
         )`, () => {
-            // АВТО-МИГРАЦИЯ: проверяем и добавляем все недостающие колонки паспорта весов
             const requiredColumns = [
-                'gsiNumber TEXT',
-                'ownerName TEXT',
-                'installationDate TEXT',
-                'capacity TEXT',
-                'minCapacity TEXT',
-                'discrete TEXT',
-                'adcType TEXT',
-                'sensorType TEXT',
-                'platformCount TEXT',
-                'weighingMode TEXT',
-                'certNumber TEXT',
-                'lastVer TEXT',
-                'nextVer TEXT',
-                'phone TEXT',
-                'email TEXT',
-                'files TEXT'
+                'gsiNumber TEXT', 'ownerName TEXT', 'installationDate TEXT',
+                'capacity TEXT', 'minCapacity TEXT', 'discrete TEXT',
+                'adcType TEXT', 'sensorType TEXT', 'platformCount TEXT',
+                'weighingMode TEXT', 'certNumber TEXT', 'lastVer TEXT',
+                'nextVer TEXT', 'phone TEXT', 'email TEXT', 'files TEXT'
             ];
-
             db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
                 if (!pragmaErr && rows) {
                     const existingColumns = rows.map(r => r.name);
                     requiredColumns.forEach(colDef => {
                         const colName = colDef.split(' ')[0];
                         if (!existingColumns.includes(colName)) {
-                            db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, (alterErr) => {
-                                if (!alterErr) console.log(`➕ Добавлена колонка: ${colName}`);
-                            });
+                            db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, () => {});
                         }
                     });
                 }
             });
         });
 
-        // Таблица журнала обслуживания
+        // Журнал обслуживания
         db.run(`CREATE TABLE IF NOT EXISTS maintenance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             equipmentId INTEGER,
@@ -97,6 +82,7 @@ function initDatabase() {
             performedBy TEXT
         )`);
 
+        // Папки
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -104,6 +90,7 @@ function initDatabase() {
             type TEXT
         )`);
 
+        // Заметки
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
@@ -111,6 +98,7 @@ function initDatabase() {
             date TEXT
         )`);
 
+        // Файлы
         db.run(`CREATE TABLE IF NOT EXISTS files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
