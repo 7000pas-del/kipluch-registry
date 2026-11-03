@@ -165,6 +165,9 @@ function renderEquipment(data) {
         const nextVer = item.nextver || item.nextVer || item.nextVerification || '-';
         const status = item.status || 'В эксплуатации';
 
+        // Красивая выровненная плашка для статуса
+        const statusClass = status.toLowerCase().includes('выведен') || status.toLowerCase().includes('ремонт') ? 'badge-status badge-warning' : 'badge-status badge-ok';
+
         // Верстка для ПК (таблица)
         if (tableBody) {
             const row = document.createElement('tr');
@@ -181,7 +184,7 @@ function renderEquipment(data) {
                 <td>${owner}</td>
                 <td>${location}</td>
                 <td>${nextVer}</td>
-                <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; background: #0f172a; border: 1px solid var(--border);">${status}</span></td>
+                <td><span class="${statusClass}" style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">${status}</span></td>
                 <td style="text-align: right; white-space: nowrap;">
                     <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
                     <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
@@ -201,7 +204,7 @@ function renderEquipment(data) {
                 <div style="font-weight: 700; color: #fff; font-size: 14px;">${name}</div>
                 <div style="font-size: 12px; color: var(--text-muted);">Зав. №: ${serial} | Объект: ${location}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                    <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; background: #0f172a; border: 1px solid var(--border);">${status}</span>
+                    <span style="padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">${status}</span>
                     <div>
                         <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155;" onclick="editEquipmentFromButton(event, '${encodeURIComponent(JSON.stringify(item))}')">✏️</button>
                         <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
@@ -678,9 +681,16 @@ function renderFoldersAndFiles(folders, files) {
         files.forEach(file => {
             const div = document.createElement('div');
             div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
+            
+            // Открытие для просмотра в новой вкладке (вместо скачивания)
             div.innerHTML = `
-                <a href="/uploads/${file.filename}" target="_blank" download="${file.name}" style="color: #38bdf8; text-decoration: none; font-weight: 500;">📄 ${file.name}</a>
-                <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFile(${file.id})">🗑️</button>
+                <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex-grow: 1;" onclick="window.open('/uploads/${file.filename}', '_blank')">
+                    <span style="color: #38bdf8; font-weight: 500;">📄 ${file.name}</span>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn" type="button" style="background: #334155; padding: 4px 8px; font-size: 11px;" onclick="window.open('/uploads/${file.filename}', '_blank')">👁️ Просмотр</button>
+                    <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFile(${file.id})">🗑️</button>
+                </div>
             `;
             filesContainer.appendChild(div);
         });
