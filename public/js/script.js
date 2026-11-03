@@ -132,28 +132,6 @@ async function loadEquipment() {
     }
 }
 
-function getStatusBadge(status) {
-    const st = (status || 'В эксплуатации').trim();
-    
-    let badgeStyle = 'background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);';
-    let icon = '🟢';
-
-    if (st.includes('поверк')) {
-        badgeStyle = 'background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3);';
-        icon = '🟡';
-    } else if (st.includes('ремонт')) {
-        badgeStyle = 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);';
-        icon = '🔴';
-    } else if (st.includes('Выведен')) {
-        badgeStyle = 'background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3);';
-        icon = '⚫';
-    }
-
-    return `<span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; ${badgeStyle}">
-        <span>${icon}</span> <span>${st}</span>
-    </span>`;
-}
-
 function renderEquipment(data) {
     const tableBody = document.getElementById('equipmentTableBody');
     if (!tableBody) return;
@@ -174,8 +152,8 @@ function renderEquipment(data) {
             <td>${item.ownerName || ''}</td>
             <td>${item.location || ''}</td>
             <td>${item.nextVer || ''}</td>
-            <td style="text-align: center; vertical-align: middle;">${getStatusBadge(item.status)}</td>
-            <td style="text-align: right; white-space: nowrap; vertical-align: middle;">
+            <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; background: #0f172a; border: 1px solid var(--border);">${item.status || 'В эксплуатации'}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
                 <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
                 <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
             </td>
@@ -643,13 +621,6 @@ function renderFoldersAndFiles(folders, files) {
 
 function openFolder(id) {
     window.currentFolderId = id;
-    
-    // Включаем отображение кнопок загрузки и внутри папок
-    const btnPhoto = document.getElementById('btnUploadPhoto');
-    const btnDoc = document.getElementById('btnUploadDoc');
-    if (window.currentTab === 'doc' && btnDoc) btnDoc.style.display = 'inline-flex';
-    if (window.currentTab === 'image' && btnPhoto) btnPhoto.style.display = 'inline-flex';
-
     loadArchiveContent();
 }
 
