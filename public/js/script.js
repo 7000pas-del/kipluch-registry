@@ -13,6 +13,23 @@ document.addEventListener('DOMContentLoaded', () => {
             await performLogin();
         });
     }
+
+    // Обработка строки поиска по сайту
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (window.allEquipment) {
+                const filtered = window.allEquipment.filter(item => 
+                    (item.name && item.name.toLowerCase().includes(query)) ||
+                    (item.serialNumber && item.serialNumber.toLowerCase().includes(query)) ||
+                    (item.ownerName && item.ownerName.toLowerCase().includes(query)) ||
+                    (item.location && item.location.toLowerCase().includes(query))
+                );
+                renderEquipment(filtered);
+            }
+        });
+    }
 });
 
 async function performLogin() {
