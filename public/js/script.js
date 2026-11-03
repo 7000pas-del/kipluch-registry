@@ -165,7 +165,6 @@ function renderEquipment(data) {
         const nextVer = item.nextver || item.nextVer || item.nextVerification || '-';
         const status = item.status || 'В эксплуатации';
 
-        // Красивая выровненная плашка для статуса
         const statusClass = status.toLowerCase().includes('выведен') || status.toLowerCase().includes('ремонт') ? 'badge-status badge-warning' : 'badge-status badge-ok';
 
         // Верстка для ПК (таблица)
@@ -665,6 +664,14 @@ function renderFoldersAndFiles(folders, files) {
         if (banner) banner.style.display = 'none';
     }
 
+    // Добавляем информационную подсказку вверху списка документов для удобства
+    if (window.currentTab === 'doc') {
+        const hintDiv = document.createElement('div');
+        hintDiv.style.cssText = 'background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #38bdf8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;';
+        hintDiv.innerHTML = 'ℹ️ <strong>Подсказка:</strong> PDF-файлы можно открывать для просмотра на сайте. Документы Word и Excel доступны для скачивания.';
+        filesContainer.appendChild(hintDiv);
+    }
+
     if (folders && folders.length > 0) {
         folders.forEach(folder => {
             const div = document.createElement('div');
@@ -682,13 +689,22 @@ function renderFoldersAndFiles(folders, files) {
             const div = document.createElement('div');
             div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
             
-            // Открытие для просмотра в новой вкладке (вместо скачивания)
+            const ext = file.name.split('.').pop().toLowerCase();
+            const isPdf = ext === 'pdf';
+            const actionText = isPdf ? '👁️ Просмотр' : '📥 Скачать';
+            const actionBg = isPdf ? '#334155' : '#047857'; // Зеленоватый оттенок для скачивания или темный для просмотровых
+
+            // Для PDF открываем во вкладке, для остальных (Word, Excel и др.) делаем прямую ссылку с атрибутом download
+            const actionHtml = isPdf 
+                ? `<button class="btn" type="button" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px;" onclick="window.open('/uploads/${file.filename}', '_blank')">${actionText}</button>`
+                : `<a href="/uploads/${file.filename}" download="${file.name}" class="btn" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px; text-decoration: none; color: #fff; display: inline-flex; align-items: center;">${actionText}</a>`;
+
             div.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex-grow: 1;" onclick="window.open('/uploads/${file.filename}', '_blank')">
+                <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1;">
                     <span style="color: #38bdf8; font-weight: 500;">📄 ${file.name}</span>
                 </div>
-                <div style="display: flex; gap: 6px;">
-                    <button class="btn" type="button" style="background: #334155; padding: 4px 8px; font-size: 11px;" onclick="window.open('/uploads/${file.filename}', '_blank')">👁️ Просмотр</button>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    ${actionHtml}
                     <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFile(${file.id})">🗑️</button>
                 </div>
             `;
