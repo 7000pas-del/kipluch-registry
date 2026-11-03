@@ -444,7 +444,7 @@ function printPassport() {
     window.print();
 }
 
-// --- Вкладки архива и заметок ---
+// --- Вкладки архива, папки и файлы ---
 function selectTab(tabName) {
     window.currentTab = tabName;
     window.currentFolderId = null;
