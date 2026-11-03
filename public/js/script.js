@@ -14,8 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Обработка строки поиска по сайту
-    const searchInput = document.getElementById('searchInput');
+    const searchInput = document.querySelector('.real-search-input');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
@@ -99,6 +98,7 @@ function logoutSystem() {
 window.currentTab = 'doc';
 window.currentFolderId = null;
 window.currentEquipmentId = null;
+window.currentEditingNoteId = null;
 
 // --- Счетчики ---
 async function updateCounters() {
@@ -151,31 +151,56 @@ async function loadEquipment() {
 
 function renderEquipment(data) {
     const tableBody = document.getElementById('equipmentTableBody');
-    if (!tableBody) return;
+    const mobileContainer = document.getElementById('mobileEquipmentList');
+    if (tableBody) tableBody.innerHTML = '';
+    if (mobileContainer) mobileContainer.innerHTML = '';
 
-    tableBody.innerHTML = '';
     data.forEach(item => {
-        const row = document.createElement('tr');
-        row.style.cursor = 'pointer';
-        row.onclick = (e) => {
-            if (!e.target.closest('button')) viewEquipmentPassport(item.id);
-        };
+        // Верстка для таблиц ПК
+        if (tableBody) {
+            const row = document.createElement('tr');
+            row.style.cursor = 'pointer';
+            row.onclick = (e) => {
+                if (!e.target.closest('button')) viewEquipmentPassport(item.id);
+            };
 
-        const itemJson = encodeURIComponent(JSON.stringify(item));
+            const itemJson = encodeURIComponent(JSON.stringify(item));
 
-        row.innerHTML = `
-            <td><strong>${item.name || ''}</strong></td>
-            <td>${item.serialNumber || ''}</td>
-            <td>${item.ownerName || ''}</td>
-            <td>${item.location || ''}</td>
-            <td>${item.nextVer || ''}</td>
-            <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; background: #0f172a; border: 1px solid var(--border);">${item.status || 'В эксплуатации'}</span></td>
-            <td style="text-align: right; white-space: nowrap;">
-                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
-                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
-            </td>
-        `;
-        tableBody.appendChild(row);
+            row.innerHTML = `
+                <td><strong>${item.name || ''}</strong></td>
+                <td>${item.serialNumber || ''}</td>
+                <td>${item.ownerName || ''}</td>
+                <td>${item.location || ''}</td>
+                <td>${item.nextVer || ''}</td>
+                <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; background: #0f172a; border: 1px solid var(--border);">${item.status || 'В эксплуатации'}</span></td>
+                <td style="text-align: right; white-space: nowrap;">
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        // Верстка для карточек мобильных
+        if (mobileContainer) {
+            const card = document.createElement('div');
+            card.className = 'mobile-eq-card';
+            card.onclick = (e) => {
+                if (!e.target.closest('button')) viewEquipmentPassport(item.id);
+            };
+            card.innerHTML = `
+                <div style="font-weight: 700; color: #fff; font-size: 14px;">${item.name || 'Оборудование'}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Зав. №: ${item.serialNumber || '-'} | Объект: ${item.location || '-'}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; background: #0f172a; border: 1px solid var(--border);">${item.status || 'В эксплуатации'}</span>
+                    <div>
+                        <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155;" onclick="editEquipmentFromButton(event, '${encodeURIComponent(JSON.stringify(item))}')">✏️</button>
+                        <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
+                    </div>
+                </div>
+            `;
+            mobileContainer.appendChild(card);
+        }
     });
 }
 
@@ -341,7 +366,7 @@ async function deleteEquipment(event, id) {
     if (event) event.stopPropagation();
     
     if (!id || isNaN(Number(id))) {
-        alert('Ошибка: неверный ID записи для удаления (ID = ' + id + ')');
+        alert('Ошибка: неверный ID записи для удаления');
         return;
     }
 
@@ -386,7 +411,7 @@ async function loadMaintenanceRecords(equipmentId) {
             div.innerHTML = `
                 <div>
                     <strong style="color: #fff;">${rec.workType || 'Работа'}</strong> <span style="color: var(--text-muted);">(${rec.maintDate || ''})</span>
-                    <div style="color: var(--text-main); margin-top: 2px;">${rec.desc || ''}</div>
+                    <div style="color: var(--text-main); margin-top: 2px;">${rec.description || rec.desc || ''}</div>
                     <div style="color: #38bdf8; font-size: 11px; margin-top: 2px;">Исполнитель: ${rec.performedBy || '-'}</div>
                 </div>
                 <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteMaintenance(${rec.id})">🗑️</button>
@@ -431,7 +456,7 @@ async function saveMaintenance(event) {
         const res = await fetch('/api/maintenance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
-            body: JSON.stringify({ equipmentId: window.currentEquipmentId, workType, maintDate, desc, performedBy })
+            body: JSON.stringify({ equipmentId: window.currentEquipmentId, workType, maintDate, desc, description: desc, performedBy })
         });
         if (!res.ok) throw new Error('Ошибка добавления записи');
 
@@ -465,6 +490,14 @@ function printPassport() {
 function selectTab(tabName) {
     window.currentTab = tabName;
     window.currentFolderId = null;
+
+    // Сброс активного состояния всех nav-card
+    document.querySelectorAll('.nav-card').forEach(card => card.classList.remove('active'));
+    
+    if (tabName === 'doc') document.getElementById('navDoc')?.classList.add('active');
+    if (tabName === 'image') document.getElementById('navImage')?.classList.add('active');
+    if (tabName === 'note') document.getElementById('navNote')?.classList.add('active');
+    if (tabName === 'admin') document.getElementById('navAdmin')?.classList.add('active');
 
     const welcomeScreen = document.getElementById('welcomeScreen');
     const adminSection = document.getElementById('adminSection');
@@ -543,6 +576,9 @@ async function loadArchiveContent() {
     if (!user) return;
 
     if (window.currentTab === 'note') {
+        // Очищаем старые папки
+        const foldersContainer = document.getElementById('foldersContainer');
+        if (foldersContainer) foldersContainer.innerHTML = '';
         loadNotes();
         return;
     }
@@ -567,6 +603,7 @@ async function loadArchiveContent() {
     }
 }
 
+// ИСПРАВЛЕНИЕ: Создание папки с поддержкой типов и вложенности
 async function promptCreateFolder() {
     if (window.currentTab === 'note') {
         openNoteModal();
@@ -579,8 +616,8 @@ async function promptCreateFolder() {
     const user = getCurrentUser();
     const payload = { 
         name: folderName.trim(), 
-        type: window.currentTab, 
-        parentId: window.currentFolderId || null
+        type: window.currentTab || 'doc', 
+        parentId: window.currentFolderId ? Number(window.currentFolderId) : null
     };
 
     try {
@@ -669,7 +706,7 @@ async function deleteFile(id) {
     }
 }
 
-// --- Заметки ---
+// --- ИСПРАВЛЕНИЕ ЗАМЕТОК ---
 function openNoteModal() {
     document.getElementById('noteNameInput').value = '';
     document.getElementById('noteContentInput').value = '';
@@ -718,16 +755,70 @@ function renderNotes(notes) {
 
     notes.forEach(note => {
         const div = document.createElement('div');
-        div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 8px;';
+        div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s;';
+        div.onmouseover = () => div.style.borderColor = 'var(--accent)';
+        div.onmouseout = () => div.style.borderColor = 'var(--border)';
+        
+        // Открытие заметки по клику
+        div.onclick = (e) => {
+            if (!e.target.closest('button')) {
+                openViewNoteModal(note);
+            }
+        };
+
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
                 <button class="btn" type="button" style="background: #ef4444; padding: 2px 6px; font-size: 10px;" onclick="deleteNote(event, ${note.id})">🗑️</button>
             </div>
-            <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap;">${note.content || ''}</div>
+            <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap; max-height: 80px; overflow: hidden; text-overflow: ellipsis;">${note.content || ''}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">📅 ${note.date || ''}</div>
         `;
         container.appendChild(div);
     });
+}
+
+// Просмотр заметки в модальном окне
+function openViewNoteModal(note) {
+    window.currentEditingNoteId = note.id;
+    const titleInput = document.getElementById('viewNoteNameInput');
+    const contentInput = document.getElementById('viewNoteContentInput');
+    const dateDiv = document.getElementById('viewNoteDate');
+
+    if (titleInput) titleInput.value = note.title || '';
+    if (contentInput) contentInput.value = note.content || '';
+    if (dateDiv) dateDiv.textContent = `Дата сохранения: ${note.date || '-'}`;
+
+    const modal = document.getElementById('viewNoteModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeViewNoteModal() {
+    const modal = document.getElementById('viewNoteModal');
+    if (modal) modal.style.display = 'none';
+    window.currentEditingNoteId = null;
+}
+
+// Обновление существующей заметки
+async function updateExistingNote() {
+    if (!window.currentEditingNoteId) return;
+    const user = getCurrentUser();
+    const title = document.getElementById('viewNoteNameInput')?.value || '';
+    const content = document.getElementById('viewNoteContentInput')?.value || '';
+
+    try {
+        const res = await fetch(`/api/notes/${window.currentEditingNoteId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
+            body: JSON.stringify({ title, content })
+        });
+        if (!res.ok) throw new Error('Ошибка обновления заметки');
+
+        closeViewNoteModal();
+        loadNotes();
+    } catch (err) {
+        alert(err.message);
+    }
 }
 
 async function deleteNote(event, id) {
@@ -757,7 +848,7 @@ function closeModals() {
     document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
 }
 
-function closeViewEquipmentModal() {
-    const modal = document.getElementById('viewEquipmentModal');
-    if (modal) modal.style.display = 'none';
+function toggleMobileSearch() {
+    const searchBox = document.getElementById('searchBoxContainer');
+    if (searchBox) searchBox.classList.toggle('search-active');
 }
