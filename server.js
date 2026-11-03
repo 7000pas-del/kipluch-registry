@@ -29,16 +29,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Принудительный разовый сброс старой битой базы со старыми ID
-if (fs.existsSync(DB_PATH)) {
-    try {
-        fs.unlinkSync(DB_PATH);
-        console.log('🗑️ Старая база данных успешно очищена для восстановления структуры с автоинкрементом!');
-    } catch (e) {
-        console.error('Не удалось удалить файл БД:', e);
-    }
-}
-
 let db = new sqlite3.Database(DB_PATH, (err) => {
     if (err) console.error('Ошибка подключения к БД:', err.message);
     else console.log('Успешное подключение к SQLite БД');
@@ -53,7 +43,6 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Жесткое создание таблицы оборудования со всеми полями и корректным ID
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
