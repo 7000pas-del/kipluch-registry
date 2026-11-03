@@ -390,6 +390,20 @@ app.delete('/api/notes/:id', requireAuth, (req, res) => {
     });
 });
 
+// --- Дополнительные эндпоинты бэкапа и служебные ---
+app.get('/api/backup', requireAuth, (req, res) => {
+    res.download(DB_PATH);
+});
+
+app.post('/api/restore', requireAuth, upload.single('backup'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Файл бэкапа не передан' });
+    const tempPath = req.file.path;
+    fs.copyFile(tempPath, DB_PATH, (err) => {
+        if (err) return res.status(500).json({ error: 'Ошибка восстановления базы данных' });
+        res.json({ success: true });
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
