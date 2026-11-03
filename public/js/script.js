@@ -155,8 +155,17 @@ function renderEquipment(data) {
     if (tableBody) tableBody.innerHTML = '';
     if (mobileContainer) mobileContainer.innerHTML = '';
 
+    if (!data || data.length === 0) return;
+
     data.forEach(item => {
-        // Верстка для таблиц ПК
+        const name = item.name || item.model || '';
+        const serial = item.serialNumber || item.serial || '-';
+        const owner = item.ownerName || item.owner || '-';
+        const location = item.location || '-';
+        const nextVer = item.nextVer || item.nextVerification || '-';
+        const status = item.status || 'В эксплуатации';
+
+        // Верстка для ПК (таблица)
         if (tableBody) {
             const row = document.createElement('tr');
             row.style.cursor = 'pointer';
@@ -167,12 +176,12 @@ function renderEquipment(data) {
             const itemJson = encodeURIComponent(JSON.stringify(item));
 
             row.innerHTML = `
-                <td><strong>${item.name || ''}</strong></td>
-                <td>${item.serialNumber || ''}</td>
-                <td>${item.ownerName || ''}</td>
-                <td>${item.location || ''}</td>
-                <td>${item.nextVer || ''}</td>
-                <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; background: #0f172a; border: 1px solid var(--border);">${item.status || 'В эксплуатации'}</span></td>
+                <td><strong>${name}</strong></td>
+                <td>${serial}</td>
+                <td>${owner}</td>
+                <td>${location}</td>
+                <td>${nextVer}</td>
+                <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; background: #0f172a; border: 1px solid var(--border);">${status}</span></td>
                 <td style="text-align: right; white-space: nowrap;">
                     <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
                     <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
@@ -181,7 +190,7 @@ function renderEquipment(data) {
             tableBody.appendChild(row);
         }
 
-        // Верстка для карточек мобильных
+        // Верстка для мобильных карточек
         if (mobileContainer) {
             const card = document.createElement('div');
             card.className = 'mobile-eq-card';
@@ -189,10 +198,10 @@ function renderEquipment(data) {
                 if (!e.target.closest('button')) viewEquipmentPassport(item.id);
             };
             card.innerHTML = `
-                <div style="font-weight: 700; color: #fff; font-size: 14px;">${item.name || 'Оборудование'}</div>
-                <div style="font-size: 12px; color: var(--text-muted);">Зав. №: ${item.serialNumber || '-'} | Объект: ${item.location || '-'}</div>
+                <div style="font-weight: 700; color: #fff; font-size: 14px;">${name}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Зав. №: ${serial} | Объект: ${location}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                    <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; background: #0f172a; border: 1px solid var(--border);">${item.status || 'В эксплуатации'}</span>
+                    <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; background: #0f172a; border: 1px solid var(--border);">${status}</span>
                     <div>
                         <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155;" onclick="editEquipmentFromButton(event, '${encodeURIComponent(JSON.stringify(item))}')">✏️</button>
                         <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
@@ -491,7 +500,6 @@ function selectTab(tabName) {
     window.currentTab = tabName;
     window.currentFolderId = null;
 
-    // Сброс активного состояния всех nav-card
     document.querySelectorAll('.nav-card').forEach(card => card.classList.remove('active'));
     
     if (tabName === 'doc') document.getElementById('navDoc')?.classList.add('active');
@@ -576,7 +584,6 @@ async function loadArchiveContent() {
     if (!user) return;
 
     if (window.currentTab === 'note') {
-        // Очищаем старые папки
         const foldersContainer = document.getElementById('foldersContainer');
         if (foldersContainer) foldersContainer.innerHTML = '';
         loadNotes();
@@ -603,7 +610,6 @@ async function loadArchiveContent() {
     }
 }
 
-// ИСПРАВЛЕНИЕ: Создание папки с поддержкой типов и вложенности
 async function promptCreateFolder() {
     if (window.currentTab === 'note') {
         openNoteModal();
@@ -617,7 +623,7 @@ async function promptCreateFolder() {
     const payload = { 
         name: folderName.trim(), 
         type: window.currentTab || 'doc', 
-        parentId: window.currentFolderId ? Number(window.currentFolderId) : null
+        parentId: (window.currentFolderId && window.currentFolderId !== 'null' && window.currentFolderId !== 'undefined') ? Number(window.currentFolderId) : null
     };
 
     try {
@@ -626,7 +632,10 @@ async function promptCreateFolder() {
             headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
             body: JSON.stringify(payload)
         });
-        if (!res.ok) throw new Error('Ошибка создания папки');
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка создания папки');
+        
         loadArchiveContent();
     } catch (err) {
         alert('Ошибка: ' + err.message);
@@ -706,7 +715,7 @@ async function deleteFile(id) {
     }
 }
 
-// --- ИСПРАВЛЕНИЕ ЗАМЕТОК ---
+// --- Заметки ---
 function openNoteModal() {
     document.getElementById('noteNameInput').value = '';
     document.getElementById('noteContentInput').value = '';
@@ -759,7 +768,6 @@ function renderNotes(notes) {
         div.onmouseover = () => div.style.borderColor = 'var(--accent)';
         div.onmouseout = () => div.style.borderColor = 'var(--border)';
         
-        // Открытие заметки по клику
         div.onclick = (e) => {
             if (!e.target.closest('button')) {
                 openViewNoteModal(note);
@@ -778,7 +786,6 @@ function renderNotes(notes) {
     });
 }
 
-// Просмотр заметки в модальном окне
 function openViewNoteModal(note) {
     window.currentEditingNoteId = note.id;
     const titleInput = document.getElementById('viewNoteNameInput');
@@ -799,7 +806,6 @@ function closeViewNoteModal() {
     window.currentEditingNoteId = null;
 }
 
-// Обновление существующей заметки
 async function updateExistingNote() {
     if (!window.currentEditingNoteId) return;
     const user = getCurrentUser();
