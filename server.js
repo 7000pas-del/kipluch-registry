@@ -43,7 +43,7 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Создаем таблицу, если ее нет вообще
+        // Создаем таблицу, если ее нет
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -54,33 +54,50 @@ function initDatabase() {
             location TEXT,
             notes TEXT,
             files TEXT
-        )`, (err) => {
-            if (!err) {
-                // Если таблица уже существовала, проверяем и добавляем все недостающие колонки по одной
-                const requiredColumns = [
-                    'serialNumber TEXT',
-                    'verificationDate TEXT',
-                    'nextVerificationDate TEXT',
-                    'status TEXT',
-                    'location TEXT',
-                    'notes TEXT',
-                    'files TEXT'
-                ];
-                
-                db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
-                    if (!pragmaErr && rows) {
-                        const existingColumns = rows.map(r => r.name);
-                        requiredColumns.forEach(colDef => {
+        )`, () => {
+            // ЖЕСТКАЯ МИГРАЦИЯ: проверяем, есть ли в таблице записи со старой структурой или без ID
+            db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
+                if (!pragmaErr && rows) {
+                    const hasId = rows.some(r => r.name === 'id');
+                    const existingColumns = rows.map(r => r.name);
+                    
+                    // Если колонки id нет или таблица повреждена — пересоздаем с сохранением данных
+                    if (!hasId) {
+                        console.log('🔄 Миграция: добавляем ID к старым записям оборудования...');
+                        db.serialize(() => {
+                            db.run(`CREATE TABLE equipment_backup AS SELECT * FROM equipment`);
+                            db.run(`DROP TABLE equipment`);
+                            db.run(`CREATE TABLE equipment (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                name TEXT,
+                                serialNumber TEXT,
+                                verificationDate TEXT,
+                                nextVerificationDate TEXT,
+                                status TEXT,
+                                location TEXT,
+                                notes TEXT,
+                                files TEXT
+                            )`);
+                            db.run(`INSERT INTO equipment (name, serialNumber, status, location, notes) 
+                                    SELECT name, serialNumber, status, location, notes FROM equipment_backup`, (insErr) => {
+                                if (!insErr) {
+                                    db.run(`DROP TABLE equipment_backup`);
+                                    console.log('✅ Миграция оборудования завершена успешно!');
+                                }
+                            });
+                        });
+                    } else {
+                        // Добиваем остальные колонки на случай их отсутствия
+                        const required = ['serialNumber TEXT', 'verificationDate TEXT', 'nextVerificationDate TEXT', 'status TEXT', 'location TEXT', 'notes TEXT', 'files TEXT'];
+                        required.forEach(colDef => {
                             const colName = colDef.split(' ')[0];
                             if (!existingColumns.includes(colName)) {
-                                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, (alterErr) => {
-                                    if (!alterErr) console.log(`➕ Добавлена недостающая колонка: ${colName}`);
-                                });
+                                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, () => {});
                             }
                         });
                     }
-                });
-            }
+                }
+            });
         });
 
         db.run(`CREATE TABLE IF NOT EXISTS folders (
