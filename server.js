@@ -29,6 +29,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// ПРИНУДИТЕЛЬНЫЙ СБРОС СТАРОЙ БАЗЫ БЕЗ ID (разово, чтобы очистить битую структуру)
+// Если хотите сохранить старые данные, закомментируйте блок ниже. Но судя по багам, база повреждена.
+const dbFile = DB_PATH;
+if (process.env.RESET_DB === 'true' && fs.existsSync(dbFile)) {
+    try {
+        fs.unlinkSync(dbFile);
+        console.log('🗑️ Старая база данных успешно удалена для чистой переустановки!');
+    } catch (e) {
+        console.error('Не удалось удалить файл БД:', e);
+    }
+}
+
 let db = new sqlite3.Database(DB_PATH, (err) => {
     if (err) console.error('Ошибка подключения к БД:', err.message);
     else console.log('Успешное подключение к SQLite БД');
@@ -43,7 +55,7 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Создаем таблицу, если ее нет
+        // Жесткое создание чистой таблицы оборудования со ВСЕМИ полями и ID
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -54,50 +66,30 @@ function initDatabase() {
             location TEXT,
             notes TEXT,
             files TEXT
-        )`, () => {
-            // ЖЕСТКАЯ МИГРАЦИЯ: проверяем, есть ли в таблице записи со старой структурой или без ID
-            db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
-                if (!pragmaErr && rows) {
-                    const hasId = rows.some(r => r.name === 'id');
-                    const existingColumns = rows.map(r => r.name);
-                    
-                    // Если колонки id нет или таблица повреждена — пересоздаем с сохранением данных
-                    if (!hasId) {
-                        console.log('🔄 Миграция: добавляем ID к старым записям оборудования...');
-                        db.serialize(() => {
-                            db.run(`CREATE TABLE equipment_backup AS SELECT * FROM equipment`);
-                            db.run(`DROP TABLE equipment`);
-                            db.run(`CREATE TABLE equipment (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                name TEXT,
-                                serialNumber TEXT,
-                                verificationDate TEXT,
-                                nextVerificationDate TEXT,
-                                status TEXT,
-                                location TEXT,
-                                notes TEXT,
-                                files TEXT
-                            )`);
-                            db.run(`INSERT INTO equipment (name, serialNumber, status, location, notes) 
-                                    SELECT name, serialNumber, status, location, notes FROM equipment_backup`, (insErr) => {
-                                if (!insErr) {
-                                    db.run(`DROP TABLE equipment_backup`);
-                                    console.log('✅ Миграция оборудования завершена успешно!');
-                                }
-                            });
-                        });
-                    } else {
-                        // Добиваем остальные колонки на случай их отсутствия
-                        const required = ['serialNumber TEXT', 'verificationDate TEXT', 'nextVerificationDate TEXT', 'status TEXT', 'location TEXT', 'notes TEXT', 'files TEXT'];
-                        required.forEach(colDef => {
-                            const colName = colDef.split(' ')[0];
-                            if (!existingColumns.includes(colName)) {
+        )`, (err) => {
+            if (!err) {
+                // Дополнительная страховка: если таблица была создана ранее без каких-то колонок
+                const requiredColumns = [
+                    'serialNumber TEXT',
+                    'verificationDate TEXT',
+                    'nextVerificationDate TEXT',
+                    'status TEXT',
+                    'location TEXT',
+                    'notes TEXT',
+                    'files TEXT'
+                ];
+                db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
+                    if (!pragmaErr && rows) {
+                        const existingNames = rows.map(r => r.name);
+                        requiredColumns.forEach(colDef => {
+                            const name = colDef.split(' ')[0];
+                            if (!existingNames.includes(name)) {
                                 db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, () => {});
                             }
                         });
                     }
-                }
-            });
+                });
+            }
         });
 
         db.run(`CREATE TABLE IF NOT EXISTS folders (
