@@ -116,7 +116,7 @@ async function initDatabase() {
                     equipmentId INTEGER,
                     workType TEXT,
                     maintDate TEXT,
-                    desc TEXT,
+                    description TEXT,
                     performedBy TEXT
                 );
                 CREATE TABLE IF NOT EXISTS folders (
@@ -190,9 +190,18 @@ async function initDatabase() {
                 equipmentId INTEGER,
                 workType TEXT,
                 maintDate TEXT,
-                desc TEXT,
+                description TEXT,
                 performedBy TEXT
-            )`);
+            )`, () => {
+                db.all("PRAGMA table_info(maintenance)", [], (err, rows) => {
+                    if (!err && rows) {
+                        const existing = rows.map(r => r.name);
+                        if (existing.includes('desc') && !existing.includes('description')) {
+                            db.run("ALTER TABLE maintenance RENAME COLUMN desc TO description", () => {});
+                        }
+                    }
+                });
+            });
 
             db.run(`CREATE TABLE IF NOT EXISTS folders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -399,9 +408,10 @@ app.get('/api/maintenance', requireAuth, async (req, res) => {
 });
 
 app.post('/api/maintenance', requireAuth, async (req, res) => {
-    const { equipmentId, workType, maintDate, desc, performedBy } = req.body;
-    const query = `INSERT INTO maintenance (equipmentId, workType, maintDate, desc, performedBy) VALUES (?, ?, ?, ?, ?)`;
-    const params = [equipmentId, workType || 'Обслуживание', maintDate || '', desc || '', performedBy || ''];
+    const { equipmentId, workType, maintDate, desc, description, performedBy } = req.body;
+    const finalDesc = description || desc || '';
+    const query = `INSERT INTO maintenance (equipmentId, workType, maintDate, description, performedBy) VALUES (?, ?, ?, ?, ?)`;
+    const params = [equipmentId, workType || 'Обслуживание', maintDate || '', finalDesc, performedBy || ''];
     try {
         const result = await runQuery(query, params, 'insert');
         res.json({ id: result.lastID, success: true });
@@ -571,7 +581,7 @@ app.get('/api/backup', requireAuth, (req, res) => {
     res.download(DB_PATH);
 });
 
-app.post('/api/restore', requireAuth, upload.single('backup'), (req, res) => {
+app.post('/api/restore', requireAuth, upload.array('backup'), (req, res) => {
     if (isPg) {
         return res.status(400).json({ error: 'Восстановление SQLite-файла недоступно при использовании PostgreSQL' });
     }
