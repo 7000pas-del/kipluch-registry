@@ -66,29 +66,7 @@ function initDatabase() {
             email TEXT,
             notes TEXT,
             files TEXT
-        )`, () => {
-            // Безопасное добавление колонок на случай старой базы
-            db.all("PRAGMA table_info(equipment)", [], (err, rows) => {
-                if (!err && rows) {
-                    const cols = rows.map(r => r.name);
-                    if (!cols.includes('gsiNumber')) db.run("ALTER TABLE equipment ADD COLUMN gsiNumber TEXT");
-                    if (!cols.includes('ownerName')) db.run("ALTER TABLE equipment ADD COLUMN ownerName TEXT");
-                    if (!cols.includes('installationDate')) db.run("ALTER TABLE equipment ADD COLUMN installationDate TEXT");
-                    if (!cols.includes('capacity')) db.run("ALTER TABLE equipment ADD COLUMN capacity TEXT");
-                    if (!cols.includes('minCapacity')) db.run("ALTER TABLE equipment ADD COLUMN minCapacity TEXT");
-                    if (!cols.includes('discrete')) db.run("ALTER TABLE equipment ADD COLUMN discrete TEXT");
-                    if (!cols.includes('adcType')) db.run("ALTER TABLE equipment ADD COLUMN adcType TEXT");
-                    if (!cols.includes('sensorType')) db.run("ALTER TABLE equipment ADD COLUMN sensorType TEXT");
-                    if (!cols.includes('platformCount')) db.run("ALTER TABLE equipment ADD COLUMN platformCount TEXT");
-                    if (!cols.includes('weighingMode')) db.run("ALTER TABLE equipment ADD COLUMN weighingMode TEXT");
-                    if (!cols.includes('certNumber')) db.run("ALTER TABLE equipment ADD COLUMN certNumber TEXT");
-                    if (!cols.includes('lastVer')) db.run("ALTER TABLE equipment ADD COLUMN lastVer TEXT");
-                    if (!cols.includes('nextVer')) db.run("ALTER TABLE equipment ADD COLUMN nextVer TEXT");
-                    if (!cols.includes('phone')) db.run("ALTER TABLE equipment ADD COLUMN phone TEXT");
-                    if (!cols.includes('email')) db.run("ALTER TABLE equipment ADD COLUMN email TEXT");
-                }
-            });
-        });
+        )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS maintenance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -104,15 +82,7 @@ function initDatabase() {
             name TEXT,
             parentId INTEGER,
             type TEXT
-        )`, () => {
-            db.all("PRAGMA table_info(folders)", [], (err, rows) => {
-                if (!err && rows) {
-                    const cols = rows.map(r => r.name);
-                    if (!cols.includes('type')) db.run("ALTER TABLE folders ADD COLUMN type TEXT");
-                    if (!cols.includes('parentId')) db.run("ALTER TABLE folders ADD COLUMN parentId INTEGER");
-                }
-            });
-        });
+        )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -128,15 +98,7 @@ function initDatabase() {
             folderId INTEGER,
             type TEXT,
             date TEXT
-        )`, () => {
-            db.all("PRAGMA table_info(files)", [], (err, rows) => {
-                if (!err && rows) {
-                    const cols = rows.map(r => r.name);
-                    if (!cols.includes('folderId')) db.run("ALTER TABLE files ADD COLUMN folderId INTEGER");
-                    if (!cols.includes('type')) db.run("ALTER TABLE files ADD COLUMN type TEXT");
-                }
-            });
-        });
+        )`);
 
         db.run("DELETE FROM users WHERE username = 'admin'", () => {
             db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", (err) => {
@@ -273,7 +235,7 @@ app.delete('/api/maintenance/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Папки ---
+// --- Папки (с четким разделением по типу) ---
 app.get('/api/folders', requireAuth, (req, res) => {
     const type = req.query.type || 'doc';
     const parentId = req.query.parentId;
