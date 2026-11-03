@@ -25,14 +25,6 @@ async function performLogin() {
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
 
-    if (!username || !password) {
-        if (errorDiv) {
-            errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Введите логин и пароль!';
-        }
-        return;
-    }
-
     try {
         const response = await fetch('/api/login', {
             method: 'POST',
@@ -89,8 +81,9 @@ function logoutSystem() {
 
 window.currentTab = 'doc';
 window.currentFolderId = null;
+window.currentEquipmentId = null;
 
-// --- Обновление счетчиков ---
+// --- Счетчики ---
 async function updateCounters() {
     const user = getCurrentUser();
     if (!user) return;
@@ -117,7 +110,7 @@ async function updateCounters() {
             if (countNote) countNote.textContent = notes.length;
         }
     } catch (err) {
-        console.error('Ошибка обновления счетчиков:', err);
+        console.error('Ошибка счетчиков:', err);
     }
 }
 
@@ -154,12 +147,12 @@ function renderEquipment(data) {
         const itemJson = encodeURIComponent(JSON.stringify(item));
 
         row.innerHTML = `
-            <td>${item.name || ''}</td>
+            <td><strong>${item.name || ''}</strong></td>
             <td>${item.serialNumber || ''}</td>
+            <td>${item.ownerName || ''}</td>
             <td>${item.location || ''}</td>
-            <td>${item.location || ''}</td>
-            <td>${item.nextVerificationDate || ''}</td>
-            <td>${item.status || ''}</td>
+            <td>${item.nextVer || ''}</td>
+            <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; background: #0f172a; border: 1px solid var(--border);">${item.status || 'В эксплуатации'}</span></td>
             <td style="text-align: right; white-space: nowrap;">
                 <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
                 <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
@@ -169,16 +162,37 @@ function renderEquipment(data) {
     });
 }
 
-function viewEquipmentPassport(id) {
+async function viewEquipmentPassport(id) {
     const item = window.allEquipment?.find(eq => eq.id === id);
     if (!item) return;
 
+    window.currentEquipmentId = item.id;
+
     document.getElementById('viewEqName').textContent = item.name || '-';
     document.getElementById('viewEqSerial').textContent = item.serialNumber || '-';
+    document.getElementById('viewEqGsiNumber').textContent = item.gsiNumber || '-';
+    document.getElementById('viewEqOwnerName').textContent = item.ownerName || '-';
     document.getElementById('viewEqLocation').textContent = item.location || '-';
-    document.getElementById('viewEqNextVer').textContent = item.nextVerificationDate || '-';
+    document.getElementById('viewEqInstallationDate').textContent = item.installationDate || '-';
+    document.getElementById('viewEqCapacity').textContent = item.capacity || '-';
+    document.getElementById('viewEqMinCapacity').textContent = item.minCapacity || '-';
+    document.getElementById('viewEqDiscrete').textContent = item.discrete || '-';
+    document.getElementById('viewEqAdcType').textContent = item.adcType || '-';
+    document.getElementById('viewEqSensorType').textContent = item.sensorType || '-';
+    document.getElementById('viewEqPlatformCount').textContent = item.platformCount || '-';
+    document.getElementById('viewEqWeighingMode').textContent = item.weighingMode || '-';
+    document.getElementById('viewEqCertNumber').textContent = item.certNumber || '-';
+    document.getElementById('viewEqLastVer').textContent = item.lastVer || '-';
+    document.getElementById('viewEqNextVer').textContent = item.nextVer || '-';
+    document.getElementById('viewEqPhone').textContent = item.phone || '-';
+    document.getElementById('viewEqEmail').textContent = item.email || '-';
     document.getElementById('viewEqNotes').textContent = item.notes || '-';
     
+    const badge = document.getElementById('viewEqBadge');
+    if (badge) badge.textContent = item.status || 'В эксплуатации';
+
+    await loadMaintenanceRecords(item.id);
+
     const btnEdit = document.getElementById('btnEditFromView');
     if (btnEdit) {
         btnEdit.onclick = () => {
@@ -202,9 +216,23 @@ function openEquipmentModal(editData = null) {
 
     document.getElementById('eqName').value = editData ? editData.name || '' : '';
     document.getElementById('eqSerial').value = editData ? editData.serialNumber || '' : '';
+    document.getElementById('eqGsiNumber').value = editData ? editData.gsiNumber || '' : '';
+    document.getElementById('eqOwnerName').value = editData ? editData.ownerName || '' : '';
     document.getElementById('eqLocation').value = editData ? editData.location || '' : '';
+    document.getElementById('eqInstallationDate').value = editData ? editData.installationDate || '' : '';
+    document.getElementById('eqCapacity').value = editData ? editData.capacity || '' : '';
+    document.getElementById('eqMinCapacity').value = editData ? editData.minCapacity || '' : '';
+    document.getElementById('eqDiscrete').value = editData ? editData.discrete || '' : '';
+    document.getElementById('eqAdcType').value = editData ? editData.adcType || '' : '';
+    document.getElementById('eqSensorType').value = editData ? editData.sensorType || '' : '';
+    document.getElementById('eqPlatformCount').value = editData ? editData.platformCount || '' : '';
+    document.getElementById('eqWeighingMode').value = editData ? editData.weighingMode || '' : '';
+    document.getElementById('eqCertNumber').value = editData ? editData.certNumber || '' : '';
+    document.getElementById('eqLastVer').value = editData ? editData.lastVer || '' : '';
+    document.getElementById('eqNextVer').value = editData ? editData.nextVer || '' : '';
     document.getElementById('eqStatus').value = editData ? editData.status || 'В эксплуатации' : 'В эксплуатации';
-    document.getElementById('eqNextVer').value = editData ? editData.nextVerificationDate || '' : '';
+    document.getElementById('eqPhone').value = editData ? editData.phone || '' : '';
+    document.getElementById('eqEmail').value = editData ? editData.email || '' : '';
     document.getElementById('eqNotes').value = editData ? editData.notes || '' : '';
 
     if (modal) {
@@ -241,21 +269,36 @@ async function saveEquipment(event) {
     if (event) event.preventDefault();
     const user = getCurrentUser();
 
-    const name = document.getElementById('eqName')?.value || '';
-    const serialNumber = document.getElementById('eqSerial')?.value || '';
-    const location = document.getElementById('eqLocation')?.value || '';
-    const status = document.getElementById('eqStatus')?.value || 'В эксплуатации';
-    const nextVerificationDate = document.getElementById('eqNextVer')?.value || '';
-    const notes = document.getElementById('eqNotes')?.value || '';
+    const payload = {
+        name: document.getElementById('eqName')?.value || '',
+        serialNumber: document.getElementById('eqSerial')?.value || '',
+        gsiNumber: document.getElementById('eqGsiNumber')?.value || '',
+        ownerName: document.getElementById('eqOwnerName')?.value || '',
+        location: document.getElementById('eqLocation')?.value || '',
+        installationDate: document.getElementById('eqInstallationDate')?.value || '',
+        capacity: document.getElementById('eqCapacity')?.value || '',
+        minCapacity: document.getElementById('eqMinCapacity')?.value || '',
+        discrete: document.getElementById('eqDiscrete')?.value || '',
+        adcType: document.getElementById('eqAdcType')?.value || '',
+        sensorType: document.getElementById('eqSensorType')?.value || '',
+        platformCount: document.getElementById('eqPlatformCount')?.value || '',
+        weighingMode: document.getElementById('eqWeighingMode')?.value || '',
+        certNumber: document.getElementById('eqCertNumber')?.value || '',
+        lastVer: document.getElementById('eqLastVer')?.value || '',
+        nextVer: document.getElementById('eqNextVer')?.value || '',
+        status: document.getElementById('eqStatus')?.value || 'В эксплуатации',
+        phone: document.getElementById('eqPhone')?.value || '',
+        email: document.getElementById('eqEmail')?.value || '',
+        notes: document.getElementById('eqNotes')?.value || ''
+    };
 
-    if (!name) {
+    if (!payload.name) {
         alert('Введите наименование!');
         return;
     }
 
     const modal = document.getElementById('equipmentModal');
     const editId = modal ? modal.dataset.editId : null;
-    
     const isEdit = editId !== null && editId !== undefined && editId !== '' && editId !== 'undefined' && editId !== 'null';
     const url = isEdit ? `/api/equipment/${editId}` : '/api/equipment';
     const method = isEdit ? 'PUT' : 'POST';
@@ -264,7 +307,7 @@ async function saveEquipment(event) {
         const res = await fetch(url, {
             method: method,
             headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
-            body: JSON.stringify({ name, serialNumber, nextVerificationDate, status, location, notes })
+            body: JSON.stringify(payload)
         });
         
         const responseData = await res.json();
@@ -285,7 +328,7 @@ async function deleteEquipment(event, id) {
         return;
     }
 
-    if (!confirm('Удалить эту запись?')) return;
+    if (!confirm('Удалить эту запись оборудования?')) return;
     const user = getCurrentUser();
     
     try {
@@ -295,22 +338,116 @@ async function deleteEquipment(event, id) {
         });
         
         if (!res.ok) throw new Error('Ошибка удаления с сервера');
-        
         loadEquipment();
     } catch (err) {
         alert('Не удалось удалить: ' + err.message);
     }
 }
 
-// --- Управление вкладками и контентом ---
+// --- Журнал обслуживания ---
+async function loadMaintenanceRecords(equipmentId) {
+    const user = getCurrentUser();
+    const container = document.getElementById('maintenanceListContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    try {
+        const res = await fetch(`/api/maintenance?equipmentId=${equipmentId}`, {
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
+        if (!res.ok) return;
+        const records = await res.json();
+
+        if (records.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; padding: 4px;">Записей обслуживания нет.</div>';
+            return;
+        }
+
+        records.forEach(rec => {
+            const div = document.createElement('div');
+            div.style.cssText = 'background: #0f172a; border: 1px solid var(--border); padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: flex-start; font-size: 12px;';
+            div.innerHTML = `
+                <div>
+                    <strong style="color: #fff;">${rec.workType || 'Работа'}</strong> <span style="color: var(--text-muted);">(${rec.maintDate || ''})</span>
+                    <div style="color: var(--text-main); margin-top: 2px;">${rec.desc || ''}</div>
+                    <div style="color: #38bdf8; font-size: 11px; margin-top: 2px;">Исполнитель: ${rec.performedBy || '-'}</div>
+                </div>
+                <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteMaintenance(${rec.id})">🗑️</button>
+            `;
+            container.appendChild(div);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function openMaintenanceModal() {
+    document.getElementById('maintWorkType').value = '';
+    document.getElementById('maintDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('maintDesc').value = '';
+    document.getElementById('maintPerformedBy').value = '';
+
+    const modal = document.getElementById('maintenanceModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeMaintenanceModal() {
+    const modal = document.getElementById('maintenanceModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function saveMaintenance(event) {
+    if (event) event.preventDefault();
+    const user = getCurrentUser();
+
+    const workType = document.getElementById('maintWorkType')?.value || '';
+    const maintDate = document.getElementById('maintDate')?.value || '';
+    const desc = document.getElementById('maintDesc')?.value || '';
+    const performedBy = document.getElementById('maintPerformedBy')?.value || '';
+
+    if (!window.currentEquipmentId) {
+        alert('Ошибка: не определено оборудование');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/maintenance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
+            body: JSON.stringify({ equipmentId: window.currentEquipmentId, workType, maintDate, desc, performedBy })
+        });
+        if (!res.ok) throw new Error('Ошибка добавления записи');
+
+        closeMaintenanceModal();
+        loadMaintenanceRecords(window.currentEquipmentId);
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+async function deleteMaintenance(id) {
+    if (!confirm('Удалить эту запись обслуживания?')) return;
+    const user = getCurrentUser();
+    try {
+        const res = await fetch(`/api/maintenance/${id}`, {
+            method: 'DELETE',
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
+        if (!res.ok) throw new Error('Ошибка удаления');
+        loadMaintenanceRecords(window.currentEquipmentId);
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+function printPassport() {
+    window.print();
+}
+
+// --- Вкладки архива и заметок ---
 function selectTab(tabName) {
     window.currentTab = tabName;
     window.currentFolderId = null;
-
-    const fc = document.getElementById('foldersContainer');
-    if (fc) fc.innerHTML = '';
-    const fic = document.getElementById('filesContainer');
-    if (fic) fic.innerHTML = '';
 
     const welcomeScreen = document.getElementById('welcomeScreen');
     const adminSection = document.getElementById('adminSection');
@@ -320,14 +457,13 @@ function selectTab(tabName) {
     if (adminSection) adminSection.style.display = 'none';
     if (contentSection) contentSection.style.display = 'none';
 
-    const createBtn = document.querySelector('button[onclick*="promptCreateFolder"]');
-    if (createBtn) {
-        if (tabName === 'note') {
-            createBtn.innerHTML = '➕ Создать заметку';
-        } else {
-            createBtn.innerHTML = '➕ Создать папку';
-        }
-    }
+    const btnFolder = document.getElementById('btnCreateFolder');
+    const btnPhoto = document.getElementById('btnUploadPhoto');
+    const btnDoc = document.getElementById('btnUploadDoc');
+
+    if (btnFolder) btnFolder.style.display = 'inline-flex';
+    if (btnPhoto) btnPhoto.style.display = 'none';
+    if (btnDoc) btnDoc.style.display = 'none';
 
     if (tabName === 'admin') {
         if (adminSection) adminSection.style.display = 'flex';
@@ -336,12 +472,19 @@ function selectTab(tabName) {
         
         const titleEl = document.getElementById('sectionTitle');
         if (titleEl) {
-            if (tabName === 'doc') titleEl.textContent = '📄 Документы';
-            if (tabName === 'image') titleEl.textContent = '🖼️ Фотографии';
-            if (tabName === 'note') titleEl.textContent = '📝 Заметки';
+            if (tabName === 'doc') {
+                titleEl.textContent = '📄 Документы';
+                if (btnDoc) btnDoc.style.display = 'inline-flex';
+            }
+            if (tabName === 'image') {
+                titleEl.textContent = '🖼️ Фотографии';
+                if (btnPhoto) btnPhoto.style.display = 'inline-flex';
+            }
+            if (tabName === 'note') {
+                titleEl.textContent = '📝 Заметки';
+                if (btnFolder) btnFolder.style.display = 'none';
+            }
         }
-
-        ensureUploadButtonExists();
         loadArchiveContent();
     } else {
         if (welcomeScreen) welcomeScreen.style.display = 'block';
@@ -353,36 +496,8 @@ function goHome() {
     updateCounters();
 }
 
-function ensureUploadButtonExists() {
-    const actionContainer = document.querySelector('.content-actions') || document.querySelector('#contentSection .actions') || document.querySelector('#contentSection');
-    if (!actionContainer) return;
-
-    let uploadBtn = document.getElementById('dynamicUploadBtn');
-    if (!uploadBtn) {
-        uploadBtn = document.createElement('button');
-        uploadBtn.id = 'dynamicUploadBtn';
-        uploadBtn.className = 'btn';
-        uploadBtn.style.cssText = 'background: #10b981; color: white; padding: 6px 12px; font-size: 13px; border-radius: 6px; margin-right: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;';
-        uploadBtn.innerHTML = '📤 Загрузить файл';
-        
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'dynamicFileInput';
-        fileInput.style.display = 'none';
-        fileInput.multiple = true;
-        fileInput.onchange = (e) => handleFileUpload(e);
-
-        document.body.appendChild(fileInput);
-        uploadBtn.onclick = () => fileInput.click();
-
-        actionContainer.insertBefore(uploadBtn, actionContainer.firstChild);
-    }
-}
-
-async function handleFileUpload(event) {
-    const files = event.target.files;
+async function uploadFiles(files) {
     if (!files || files.length === 0) return;
-
     const user = getCurrentUser();
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
@@ -397,10 +512,8 @@ async function handleFileUpload(event) {
             headers: { 'x-auth-user': JSON.stringify(user) },
             body: formData
         });
-        if (!res.ok) throw new Error('Ошибка загрузки файла');
+        if (!res.ok) throw new Error('Ошибка загрузки файлов');
 
-        alert('Файл успешно загружен!');
-        event.target.value = '';
         loadArchiveContent();
         updateCounters();
     } catch (err) {
@@ -419,25 +532,21 @@ async function loadArchiveContent() {
 
     try {
         let url = `/api/folders?type=${window.currentTab}`;
-        if (window.currentFolderId) {
-            url += `&parentId=${window.currentFolderId}`;
-        }
+        if (window.currentFolderId) url += `&parentId=${window.currentFolderId}`;
 
         const res = await fetch(url, { headers: { 'x-auth-user': JSON.stringify(user) } });
         if (res.ok) {
             const folders = await res.json();
             
             let filesUrl = `/api/files?type=${window.currentTab}`;
-            if (window.currentFolderId) {
-                filesUrl += `&folderId=${window.currentFolderId}`;
-            }
+            if (window.currentFolderId) filesUrl += `&folderId=${window.currentFolderId}`;
             const filesRes = await fetch(filesUrl, { headers: { 'x-auth-user': JSON.stringify(user) } });
             const files = filesRes.ok ? await filesRes.json() : [];
 
             renderFoldersAndFiles(folders, files);
         }
     } catch (err) {
-        console.error('Ошибка загрузки контента:', err);
+        console.error('Ошибка архива:', err);
     }
 }
 
@@ -451,11 +560,6 @@ async function promptCreateFolder() {
     if (!folderName || !folderName.trim()) return;
 
     const user = getCurrentUser();
-    if (!user) {
-        alert('Ошибка: пользователь не авторизован');
-        return;
-    }
-
     const payload = { 
         name: folderName.trim(), 
         type: window.currentTab, 
@@ -468,7 +572,6 @@ async function promptCreateFolder() {
             headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
             body: JSON.stringify(payload)
         });
-
         if (!res.ok) throw new Error('Ошибка создания папки');
         loadArchiveContent();
     } catch (err) {
@@ -476,175 +579,83 @@ async function promptCreateFolder() {
     }
 }
 
-function loadFolders() {
-    loadArchiveContent();
-}
-
 function renderFoldersAndFiles(folders, files) {
     const container = document.getElementById('foldersContainer');
-    if (!container) return;
+    const filesContainer = document.getElementById('filesContainer');
+    if (!container || !filesContainer) return;
 
     container.innerHTML = '';
+    filesContainer.innerHTML = '';
 
+    const banner = document.getElementById('folderBanner');
     if (window.currentFolderId) {
-        const backDiv = document.createElement('div');
-        backDiv.style.cssText = 'background: #334155; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 8px; color: #38bdf8; font-weight: bold; text-align: center; cursor: pointer;';
-        backDiv.innerHTML = '⬅️ Назад в корень';
-        backDiv.onclick = () => {
-            window.currentFolderId = null;
-            loadArchiveContent();
-        };
-        container.appendChild(backDiv);
+        if (banner) banner.style.display = 'flex';
+    } else {
+        if (banner) banner.style.display = 'none';
     }
 
     if (folders && folders.length > 0) {
         folders.forEach(folder => {
             const div = document.createElement('div');
-            div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
-            
-            const titleSpan = document.createElement('span');
-            titleSpan.style.cssText = 'color: #fff; cursor: pointer; flex-grow: 1; font-weight: bold;';
-            titleSpan.innerHTML = `📁 ${folder.name}`;
-            titleSpan.onclick = () => {
-                window.currentFolderId = folder.id;
-                loadArchiveContent();
-            };
-
-            const btnContainer = document.createElement('div');
-
-            const openBtn = document.createElement('button');
-            openBtn.type = 'button';
-            openBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px;';
-            openBtn.textContent = 'Открыть';
-            openBtn.onclick = () => {
-                window.currentFolderId = folder.id;
-                loadArchiveContent();
-            };
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.type = 'button';
-            deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
-            deleteBtn.textContent = 'Удалить';
-            deleteBtn.onclick = async () => {
-                if (!confirm(`Удалить папку "${folder.name}"?`)) return;
-                const user = getCurrentUser();
-                try {
-                    const res = await fetch(`/api/folders/${folder.id}`, {
-                        method: 'DELETE',
-                        headers: { 'x-auth-user': JSON.stringify(user) }
-                    });
-                    if (!res.ok) throw new Error('Ошибка удаления');
-                    loadArchiveContent();
-                } catch (err) {
-                    alert('Не удалось удалить: ' + err.message);
-                }
-            };
-
-            btnContainer.appendChild(openBtn);
-            btnContainer.appendChild(deleteBtn);
-
-            div.appendChild(titleSpan);
-            div.appendChild(btnContainer);
+            div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
+            div.innerHTML = `
+                <span style="color: #fff; cursor: pointer; font-weight: 600;" onclick="openFolder(${folder.id})">📁 ${folder.name}</span>
+                <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFolder(${folder.id})">🗑️</button>
+            `;
             container.appendChild(div);
         });
-    }
-
-    const filesContainer = document.getElementById('filesContainer');
-    if (!filesContainer) return;
-
-    filesContainer.innerHTML = '';
-
-    if ((!folders || folders.length === 0) && (!files || files.length === 0)) {
-        filesContainer.innerHTML = '<div style="color: #94a3b8; font-size: 13px; padding: 10px; text-align: center;">📭 Папка пуста</div>';
-        return;
     }
 
     if (files && files.length > 0) {
         files.forEach(file => {
             const div = document.createElement('div');
-            div.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
-            
-            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
-            const isWord = /\.(docx|doc)$/i.test(file.name);
-            const isExcel = /\.(xlsx|xls|csv)$/i.test(file.name);
-            
-            let previewHtml = '';
-            if (isImage) {
-                previewHtml = `<a href="/uploads/${file.filename}" target="_blank"><img src="/uploads/${file.filename}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px;"></a>`;
-            } else if (isWord) {
-                previewHtml = `<span style="font-size: 24px; margin-right: 10px;">📝</span>`;
-            } else if (isExcel) {
-                previewHtml = `<span style="font-size: 24px; margin-right: 10px;">📊</span>`;
-            } else {
-                previewHtml = `<span style="font-size: 24px; margin-right: 10px;">📄</span>`;
-            }
-
-            const infoDiv = document.createElement('div');
-            infoDiv.style.cssText = 'display: flex; align-items: center; flex-grow: 1;';
-            infoDiv.innerHTML = `
-                ${previewHtml}
-                <div>
-                    <a href="/uploads/${file.filename}" target="_blank" download="${file.name}" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 14px; display: block;">${file.name}</a>
-                    <span style="font-size: 11px; color: #94a3b8;">${file.date || ''}</span>
-                </div>
+            div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
+            div.innerHTML = `
+                <a href="/uploads/${file.filename}" target="_blank" download="${file.name}" style="color: #38bdf8; text-decoration: none; font-weight: 500;">📄 ${file.name}</a>
+                <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFile(${file.id})">🗑️</button>
             `;
-
-            const btnContainer = document.createElement('div');
-            btnContainer.style.display = 'flex';
-            btnContainer.style.gap = '6px';
-
-            const downloadBtn = document.createElement('a');
-            downloadBtn.href = `/uploads/${file.filename}`;
-            downloadBtn.download = file.name;
-            downloadBtn.className = 'btn';
-            downloadBtn.style.cssText = 'background: #3b82f6; color: white; padding: 6px 10px; border-radius: 4px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center;';
-            downloadBtn.textContent = '📥 Скачать';
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.type = 'button';
-            deleteBtn.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;';
-            deleteBtn.textContent = '🗑️ Удалить';
-            deleteBtn.onclick = async () => {
-                if (!confirm(`Удалить файл "${file.name}"?`)) return;
-                const user = getCurrentUser();
-                try {
-                    const res = await fetch(`/api/files/${file.id}`, {
-                        method: 'DELETE',
-                        headers: { 'x-auth-user': JSON.stringify(user) }
-                    });
-                    if (!res.ok) throw new Error('Ошибка удаления');
-                    loadArchiveContent();
-                    updateCounters();
-                } catch (err) {
-                    alert('Не удалось удалить: ' + err.message);
-                }
-            };
-
-            btnContainer.appendChild(downloadBtn);
-            btnContainer.appendChild(deleteBtn);
-
-            div.appendChild(infoDiv);
-            div.appendChild(btnContainer);
             filesContainer.appendChild(div);
         });
     }
 }
 
-// --- Заметки ---
-function openNoteModal(editNote = null) {
-    const nameInput = document.getElementById('noteNameInput');
-    const contentInput = document.getElementById('noteContentInput');
-    
-    if (editNote) {
-        if (nameInput) nameInput.value = editNote.title || '';
-        if (contentInput) contentInput.value = editNote.content || '';
-        window.currentEditNoteId = editNote.id;
-    } else {
-        if (nameInput) nameInput.value = '';
-        if (contentInput) contentInput.value = '';
-        window.currentEditNoteId = null;
-    }
+function openFolder(id) {
+    window.currentFolderId = id;
+    loadArchiveContent();
+}
 
+function exitFolder() {
+    window.currentFolderId = null;
+    loadArchiveContent();
+}
+
+async function deleteFolder(id) {
+    if (!confirm('Удалить папку?')) return;
+    const user = getCurrentUser();
+    try {
+        await fetch(`/api/folders/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
+        loadArchiveContent();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+async function deleteFile(id) {
+    if (!confirm('Удалить файл?')) return;
+    const user = getCurrentUser();
+    try {
+        await fetch(`/api/files/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
+        loadArchiveContent();
+        updateCounters();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+// --- Заметки ---
+function openNoteModal() {
+    document.getElementById('noteNameInput').value = '';
+    document.getElementById('noteContentInput').value = '';
     const modal = document.getElementById('noteModal');
     if (modal) modal.style.display = 'flex';
 }
@@ -652,29 +663,17 @@ function openNoteModal(editNote = null) {
 async function saveNote(event) {
     if (event) event.preventDefault();
     const user = getCurrentUser();
-
     const title = document.getElementById('noteNameInput')?.value || '';
     const content = document.getElementById('noteContentInput')?.value || '';
 
-    if (!title && !content) {
-        alert('Заполните название или текст заметки!');
-        return;
-    }
-
-    const editId = window.currentEditNoteId;
-    const isEdit = editId !== null && editId !== undefined && editId !== '';
-    const url = isEdit ? `/api/notes/${editId}` : '/api/notes';
-    const method = isEdit ? 'PUT' : 'POST';
-
     try {
-        const res = await fetch(url, {
-            method: method,
+        const res = await fetch('/api/notes', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(user) },
             body: JSON.stringify({ title, content })
         });
         if (!res.ok) throw new Error('Ошибка сохранения');
 
-        window.currentEditNoteId = null;
         closeModals();
         loadNotes();
         updateCounters();
@@ -685,18 +684,11 @@ async function saveNote(event) {
 
 async function loadNotes() {
     const user = getCurrentUser();
-    if (!user) return;
-
     try {
-        const res = await fetch('/api/notes', {
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
+        const res = await fetch('/api/notes', { headers: { 'x-auth-user': JSON.stringify(user) } });
         if (!res.ok) return;
         const notes = await res.json();
         renderNotes(notes);
-        
-        window.allNotes = notes;
-        updateCounters();
     } catch (err) {
         console.error(err);
     }
@@ -705,52 +697,25 @@ async function loadNotes() {
 function renderNotes(notes) {
     const container = document.getElementById('filesContainer');
     if (!container) return;
-
     container.innerHTML = '';
+
     notes.forEach(note => {
-        const card = document.createElement('div');
-        card.style.cssText = 'background: #1e293b; border: 1px solid #475569; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer;';
-        
-        card.onclick = (e) => {
-            if (!e.target.closest('button')) {
-                viewNote(note);
-            }
-        };
-
-        const noteJson = encodeURIComponent(JSON.stringify(note));
-
-        card.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        const div = document.createElement('div');
+        div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 8px;';
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
-                <div>
-                    <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #334155; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px;" onclick="editNoteFromButton(event, '${noteJson}')">✏️</button>
-                    <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="deleteNote(event, ${note.id})">🗑️</button>
-                </div>
+                <button class="btn" type="button" style="background: #ef4444; padding: 2px 6px; font-size: 10px;" onclick="deleteNote(event, ${note.id})">🗑️</button>
             </div>
-            <div style="font-size: 13px; color: #cbd5e1; white-space: pre-wrap; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${note.content || ''}</div>
-            <div style="font-size: 10px; color: #94a3b8;">${note.date || ''}</div>
+            <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap;">${note.content || ''}</div>
         `;
-        container.appendChild(card);
+        container.appendChild(div);
     });
-}
-
-function viewNote(note) {
-    alert(`📝 ${note.title || 'Без названия'}\n\n${note.content || ''}\n\nДата: ${note.date || ''}`);
-}
-
-function editNoteFromButton(event, encodedNote) {
-    if (event) event.stopPropagation();
-    try {
-        const note = JSON.parse(decodeURIComponent(encodedNote));
-        openNoteModal(note);
-    } catch (err) {
-        console.error(err);
-    }
 }
 
 async function deleteNote(event, id) {
     if (event) event.stopPropagation();
-    if (!confirm('Удалить эту заметку?')) return;
+    if (!confirm('Удалить заметку?')) return;
     const user = getCurrentUser();
     try {
         await fetch(`/api/notes/${id}`, { method: 'DELETE', headers: { 'x-auth-user': JSON.stringify(user) } });
@@ -773,4 +738,9 @@ function closeBackupModal() {
 
 function closeModals() {
     document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+}
+
+function closeViewEquipmentModal() {
+    const modal = document.getElementById('viewEquipmentModal');
+    if (modal) modal.style.display = 'none';
 }
