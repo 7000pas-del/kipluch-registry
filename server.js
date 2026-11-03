@@ -47,26 +47,29 @@ function initDatabase() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             serialNumber TEXT,
-            gsiNumber TEXT,
-            ownerName TEXT,
-            location TEXT,
-            installationDate TEXT,
-            capacity TEXT,
-            minCapacity TEXT,
-            discrete TEXT,
-            adcType TEXT,
-            sensorType TEXT,
-            platformCount TEXT,
-            weighingMode TEXT,
-            certNumber TEXT,
-            lastVer TEXT,
-            nextVer TEXT,
             status TEXT,
-            phone TEXT,
-            email TEXT,
-            notes TEXT,
-            files TEXT
-        )`);
+            location TEXT,
+            notes TEXT
+        )`, () => {
+            const columnsToAdd = [
+                'gsiNumber TEXT', 'ownerName TEXT', 'installationDate TEXT',
+                'capacity TEXT', 'minCapacity TEXT', 'discrete TEXT',
+                'adcType TEXT', 'sensorType TEXT', 'platformCount TEXT',
+                'weighingMode TEXT', 'certNumber TEXT', 'lastVer TEXT',
+                'nextVer TEXT', 'phone TEXT', 'email TEXT', 'files TEXT'
+            ];
+            db.all("PRAGMA table_info(equipment)", [], (err, rows) => {
+                if (!err && rows) {
+                    const existing = rows.map(r => r.name);
+                    columnsToAdd.forEach(colDef => {
+                        const colName = colDef.split(' ')[0];
+                        if (!existing.includes(colName)) {
+                            db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, () => {});
+                        }
+                    });
+                }
+            });
+        });
 
         db.run(`CREATE TABLE IF NOT EXISTS maintenance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,7 +85,15 @@ function initDatabase() {
             name TEXT,
             parentId INTEGER,
             type TEXT
-        )`);
+        )`, () => {
+            db.all("PRAGMA table_info(folders)", [], (err, rows) => {
+                if (!err && rows) {
+                    const existing = rows.map(r => r.name);
+                    if (!existing.includes('type')) db.run("ALTER TABLE folders ADD COLUMN type TEXT");
+                    if (!existing.includes('parentId')) db.run("ALTER TABLE folders ADD COLUMN parentId INTEGER");
+                }
+            });
+        });
 
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -98,7 +109,15 @@ function initDatabase() {
             folderId INTEGER,
             type TEXT,
             date TEXT
-        )`);
+        )`, () => {
+            db.all("PRAGMA table_info(files)", [], (err, rows) => {
+                if (!err && rows) {
+                    const existing = rows.map(r => r.name);
+                    if (!existing.includes('folderId')) db.run("ALTER TABLE files ADD COLUMN folderId INTEGER");
+                    if (!existing.includes('type')) db.run("ALTER TABLE files ADD COLUMN type TEXT");
+                }
+            });
+        });
 
         db.run("DELETE FROM users WHERE username = 'admin'", () => {
             db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", (err) => {
@@ -390,7 +409,7 @@ app.delete('/api/notes/:id', requireAuth, (req, res) => {
     });
 });
 
-// --- Дополнительные эндпоинты бэкапа и служебные ---
+// --- Бэкапы ---
 app.get('/api/backup', requireAuth, (req, res) => {
     res.download(DB_PATH);
 });
