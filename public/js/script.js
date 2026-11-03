@@ -643,6 +643,13 @@ function renderFoldersAndFiles(folders, files) {
 
 function openFolder(id) {
     window.currentFolderId = id;
+    
+    // Включаем отображение кнопок загрузки и внутри папок
+    const btnPhoto = document.getElementById('btnUploadPhoto');
+    const btnDoc = document.getElementById('btnUploadDoc');
+    if (window.currentTab === 'doc' && btnDoc) btnDoc.style.display = 'inline-flex';
+    if (window.currentTab === 'image' && btnPhoto) btnPhoto.style.display = 'inline-flex';
+
     loadArchiveContent();
 }
 
