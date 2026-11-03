@@ -158,11 +158,13 @@ function renderEquipment(data) {
     if (!data || data.length === 0) return;
 
     data.forEach(item => {
-        const name = item.name || item.model || '';
-        const serial = item.serialNumber || item.serial || '-';
-        const owner = item.ownerName || item.owner || '-';
-        const location = item.location || '-';
-        const nextVer = item.nextVer || item.nextVerification || '-';
+        console.log("Оборудование из БД:", item);
+
+        const name = item.name || item.model || item.title || 'Без названия';
+        const serial = item.serialNumber || item.serial || item.zav_num || '-';
+        const owner = item.ownerName || item.owner || item.vladilet || '-';
+        const location = item.location || item.object || item.mesto || '-';
+        const nextVer = item.nextVer || item.nextVerification || item.poverka || '-';
         const status = item.status || 'В эксплуатации';
 
         // Верстка для ПК (таблица)
@@ -619,12 +621,19 @@ async function promptCreateFolder() {
     const folderName = prompt('Введите название новой папки:');
     if (!folderName || !folderName.trim()) return;
 
+    let folderType = window.currentTab;
+    if (!folderType || folderType === 'home' || folderType === 'admin') {
+        folderType = 'doc';
+    }
+
     const user = getCurrentUser();
     const payload = { 
         name: folderName.trim(), 
-        type: window.currentTab || 'doc', 
+        type: folderType, 
         parentId: (window.currentFolderId && window.currentFolderId !== 'null' && window.currentFolderId !== 'undefined') ? Number(window.currentFolderId) : null
     };
+
+    console.log("Отправка папки на сервер:", payload);
 
     try {
         const res = await fetch('/api/folders', {
@@ -638,7 +647,7 @@ async function promptCreateFolder() {
         
         loadArchiveContent();
     } catch (err) {
-        alert('Ошибка: ' + err.message);
+        alert('Ошибка создания папки: ' + err.message);
     }
 }
 
