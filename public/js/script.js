@@ -20,9 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const query = e.target.value.toLowerCase().trim();
             if (window.allEquipment) {
                 const filtered = window.allEquipment.filter(item => 
-                    (item.name && item.name.toLowerCase().includes(query)) ||
-                    (item.serialNumber && item.serialNumber.toLowerCase().includes(query)) ||
-                    (item.ownerName && item.ownerName.toLowerCase().includes(query)) ||
+                    ((item.name || item.model) && (item.name || item.model).toLowerCase().includes(query)) ||
+                    ((item.serialnumber || item.serialNumber) && (item.serialnumber || item.serialNumber).toLowerCase().includes(query)) ||
+                    ((item.ownername || item.ownerName) && (item.ownername || item.ownerName).toLowerCase().includes(query)) ||
                     (item.location && item.location.toLowerCase().includes(query))
                 );
                 renderEquipment(filtered);
@@ -158,13 +158,11 @@ function renderEquipment(data) {
     if (!data || data.length === 0) return;
 
     data.forEach(item => {
-        console.log("Оборудование из БД:", item);
-
         const name = item.name || item.model || item.title || 'Без названия';
-        const serial = item.serialNumber || item.serial || item.zav_num || '-';
-        const owner = item.ownerName || item.owner || item.vladilet || '-';
+        const serial = item.serialnumber || item.serialNumber || item.serial || '-';
+        const owner = item.ownername || item.ownerName || item.owner || '-';
         const location = item.location || item.object || item.mesto || '-';
-        const nextVer = item.nextVer || item.nextVerification || item.poverka || '-';
+        const nextVer = item.nextver || item.nextVer || item.nextVerification || '-';
         const status = item.status || 'В эксплуатации';
 
         // Верстка для ПК (таблица)
@@ -222,21 +220,21 @@ async function viewEquipmentPassport(id) {
     window.currentEquipmentId = item.id;
 
     document.getElementById('viewEqName').textContent = item.name || '-';
-    document.getElementById('viewEqSerial').textContent = item.serialNumber || '-';
-    document.getElementById('viewEqGsiNumber').textContent = item.gsiNumber || '-';
-    document.getElementById('viewEqOwnerName').textContent = item.ownerName || '-';
+    document.getElementById('viewEqSerial').textContent = item.serialnumber || item.serialNumber || '-';
+    document.getElementById('viewEqGsiNumber').textContent = item.gsinumber || item.gsiNumber || '-';
+    document.getElementById('viewEqOwnerName').textContent = item.ownername || item.ownerName || '-';
     document.getElementById('viewEqLocation').textContent = item.location || '-';
-    document.getElementById('viewEqInstallationDate').textContent = item.installationDate || '-';
+    document.getElementById('viewEqInstallationDate').textContent = item.installationdate || item.installationDate || '-';
     document.getElementById('viewEqCapacity').textContent = item.capacity || '-';
-    document.getElementById('viewEqMinCapacity').textContent = item.minCapacity || '-';
+    document.getElementById('viewEqMinCapacity').textContent = item.mincapacity || item.minCapacity || '-';
     document.getElementById('viewEqDiscrete').textContent = item.discrete || '-';
-    document.getElementById('viewEqAdcType').textContent = item.adcType || '-';
-    document.getElementById('viewEqSensorType').textContent = item.sensorType || '-';
-    document.getElementById('viewEqPlatformCount').textContent = item.platformCount || '-';
-    document.getElementById('viewEqWeighingMode').textContent = item.weighingMode || '-';
-    document.getElementById('viewEqCertNumber').textContent = item.certNumber || '-';
-    document.getElementById('viewEqLastVer').textContent = item.lastVer || '-';
-    document.getElementById('viewEqNextVer').textContent = item.nextVer || '-';
+    document.getElementById('viewEqAdcType').textContent = item.adctype || item.adcType || '-';
+    document.getElementById('viewEqSensorType').textContent = item.sensortype || item.sensorType || '-';
+    document.getElementById('viewEqPlatformCount').textContent = item.platformcount || item.platformCount || '-';
+    document.getElementById('viewEqWeighingMode').textContent = item.weighingmode || item.weighingMode || '-';
+    document.getElementById('viewEqCertNumber').textContent = item.certnumber || item.certNumber || '-';
+    document.getElementById('viewEqLastVer').textContent = item.lastver || item.lastVer || '-';
+    document.getElementById('viewEqNextVer').textContent = item.nextver || item.nextVer || '-';
     document.getElementById('viewEqPhone').textContent = item.phone || '-';
     document.getElementById('viewEqEmail').textContent = item.email || '-';
     document.getElementById('viewEqNotes').textContent = item.notes || '-';
@@ -268,21 +266,21 @@ function openEquipmentModal(editData = null) {
     const title = document.getElementById('eqModalTitle');
 
     document.getElementById('eqName').value = editData ? editData.name || '' : '';
-    document.getElementById('eqSerial').value = editData ? editData.serialNumber || '' : '';
-    document.getElementById('eqGsiNumber').value = editData ? editData.gsiNumber || '' : '';
-    document.getElementById('eqOwnerName').value = editData ? editData.ownerName || '' : '';
+    document.getElementById('eqSerial').value = editData ? editData.serialnumber || editData.serialNumber || '' : '';
+    document.getElementById('eqGsiNumber').value = editData ? editData.gsinumber || editData.gsiNumber || '' : '';
+    document.getElementById('eqOwnerName').value = editData ? editData.ownername || editData.ownerName || '' : '';
     document.getElementById('eqLocation').value = editData ? editData.location || '' : '';
-    document.getElementById('eqInstallationDate').value = editData ? editData.installationDate || '' : '';
+    document.getElementById('eqInstallationDate').value = editData ? editData.installationdate || editData.installationDate || '' : '';
     document.getElementById('eqCapacity').value = editData ? editData.capacity || '' : '';
-    document.getElementById('eqMinCapacity').value = editData ? editData.minCapacity || '' : '';
+    document.getElementById('eqMinCapacity').value = editData ? editData.mincapacity || editData.minCapacity || '' : '';
     document.getElementById('eqDiscrete').value = editData ? editData.discrete || '' : '';
-    document.getElementById('eqAdcType').value = editData ? editData.adcType || '' : '';
-    document.getElementById('eqSensorType').value = editData ? editData.sensorType || '' : '';
-    document.getElementById('eqPlatformCount').value = editData ? editData.platformCount || '' : '';
-    document.getElementById('eqWeighingMode').value = editData ? editData.weighingMode || '' : '';
-    document.getElementById('eqCertNumber').value = editData ? editData.certNumber || '' : '';
-    document.getElementById('eqLastVer').value = editData ? editData.lastVer || '' : '';
-    document.getElementById('eqNextVer').value = editData ? editData.nextVer || '' : '';
+    document.getElementById('eqAdcType').value = editData ? editData.adctype || editData.adcType || '' : '';
+    document.getElementById('eqSensorType').value = editData ? editData.sensortype || editData.sensorType || '' : '';
+    document.getElementById('eqPlatformCount').value = editData ? editData.platformcount || editData.platformCount || '' : '';
+    document.getElementById('eqWeighingMode').value = editData ? editData.weighingmode || editData.weighingMode || '' : '';
+    document.getElementById('eqCertNumber').value = editData ? editData.certnumber || editData.certNumber || '' : '';
+    document.getElementById('eqLastVer').value = editData ? editData.lastver || editData.lastVer || '' : '';
+    document.getElementById('eqNextVer').value = editData ? editData.nextver || editData.nextVer || '' : '';
     document.getElementById('eqStatus').value = editData ? editData.status || 'В эксплуатации' : 'В эксплуатации';
     document.getElementById('eqPhone').value = editData ? editData.phone || '' : '';
     document.getElementById('eqEmail').value = editData ? editData.email || '' : '';
@@ -632,8 +630,6 @@ async function promptCreateFolder() {
         type: folderType, 
         parentId: (window.currentFolderId && window.currentFolderId !== 'null' && window.currentFolderId !== 'undefined') ? Number(window.currentFolderId) : null
     };
-
-    console.log("Отправка папки на сервер:", payload);
 
     try {
         const res = await fetch('/api/folders', {
