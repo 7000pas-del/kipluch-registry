@@ -664,11 +664,11 @@ function renderFoldersAndFiles(folders, files) {
         if (banner) banner.style.display = 'none';
     }
 
-    // Добавляем информационную подсказку вверху списка документов для удобства
+    // Информационная подсказка вверху списка документов
     if (window.currentTab === 'doc') {
         const hintDiv = document.createElement('div');
         hintDiv.style.cssText = 'background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #38bdf8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;';
-        hintDiv.innerHTML = 'ℹ️ <strong>Подсказка:</strong> PDF-файлы можно открывать для просмотра на сайте. Документы Word и Excel доступны для скачивания.';
+        hintDiv.innerHTML = 'ℹ️ <strong>Подсказка:</strong> PDF-файлы и фото можно открывать для просмотра на сайте. Документы Word и Excel доступны для скачивания.';
         filesContainer.appendChild(hintDiv);
     }
 
@@ -690,12 +690,13 @@ function renderFoldersAndFiles(folders, files) {
             div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
             
             const ext = file.name.split('.').pop().toLowerCase();
-            const isPdf = ext === 'pdf';
-            const actionText = isPdf ? '👁️ Просмотр' : '📥 Скачать';
-            const actionBg = isPdf ? '#334155' : '#047857'; // Зеленоватый оттенок для скачивания или темный для просмотровых
+            // Разрешаем онлайн-просмотр для PDF и фотографий
+            const canViewOnline = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
+            const actionText = canViewOnline ? '👁️ Просмотр' : '📥 Скачать';
+            const actionBg = canViewOnline ? '#334155' : '#047857';
 
-            // Для PDF открываем во вкладке, для остальных (Word, Excel и др.) делаем прямую ссылку с атрибутом download
-            const actionHtml = isPdf 
+            // Для просмотровых файлов открываем во вкладке, для остальных — скачивание
+            const actionHtml = canViewOnline 
                 ? `<button class="btn" type="button" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px;" onclick="window.open('/uploads/${file.filename}', '_blank')">${actionText}</button>`
                 : `<a href="/uploads/${file.filename}" download="${file.name}" class="btn" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px; text-decoration: none; color: #fff; display: inline-flex; align-items: center;">${actionText}</a>`;
 
