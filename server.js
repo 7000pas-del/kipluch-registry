@@ -39,7 +39,8 @@ if (process.env.DATABASE_URL) {
     isPg = true;
     db = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
+        ssl: { rejectUnauthorized: false },
+        family: 4 // Принудительно используем IPv4 для обхода сетевых ограничений Render
     });
 } else {
     console.log("⚠️ Переменная DATABASE_URL не найдена! Используем локальный SQLite...");
