@@ -417,13 +417,18 @@ async function loadMaintenanceRecords(equipmentId) {
         }
 
         records.forEach(rec => {
+            const workType = rec.workType || rec.worktype || 'Работа';
+            const maintDate = rec.maintDate || rec.maintdate || rec.date || '';
+            const description = rec.description || rec.desc || '';
+            const performedBy = rec.performedBy || rec.performedby || '-';
+
             const div = document.createElement('div');
             div.style.cssText = 'background: #0f172a; border: 1px solid var(--border); padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: flex-start; font-size: 12px;';
             div.innerHTML = `
                 <div>
-                    <strong style="color: #fff;">${rec.workType || 'Работа'}</strong> <span style="color: var(--text-muted);">(${rec.maintDate || ''})</span>
-                    <div style="color: var(--text-main); margin-top: 2px;">${rec.description || rec.desc || ''}</div>
-                    <div style="color: #38bdf8; font-size: 11px; margin-top: 2px;">Исполнитель: ${rec.performedBy || '-'}</div>
+                    <strong style="color: #fff;">${workType}</strong> <span style="color: var(--text-muted);">(${maintDate})</span>
+                    <div style="color: var(--text-main); margin-top: 2px;">${description}</div>
+                    <div style="color: #38bdf8; font-size: 11px; margin-top: 2px;">Исполнитель: ${performedBy}</div>
                 </div>
                 <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteMaintenance(${rec.id})">🗑️</button>
             `;
@@ -690,12 +695,10 @@ function renderFoldersAndFiles(folders, files) {
             div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
             
             const ext = file.name.split('.').pop().toLowerCase();
-            // Разрешаем онлайн-просмотр для PDF и фотографий
             const canViewOnline = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
             const actionText = canViewOnline ? '👁️ Просмотр' : '📥 Скачать';
             const actionBg = canViewOnline ? '#334155' : '#047857';
 
-            // Для просмотровых файлов открываем во вкладке, для остальных — скачивание
             const actionHtml = canViewOnline 
                 ? `<button class="btn" type="button" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px;" onclick="window.open('/uploads/${file.filename}', '_blank')">${actionText}</button>`
                 : `<a href="/uploads/${file.filename}" download="${file.name}" class="btn" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px; text-decoration: none; color: #fff; display: inline-flex; align-items: center;">${actionText}</a>`;
