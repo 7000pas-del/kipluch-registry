@@ -29,13 +29,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ПРИНУДИТЕЛЬНЫЙ СБРОС СТАРОЙ БАЗЫ БЕЗ ID (разово, чтобы очистить битую структуру)
-// Если хотите сохранить старые данные, закомментируйте блок ниже. Но судя по багам, база повреждена.
-const dbFile = DB_PATH;
-if (process.env.RESET_DB === 'true' && fs.existsSync(dbFile)) {
+// РАЗОВОЕ СТИРАНИЕ СТАРОЙ БИТОЙ БАЗЫ ПРИ КАЖДОМ СТАРТЕ ПОКА НЕ ОБНОВИМ
+// (Потом мы уберем эту строчку, а пока она гарантированно сотрет старый файл со старыми ID)
+if (fs.existsSync(DB_PATH)) {
     try {
-        fs.unlinkSync(dbFile);
-        console.log('🗑️ Старая база данных успешно удалена для чистой переустановки!');
+        fs.unlinkSync(DB_PATH);
+        console.log('🗑️ Старый файл базы данных успешно удален!');
     } catch (e) {
         console.error('Не удалось удалить файл БД:', e);
     }
@@ -55,7 +54,6 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Жесткое создание чистой таблицы оборудования со ВСЕМИ полями и ID
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -66,31 +64,7 @@ function initDatabase() {
             location TEXT,
             notes TEXT,
             files TEXT
-        )`, (err) => {
-            if (!err) {
-                // Дополнительная страховка: если таблица была создана ранее без каких-то колонок
-                const requiredColumns = [
-                    'serialNumber TEXT',
-                    'verificationDate TEXT',
-                    'nextVerificationDate TEXT',
-                    'status TEXT',
-                    'location TEXT',
-                    'notes TEXT',
-                    'files TEXT'
-                ];
-                db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
-                    if (!pragmaErr && rows) {
-                        const existingNames = rows.map(r => r.name);
-                        requiredColumns.forEach(colDef => {
-                            const name = colDef.split(' ')[0];
-                            if (!existingNames.includes(name)) {
-                                db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, () => {});
-                            }
-                        });
-                    }
-                });
-            }
-        });
+        )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
