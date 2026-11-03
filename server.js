@@ -43,39 +43,31 @@ function initDatabase() {
             role TEXT
         )`);
 
-        // Базовая таблица оборудования
         db.run(`CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             serialNumber TEXT,
-            status TEXT,
+            gsiNumber TEXT,
+            ownerName TEXT,
             location TEXT,
-            notes TEXT
-        )`, () => {
-            // АВТО-МИГРАЦИЯ: добавляем все поля паспорта, если их нет в старой базе
-            const requiredColumns = [
-                'gsiNumber TEXT', 'ownerName TEXT', 'installationDate TEXT',
-                'capacity TEXT', 'minCapacity TEXT', 'discrete TEXT',
-                'adcType TEXT', 'sensorType TEXT', 'platformCount TEXT',
-                'weighingMode TEXT', 'certNumber TEXT', 'lastVer TEXT',
-                'nextVer TEXT', 'phone TEXT', 'email TEXT', 'files TEXT'
-            ];
-            db.all("PRAGMA table_info(equipment)", [], (pragmaErr, rows) => {
-                if (!pragmaErr && rows) {
-                    const existingColumns = rows.map(r => r.name);
-                    requiredColumns.forEach(colDef => {
-                        const colName = colDef.split(' ')[0];
-                        if (!existingColumns.includes(colName)) {
-                            db.run(`ALTER TABLE equipment ADD COLUMN ${colDef}`, (alterErr) => {
-                                if (!alterErr) console.log(`➕ Добавлена колонка оборудования: ${colName}`);
-                            });
-                        }
-                    });
-                }
-            });
-        });
+            installationDate TEXT,
+            capacity TEXT,
+            minCapacity TEXT,
+            discrete TEXT,
+            adcType TEXT,
+            sensorType TEXT,
+            platformCount TEXT,
+            weighingMode TEXT,
+            certNumber TEXT,
+            lastVer TEXT,
+            nextVer TEXT,
+            status TEXT,
+            phone TEXT,
+            email TEXT,
+            notes TEXT,
+            files TEXT
+        )`);
 
-        // Журнал обслуживания
         db.run(`CREATE TABLE IF NOT EXISTS maintenance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             equipmentId INTEGER,
@@ -85,27 +77,13 @@ function initDatabase() {
             performedBy TEXT
         )`);
 
-        // Папки с автоматической проверкой колонки type
         db.run(`CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             parentId INTEGER,
             type TEXT
-        )`, () => {
-            db.all("PRAGMA table_info(folders)", [], (pragmaErr, rows) => {
-                if (!pragmaErr && rows) {
-                    const existingColumns = rows.map(r => r.name);
-                    if (!existingColumns.includes('type')) {
-                        db.run(`ALTER TABLE folders ADD COLUMN type TEXT`, () => {});
-                    }
-                    if (!existingColumns.includes('parentId')) {
-                        db.run(`ALTER TABLE folders ADD COLUMN parentId INTEGER`, () => {});
-                    }
-                }
-            });
-        });
+        )`);
 
-        // Заметки
         db.run(`CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
@@ -113,7 +91,6 @@ function initDatabase() {
             date TEXT
         )`);
 
-        // Файлы
         db.run(`CREATE TABLE IF NOT EXISTS files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -121,19 +98,7 @@ function initDatabase() {
             folderId INTEGER,
             type TEXT,
             date TEXT
-        )`, () => {
-            db.all("PRAGMA table_info(files)", [], (pragmaErr, rows) => {
-                if (!pragmaErr && rows) {
-                    const existingColumns = rows.map(r => r.name);
-                    if (!existingColumns.includes('folderId')) {
-                        db.run(`ALTER TABLE files ADD COLUMN folderId INTEGER`, () => {});
-                    }
-                    if (!existingColumns.includes('type')) {
-                        db.run(`ALTER TABLE files ADD COLUMN type TEXT`, () => {});
-                    }
-                }
-            });
-        });
+        )`);
 
         db.run("DELETE FROM users WHERE username = 'admin'", () => {
             db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", (err) => {
