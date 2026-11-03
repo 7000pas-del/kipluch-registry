@@ -210,7 +210,7 @@ function openEquipmentModal(editData = null) {
     if (modal) {
         if (editData && editData.id) {
             if (title) title.textContent = '✏️ Редактировать оборудование';
-            modal.dataset.editId = editData.id;
+            modal.dataset.editId = String(editData.id);
         } else {
             if (title) title.textContent = '➕ Добавить оборудование';
             delete modal.dataset.editId;
@@ -256,7 +256,7 @@ async function saveEquipment(event) {
     const modal = document.getElementById('equipmentModal');
     const editId = modal ? modal.dataset.editId : null;
     
-    const isEdit = editId !== null && editId !== undefined && editId !== '';
+    const isEdit = editId !== null && editId !== undefined && editId !== '' && editId !== 'undefined' && editId !== 'null';
     const url = isEdit ? `/api/equipment/${editId}` : '/api/equipment';
     const method = isEdit ? 'PUT' : 'POST';
 
