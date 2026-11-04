@@ -142,8 +142,9 @@ async function loadUsersList() {
         const res = await fetch('/api/users', {
             headers: { 'x-auth-user': JSON.stringify(user) }
         });
-        if (!res.ok) return;
+        if (!res.ok) throw new Error('Не удалось загрузить список пользователей');
         const users = await res.json();
+        console.log("Загруженные пользователи с сервера:", users);
         renderUsersTable(users);
     } catch (err) {
         console.error('Ошибка загрузки пользователей:', err);
@@ -199,12 +200,14 @@ function openUserModal(editData = null) {
     const roleInput = document.getElementById('userRoleInput');
     const permCheckboxes = document.querySelectorAll('.perm-checkbox');
 
-    // Обязательно очищаем ID при каждом открытии
-    if (idInput) idInput.value = '';
+    // Жестко очищаем ID при каждом открытии модального окна
+    if (idInput) {
+        idInput.value = "";
+    }
 
     if (editData && editData.id) {
         if (title) title.textContent = '✏️ Редактировать пользователя';
-        if (idInput) idInput.value = editData.id;
+        if (idInput) idInput.value = String(editData.id); // Записываем ID только при редактировании
         if (loginInput) loginInput.value = editData.username || '';
         if (passwordInput) {
             passwordInput.value = '';
@@ -223,7 +226,7 @@ function openUserModal(editData = null) {
         });
     } else {
         if (title) title.textContent = '➕ Новый пользователь';
-        if (idInput) idInput.value = '';
+        if (idInput) idInput.value = ""; // Гарантированно пустая строка для создания (POST)
         if (loginInput) loginInput.value = '';
         if (passwordInput) {
             passwordInput.value = '';
