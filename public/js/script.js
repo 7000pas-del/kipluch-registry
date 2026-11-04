@@ -199,6 +199,9 @@ function openUserModal(editData = null) {
     const roleInput = document.getElementById('userRoleInput');
     const permCheckboxes = document.querySelectorAll('.perm-checkbox');
 
+    // Обязательно очищаем ID при каждом открытии
+    if (idInput) idInput.value = '';
+
     if (editData && editData.id) {
         if (title) title.textContent = '✏️ Редактировать пользователя';
         if (idInput) idInput.value = editData.id;
