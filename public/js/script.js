@@ -144,7 +144,6 @@ async function loadUsersList() {
         });
         if (!res.ok) throw new Error('Не удалось загрузить список пользователей');
         const users = await res.json();
-        console.log("Загруженные пользователи с сервера:", users);
         renderUsersTable(users);
     } catch (err) {
         console.error('Ошибка загрузки пользователей:', err);
@@ -200,14 +199,13 @@ function openUserModal(editData = null) {
     const roleInput = document.getElementById('userRoleInput');
     const permCheckboxes = document.querySelectorAll('.perm-checkbox');
 
-    // Жестко очищаем ID при каждом открытии модального окна
     if (idInput) {
         idInput.value = "";
     }
 
     if (editData && editData.id) {
         if (title) title.textContent = '✏️ Редактировать пользователя';
-        if (idInput) idInput.value = String(editData.id); // Записываем ID только при редактировании
+        if (idInput) idInput.value = String(editData.id);
         if (loginInput) loginInput.value = editData.username || '';
         if (passwordInput) {
             passwordInput.value = '';
@@ -226,7 +224,7 @@ function openUserModal(editData = null) {
         });
     } else {
         if (title) title.textContent = '➕ Новый пользователь';
-        if (idInput) idInput.value = ""; // Гарантированно пустая строка для создания (POST)
+        if (idInput) idInput.value = "";
         if (loginInput) loginInput.value = '';
         if (passwordInput) {
             passwordInput.value = '';
@@ -279,6 +277,13 @@ async function saveUser(event) {
     document.querySelectorAll('.perm-checkbox:checked').forEach(cb => {
         permissions.push(cb.value);
     });
+
+    // Автостраховка: если права не собрались, но роль обычный пользователь — ставим полный набор по умолчанию
+    if (role === 'user' && permissions.length === 0) {
+        document.querySelectorAll('.perm-checkbox').forEach(cb => {
+            permissions.push(cb.value);
+        });
+    }
 
     if (!username) {
         alert('Введите логин пользователя!');
