@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadEquipment();
         loadArchiveContent();
         updateCounters();
-        loadUsersList();
     }
 
     const authForm = document.getElementById('authForm');
@@ -61,7 +60,6 @@ async function performLogin() {
         loadEquipment();
         loadArchiveContent();
         updateCounters();
-        loadUsersList();
     } catch (err) {
         if (errorDiv) {
             errorDiv.style.display = 'block';
@@ -82,19 +80,12 @@ function checkAuthUI() {
     const user = getCurrentUser();
     const authOverlay = document.getElementById('authOverlay');
     const currentUserBadge = document.getElementById('currentUserBadge');
-    const navAdmin = document.getElementById('navAdmin'); // Вкладка админки в меню
 
     if (user) {
         if (authOverlay) authOverlay.style.display = 'none';
         if (currentUserBadge) currentUserBadge.textContent = `👤 ${user.username} (${user.role})`;
-        
-        // Админка видна ТОЛЬКО администратору
-        if (navAdmin) {
-            navAdmin.style.display = (user.role === 'admin') ? 'block' : 'none';
-        }
     } else {
         if (authOverlay) authOverlay.style.display = 'flex';
-        if (navAdmin) navAdmin.style.display = 'none';
     }
 }
 
@@ -140,200 +131,6 @@ async function updateCounters() {
     }
 }
 
-// --- Управление пользователями (Админ-панель) ---
-async function loadUsersList() {
-    const user = getCurrentUser();
-    if (!user || user.role !== 'admin') return;
-
-    try {
-        const res = await fetch('/api/users', {
-            headers: { 'x-auth-user': JSON.stringify(user) }
-        });
-        if (!res.ok) throw new Error('Не удалось загрузить список пользователей');
-        const users = await res.json();
-        renderUsersTable(users);
-    } catch (err) {
-        console.error('Ошибка загрузки пользователей:', err);
-    }
-}
-
-function renderUsersTable(users) {
-    const tbody = document.getElementById('usersTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Нет пользователей</td></tr>';
-        return;
-    }
-
-    users.forEach(u => {
-        const tr = document.createElement('tr');
-        const roleBadge = u.role === 'admin' ? '<span style="color: #38bdf8; font-weight: 700;">Администратор</span>' : 'Пользователь';
-        
-        let permissionsText = 'Полный доступ';
-        if (u.role !== 'admin') {
-            try {
-                const perms = JSON.parse(u.permissions || '[]');
-                permissionsText = perms.length > 0 ? perms.join(', ') : 'Нет прав';
-            } catch (e) {
-                permissionsText = '-';
-            }
-        }
-
-        const userJson = encodeURIComponent(JSON.stringify(u));
-
-        tr.innerHTML = `
-            <td><strong>${u.username}</strong></td>
-            <td>${roleBadge}</td>
-            <td style="font-size: 11px; color: var(--text-muted);">${permissionsText}</td>
-            <td style="text-align: right; white-space: nowrap;">
-                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editUserFromButton('${userJson}')">✏️</button>
-                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteUser(${u.id})">🗑️</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function openUserModal(editData = null) {
-    const modal = document.getElementById('userModal');
-    const title = document.getElementById('userModalTitle');
-    const idInput = document.getElementById('userIdInput');
-    const loginInput = document.getElementById('userLoginInput');
-    const passwordInput = document.getElementById('userPasswordInput');
-    const passwordLabel = document.getElementById('userPasswordLabel');
-    const roleInput = document.getElementById('userRoleInput');
-    const permCheckboxes = document.querySelectorAll('.perm-checkbox');
-
-    if (idInput) {
-        idInput.value = "";
-    }
-
-    if (editData && editData.id) {
-        if (title) title.textContent = '✏️ Редактировать пользователя';
-        if (idInput) idInput.value = String(editData.id);
-        if (loginInput) loginInput.value = editData.username || '';
-        if (passwordInput) {
-            passwordInput.value = '';
-            passwordInput.placeholder = 'Оставьте пустым, чтобы не менять';
-        }
-        if (passwordLabel) passwordLabel.textContent = 'Новый пароль (опционально):';
-        if (roleInput) roleInput.value = editData.role || 'user';
-
-        let userPerms = [];
-        try {
-            userPerms = JSON.parse(editData.permissions || '[]');
-        } catch (e) {}
-
-        permCheckboxes.forEach(cb => {
-            cb.checked = userPerms.includes(cb.value);
-        });
-    } else {
-        if (title) title.textContent = '➕ Новый пользователь';
-        if (idInput) idInput.value = "";
-        if (loginInput) loginInput.value = '';
-        if (passwordInput) {
-            passwordInput.value = '';
-            passwordInput.placeholder = '••••••••';
-        }
-        if (passwordLabel) passwordLabel.textContent = 'Пароль:*';
-        if (roleInput) roleInput.value = 'user';
-        permCheckboxes.forEach(cb => cb.checked = true);
-    }
-
-    onRoleChangeSelect();
-    if (modal) modal.style.display = 'flex';
-}
-
-function closeUserModal() {
-    const modal = document.getElementById('userModal');
-    const idInput = document.getElementById('userIdInput');
-    if (idInput) idInput.value = '';
-    if (modal) modal.style.display = 'none';
-}
-
-function onRoleChangeSelect() {
-    const role = document.getElementById('userRoleInput')?.value;
-    const permGroup = document.getElementById('permissionsGroup');
-    if (permGroup) {
-        permGroup.style.display = role === 'admin' ? 'none' : 'block';
-    }
-}
-
-function editUserFromButton(encodedUser) {
-    try {
-        const user = JSON.parse(decodeURIComponent(encodedUser));
-        openUserModal(user);
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-async function saveUser(event) {
-    if (event) event.preventDefault();
-    const currentUser = getCurrentUser();
-
-    const idInput = document.getElementById('userIdInput');
-    const id = idInput ? idInput.value.trim() : '';
-    const username = document.getElementById('userLoginInput')?.value.trim();
-    const password = document.getElementById('userPasswordInput')?.value.trim();
-    const role = document.getElementById('userRoleInput')?.value || 'user';
-
-    // Честный сбор актуального состояния всех чекбоксов прав
-    const permissions = [];
-    document.querySelectorAll('.perm-checkbox').forEach(cb => {
-        if (cb.checked) {
-            permissions.push(cb.value);
-        }
-    });
-
-    if (!username) {
-        alert('Введите логин пользователя!');
-        return;
-    }
-
-    const isEdit = !!id && id !== '';
-    const url = isEdit ? `/api/users/${id}` : '/api/users';
-    const method = isEdit ? 'PUT' : 'POST';
-
-    const payload = { username, password, role, permissions };
-
-    try {
-        const res = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(currentUser) },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Ошибка сохранения пользователя');
-
-        closeUserModal();
-        loadUsersList();
-    } catch (err) {
-        alert('Ошибка: ' + err.message);
-    }
-}
-
-async function deleteUser(id) {
-    if (!confirm('Удалить этого пользователя?')) return;
-    const currentUser = getCurrentUser();
-
-    try {
-        const res = await fetch(`/api/users/${id}`, {
-            method: 'DELETE',
-            headers: { 'x-auth-user': JSON.stringify(currentUser) }
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Ошибка удаления');
-
-        loadUsersList();
-    } catch (err) {
-        alert('Не удалось удалить: ' + err.message);
-    }
-}
-
 // --- Оборудование ---
 async function loadEquipment() {
     const user = getCurrentUser();
@@ -360,9 +157,6 @@ function renderEquipment(data) {
 
     if (!data || data.length === 0) return;
 
-    const currentUser = getCurrentUser();
-    const isAdmin = currentUser && currentUser.role === 'admin';
-
     data.forEach(item => {
         const name = item.name || item.model || item.title || 'Без названия';
         const serial = item.serialnumber || item.serialNumber || item.serial || '-';
@@ -373,6 +167,7 @@ function renderEquipment(data) {
 
         const statusClass = status.toLowerCase().includes('выведен') || status.toLowerCase().includes('ремонт') ? 'badge-status badge-warning' : 'badge-status badge-ok';
 
+        // Верстка для ПК (таблица)
         if (tableBody) {
             const row = document.createElement('tr');
             row.style.cursor = 'pointer';
@@ -382,13 +177,6 @@ function renderEquipment(data) {
 
             const itemJson = encodeURIComponent(JSON.stringify(item));
 
-            const actionButtonsHtml = isAdmin ? `
-                <td style="text-align: right; white-space: nowrap;">
-                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
-                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
-                </td>
-            ` : `<td style="text-align: right; color: var(--text-muted); font-size: 11px;">Только просмотр</td>`;
-
             row.innerHTML = `
                 <td><strong>${name}</strong></td>
                 <td>${serial}</td>
@@ -396,31 +184,30 @@ function renderEquipment(data) {
                 <td>${location}</td>
                 <td>${nextVer}</td>
                 <td><span class="${statusClass}" style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">${status}</span></td>
-                ${actionButtonsHtml}
+                <td style="text-align: right; white-space: nowrap;">
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
+                </td>
             `;
             tableBody.appendChild(row);
         }
 
+        // Верстка для мобильных карточек
         if (mobileContainer) {
             const card = document.createElement('div');
             card.className = 'mobile-eq-card';
             card.onclick = (e) => {
                 if (!e.target.closest('button')) viewEquipmentPassport(item.id);
             };
-
-            const mobileButtonsHtml = isAdmin ? `
-                <div>
-                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155;" onclick="editEquipmentFromButton(event, '${encodeURIComponent(JSON.stringify(item))}')">✏️</button>
-                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
-                </div>
-            ` : '';
-
             card.innerHTML = `
                 <div style="font-weight: 700; color: #fff; font-size: 14px;">${name}</div>
                 <div style="font-size: 12px; color: var(--text-muted);">Зав. №: ${serial} | Объект: ${location}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
                     <span style="padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">${status}</span>
-                    ${mobileButtonsHtml}
+                    <div>
+                        <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155;" onclick="editEquipmentFromButton(event, '${encodeURIComponent(JSON.stringify(item))}')">✏️</button>
+                        <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
+                    </div>
                 </div>
             `;
             mobileContainer.appendChild(card);
@@ -459,18 +246,12 @@ async function viewEquipmentPassport(id) {
 
     await loadMaintenanceRecords(item.id);
 
-    const currentUser = getCurrentUser();
     const btnEdit = document.getElementById('btnEditFromView');
     if (btnEdit) {
-        if (currentUser && currentUser.role === 'admin') {
-            btnEdit.style.display = 'inline-flex';
-            btnEdit.onclick = () => {
-                closeViewEquipmentModal();
-                openEquipmentModal(item);
-            };
-        } else {
-            btnEdit.style.display = 'none';
-        }
+        btnEdit.onclick = () => {
+            closeViewEquipmentModal();
+            openEquipmentModal(item);
+        };
     }
 
     const modal = document.getElementById('viewEquipmentModal');
@@ -635,16 +416,11 @@ async function loadMaintenanceRecords(equipmentId) {
             return;
         }
 
-        const currentUser = getCurrentUser();
-        const isAdmin = currentUser && currentUser.role === 'admin';
-
         records.forEach(rec => {
             const workType = rec.workType || rec.worktype || 'Работа';
             const maintDate = rec.maintDate || rec.maintdate || rec.date || '';
             const description = rec.description || rec.desc || '';
             const performedBy = rec.performedBy || rec.performedby || '-';
-
-            const deleteBtnHtml = isAdmin ? `<button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteMaintenance(${rec.id})">🗑️</button>` : '';
 
             const div = document.createElement('div');
             div.style.cssText = 'background: #0f172a; border: 1px solid var(--border); padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: flex-start; font-size: 12px;';
@@ -654,7 +430,7 @@ async function loadMaintenanceRecords(equipmentId) {
                     <div style="color: var(--text-main); margin-top: 2px;">${description}</div>
                     <div style="color: #38bdf8; font-size: 11px; margin-top: 2px;">Исполнитель: ${performedBy}</div>
                 </div>
-                ${deleteBtnHtml}
+                <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteMaintenance(${rec.id})">🗑️</button>
             `;
             container.appendChild(div);
         });
@@ -754,17 +530,8 @@ function selectTab(tabName) {
     if (btnPhoto) btnPhoto.style.display = 'none';
     if (btnDoc) btnDoc.style.display = 'none';
 
-    const currentUser = getCurrentUser();
-    const isAdmin = currentUser && currentUser.role === 'admin';
-
     if (tabName === 'admin') {
-        if (isAdmin) {
-            if (adminSection) adminSection.style.display = 'flex';
-            loadUsersList();
-        } else {
-            selectTab('doc'); // Защита от прямого доступа
-            return;
-        }
+        if (adminSection) adminSection.style.display = 'flex';
     } else if (tabName === 'doc' || tabName === 'image' || tabName === 'note') {
         if (contentSection) contentSection.style.display = 'flex';
         
@@ -772,11 +539,11 @@ function selectTab(tabName) {
         if (titleEl) {
             if (tabName === 'doc') {
                 titleEl.textContent = '📄 Документы';
-                if (btnDoc) btnDoc.style.display = isAdmin ? 'inline-flex' : 'none';
+                if (btnDoc) btnDoc.style.display = 'inline-flex';
             }
             if (tabName === 'image') {
                 titleEl.textContent = '🖼️ Фотографии';
-                if (btnPhoto) btnPhoto.style.display = isAdmin ? 'inline-flex' : 'none';
+                if (btnPhoto) btnPhoto.style.display = 'inline-flex';
             }
             if (tabName === 'note') {
                 titleEl.textContent = '📝 Заметки';
@@ -902,6 +669,7 @@ function renderFoldersAndFiles(folders, files) {
         if (banner) banner.style.display = 'none';
     }
 
+    // Информационная подсказка вверху списка документов
     if (window.currentTab === 'doc') {
         const hintDiv = document.createElement('div');
         hintDiv.style.cssText = 'background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #38bdf8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;';
@@ -909,18 +677,13 @@ function renderFoldersAndFiles(folders, files) {
         filesContainer.appendChild(hintDiv);
     }
 
-    const currentUser = getCurrentUser();
-    const isAdmin = currentUser && currentUser.role === 'admin';
-
     if (folders && folders.length > 0) {
         folders.forEach(folder => {
-            const deleteFolderBtn = isAdmin ? `<button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFolder(${folder.id})">🗑️</button>` : '';
-
             const div = document.createElement('div');
             div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
             div.innerHTML = `
                 <span style="color: #fff; cursor: pointer; font-weight: 600;" onclick="openFolder(${folder.id})">📁 ${folder.name}</span>
-                ${deleteFolderBtn}
+                <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFolder(${folder.id})">🗑️</button>
             `;
             container.appendChild(div);
         });
@@ -940,15 +703,13 @@ function renderFoldersAndFiles(folders, files) {
                 ? `<button class="btn" type="button" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px;" onclick="window.open('/uploads/${file.filename}', '_blank')">${actionText}</button>`
                 : `<a href="/uploads/${file.filename}" download="${file.name}" class="btn" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px; text-decoration: none; color: #fff; display: inline-flex; align-items: center;">${actionText}</a>`;
 
-            const deleteFileBtn = isAdmin ? `<button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFile(${file.id})">🗑️</button>` : '';
-
             div.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1;">
                     <span style="color: #38bdf8; font-weight: 500;">📄 ${file.name}</span>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     ${actionHtml}
-                    ${deleteFileBtn}
+                    <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFile(${file.id})">🗑️</button>
                 </div>
             `;
             filesContainer.appendChild(div);
@@ -1036,12 +797,7 @@ function renderNotes(notes) {
     if (!container) return;
     container.innerHTML = '';
 
-    const currentUser = getCurrentUser();
-    const isAdmin = currentUser && currentUser.role === 'admin';
-
     notes.forEach(note => {
-        const deleteNoteBtn = isAdmin ? `<button class="btn" type="button" style="background: #ef4444; padding: 2px 6px; font-size: 10px;" onclick="deleteNote(event, ${note.id})">🗑️</button>` : '';
-
         const div = document.createElement('div');
         div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s;';
         div.onmouseover = () => div.style.borderColor = 'var(--accent)';
@@ -1056,7 +812,7 @@ function renderNotes(notes) {
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
-                ${deleteNoteBtn}
+                <button class="btn" type="button" style="background: #ef4444; padding: 2px 6px; font-size: 10px;" onclick="deleteNote(event, ${note.id})">🗑️</button>
             </div>
             <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap; max-height: 80px; overflow: hidden; text-overflow: ellipsis;">${note.content || ''}</div>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">📅 ${note.date || ''}</div>

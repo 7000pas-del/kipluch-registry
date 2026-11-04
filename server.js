@@ -82,8 +82,7 @@ async function initDatabase() {
                     id SERIAL PRIMARY KEY,
                     username TEXT UNIQUE,
                     password TEXT,
-                    role TEXT,
-                    permissions TEXT
+                    role TEXT
                 );
                 CREATE TABLE IF NOT EXISTS equipment (
                     id SERIAL PRIMARY KEY,
@@ -137,17 +136,15 @@ async function initDatabase() {
                     date TEXT
                 );
             `);
-            const adminCheck = await db.query("SELECT * FROM users WHERE username = 'admin'");
-            if (adminCheck.rows.length === 0) {
-                await db.query("INSERT INTO users (username, password, role, permissions) VALUES ('admin', 'admin123', 'admin', '[]')");
-            }
+            await db.query("DELETE FROM users WHERE username = 'admin'");
+            await db.query("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')");
             console.log('✅ Таблицы и пользователь admin успешно инициализированы в Supabase PostgreSQL');
         } catch (err) {
             console.error('❌ Ошибка инициализации PostgreSQL:', err.message);
         }
     } else {
         db.serialize(() => {
-            db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, role TEXT, permissions TEXT)`);
+            db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, role TEXT)`);
             db.run(`CREATE TABLE IF NOT EXISTS equipment (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT, serialNumber TEXT, gsiNumber TEXT, ownerName TEXT,
@@ -161,10 +158,8 @@ async function initDatabase() {
             db.run(`CREATE TABLE IF NOT EXISTS notes (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, date TEXT)`);
             db.run(`CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, filename TEXT, folderId INTEGER, type TEXT, date TEXT)`);
 
-            db.get("SELECT * FROM users WHERE username = 'admin'", (err, row) => {
-                if (!row) {
-                    db.run("INSERT INTO users (username, password, role, permissions) VALUES ('admin', 'admin123', 'admin', '[]')");
-                }
+            db.run("DELETE FROM users WHERE username = 'admin'", () => {
+                db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')", () => {});
             });
         });
     }
@@ -194,71 +189,6 @@ const requireAuth = (req, res, next) => {
     } catch (e) {}
     res.status(401).json({ error: 'Недействительная сессия' });
 };
-
-// --- Управление пользователями ---
-app.get('/api/users', requireAuth, async (req, res) => {
-    try {
-        const rows = await runQuery("SELECT id, username, role, permissions FROM users", [], 'all');
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.post('/api/users', requireAuth, async (req, res) => {
-    const { username, password, role, permissions } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Логин и пароль обязательны' });
-    }
-    try {
-        const permsStr = JSON.stringify(permissions || []);
-        const query = isPg
-            ? "INSERT INTO users (username, password, role, permissions) VALUES (?, ?, ?, ?) RETURNING id"
-            : "INSERT INTO users (username, password, role, permissions) VALUES (?, ?, ?, ?)";
-        const result = await runQuery(query, [username, password, role || 'user', permsStr], isPg ? 'get' : 'insert');
-        res.json({ id: isPg ? result.id : result.lastID, success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Возможно, такой логин уже существует' });
-    }
-});
-
-app.put('/api/users/:id', requireAuth, async (req, res) => {
-    const userId = req.params.id;
-    const { username, password, role, permissions } = req.body;
-    try {
-        const permsStr = JSON.stringify(permissions || []);
-        if (password && password.trim() !== '') {
-            await runQuery(
-                "UPDATE users SET username = ?, password = ?, role = ?, permissions = ? WHERE id = ?",
-                [username, password, role || 'user', permsStr, userId],
-                'run'
-            );
-        } else {
-            await runQuery(
-                "UPDATE users SET username = ?, role = ?, permissions = ? WHERE id = ?",
-                [username, role || 'user', permsStr, userId],
-                'run'
-            );
-        }
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.delete('/api/users/:id', requireAuth, async (req, res) => {
-    const userId = req.params.id;
-    try {
-        const userToDelete = await runQuery("SELECT username FROM users WHERE id = ?", [userId], 'get');
-        if (userToDelete && userToDelete.username === 'admin') {
-            return res.status(400).json({ error: 'Нельзя удалить главного администратора' });
-        }
-        await runQuery("DELETE FROM users WHERE id = ?", [userId], 'run');
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // --- Оборудование ---
 app.get('/api/equipment', requireAuth, async (req, res) => {
