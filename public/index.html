@@ -9,7 +9,7 @@
 <body>
 
     <!-- Оверлей авторизации -->
-    <div id="authOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; align-items: center; justify-content: center;">
+    <div id="authOverlay" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; align-items: center; justify-content: center;">
         <div style="background: #1e293b; border: 1px solid var(--border); padding: 32px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
             <h2 style="color: #fff; margin-bottom: 20px; text-align: center; font-size: 20px;">🔐 Вход в систему</h2>
             <form id="authForm">
@@ -95,9 +95,7 @@
                                 <th style="padding: 10px; text-align: right;">Действия</th>
                             </tr>
                         </thead>
-                        <tbody id="usersTableBody">
-                            <!-- Список пользователей подгружается динамически -->
-                        </tbody>
+                        <tbody id="usersTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -124,9 +122,7 @@
                                 <th style="padding: 10px; text-align: right;">Действия</th>
                             </tr>
                         </thead>
-                        <tbody id="equipmentTableBody">
-                            <!-- Оборудование подгружается динамически -->
-                        </tbody>
+                        <tbody id="equipmentTableBody"></tbody>
                     </table>
                 </div>
                 <div id="mobileEquipmentList" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px;"></div>
@@ -134,7 +130,7 @@
         </main>
     </div>
 
-    <!-- Модальное окно пользователя (С выровненными чекбоксами и новым пунктом view_only) -->
+    <!-- Модальное окно пользователя (с выровненными правами и view_only) -->
     <div id="userModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
         <div class="modal-content" style="background: #1e293b; border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
             <h3 id="userModalTitle" style="color: #fff; margin-bottom: 16px; font-size: 18px;">👤 Пользователь</h3>
@@ -160,33 +156,26 @@
                     </select>
                 </div>
 
-                <!-- Блок прав с ровными строками -->
                 <div id="permissionsGroup" style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600;">Права доступа:</label>
                     
                     <div style="display: flex; flex-direction: column; gap: 8px; background: #0f172a; padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-                        
-                        <!-- Новый пункт: Просмотр без прав редактирования -->
                         <label style="display: flex; align-items: center; gap: 10px; color: #fff; font-size: 13px; cursor: pointer;">
                             <input type="checkbox" class="perm-checkbox" value="view_only" style="width: 16px; height: 16px; accent-color: #38bdf8;">
                             👁️ Просмотр сайта (без прав редактирования и удаления)
                         </label>
-
                         <label style="display: flex; align-items: center; gap: 10px; color: #fff; font-size: 13px; cursor: pointer;">
                             <input type="checkbox" class="perm-checkbox" value="equipment" style="width: 16px; height: 16px; accent-color: #38bdf8;">
                             ⚖️ Реестр оборудования (Весы)
                         </label>
-
                         <label style="display: flex; align-items: center; gap: 10px; color: #fff; font-size: 13px; cursor: pointer;">
                             <input type="checkbox" class="perm-checkbox" value="doc" style="width: 16px; height: 16px; accent-color: #38bdf8;">
                             📄 Документы
                         </label>
-
                         <label style="display: flex; align-items: center; gap: 10px; color: #fff; font-size: 13px; cursor: pointer;">
                             <input type="checkbox" class="perm-checkbox" value="image" style="width: 16px; height: 16px; accent-color: #38bdf8;">
                             🖼️ Фотографии
                         </label>
-
                         <label style="display: flex; align-items: center; gap: 10px; color: #fff; font-size: 13px; cursor: pointer;">
                             <input type="checkbox" class="perm-checkbox" value="note" style="width: 16px; height: 16px; accent-color: #38bdf8;">
                             📝 Заметки
@@ -202,13 +191,231 @@
         </div>
     </div>
 
-    <!-- Дополнительные скрытые модальные окна и скрипты -->
-    <div id="equipmentModal" class="modal-backdrop" style="display:none;"></div>
-    <div id="viewEquipmentModal" class="modal-backdrop" style="display:none;"></div>
-    <div id="maintenanceModal" class="modal-backdrop" style="display:none;"></div>
-    <div id="noteModal" class="modal-backdrop" style="display:none;"></div>
-    <div id="viewNoteModal" class="modal-backdrop" style="display:none;"></div>
-    <div id="backupModal" class="modal-backdrop" style="display:none;"></div>
+    <!-- Модальное окно добавления / редактирования оборудования -->
+    <div id="equipmentModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto; padding: 20px 0;">
+        <div class="modal-content" style="background: #1e293b; border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 id="eqModalTitle" style="color: #fff; margin-bottom: 16px; font-size: 18px;">➕ Оборудование</h3>
+            <form onsubmit="saveEquipment(event)">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Наименование:*</label>
+                        <input type="text" id="eqName" required style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Заводской номер:</label>
+                        <input type="text" id="eqSerial" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">№ в госреестре (ГСИ):</label>
+                        <input type="text" id="eqGsiNumber" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Владелец:</label>
+                        <input type="text" id="eqOwnerName" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Объект / Место:</label>
+                        <input type="text" id="eqLocation" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Дата установки:</label>
+                        <input type="date" id="eqInstallationDate" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">НПВ (Max):</label>
+                        <input type="text" id="eqCapacity" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">НмПВ (Min):</label>
+                        <input type="text" id="eqMinCapacity" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Дискретность (d):</label>
+                        <input type="text" id="eqDiscrete" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Тип АЦП:</label>
+                        <input type="text" id="eqAdcType" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Тип датчиков:</label>
+                        <input type="text" id="eqSensorType" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Кол-во платформ:</label>
+                        <input type="text" id="eqPlatformCount" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Режим взвешивания:</label>
+                        <input type="text" id="eqWeighingMode" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Номер свидетельства:</label>
+                        <input type="text" id="eqCertNumber" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Дата последней поверки:</label>
+                        <input type="date" id="eqLastVer" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Дата следующей поверки:</label>
+                        <input type="date" id="eqNextVer" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Статус:</label>
+                        <select id="eqStatus" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                            <option value="В эксплуатации">В эксплуатации</option>
+                            <option value="В ремонте">В ремонте</option>
+                            <option value="Выведен из эксплуатации">Выведен из эксплуатации</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Телефон:</label>
+                        <input type="text" id="eqPhone" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Email:</label>
+                        <input type="email" id="eqEmail" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Примечания:</label>
+                        <textarea id="eqNotes" rows="3" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                    <button type="button" class="btn" onclick="closeEquipmentModal()" style="background: #334155; padding: 8px 16px;">Отмена</button>
+                    <button type="submit" class="btn" style="background: #0284c7; padding: 8px 16px;">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно просмотра паспорта оборудования -->
+    <div id="viewEquipmentModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto; padding: 20px 0;">
+        <div class="modal-content" style="background: #1e293b; border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 100%; max-width: 700px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 id="viewEqName" style="color: #fff; font-size: 18px; margin: 0;">Паспорт весов</h3>
+                <span id="viewEqBadge" style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">В эксплуатации</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; background: #0f172a; padding: 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
+                <div><strong style="color: var(--text-muted);">Заводской номер:</strong> <span id="viewEqSerial" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">№ в госреестре (ГСИ):</strong> <span id="viewEqGsiNumber" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Владелец:</strong> <span id="viewEqOwnerName" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Объект / Место:</strong> <span id="viewEqLocation" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Дата установки:</strong> <span id="viewEqInstallationDate" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">НПВ (Max):</strong> <span id="viewEqCapacity" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">НмПВ (Min):</strong> <span id="viewEqMinCapacity" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Дискретность (d):</strong> <span id="viewEqDiscrete" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Тип АЦП:</strong> <span id="viewEqAdcType" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Тип датчиков:</strong> <span id="viewEqSensorType" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Кол-во платформ:</strong> <span id="viewEqPlatformCount" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Режим взвешивания:</strong> <span id="viewEqWeighingMode" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Номер свидетельства:</strong> <span id="viewEqCertNumber" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Последняя поверка:</strong> <span id="viewEqLastVer" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Следующая поверка:</strong> <span id="viewEqNextVer" style="color: #fff;">-</span></div>
+                <div><strong style="color: var(--text-muted);">Телефон:</strong> <span id="viewEqPhone" style="color: #fff;">-</span></div>
+                <div style="grid-column: span 2;"><strong style="color: var(--text-muted);">Email:</strong> <span id="viewEqEmail" style="color: #fff;">-</span></div>
+                <div style="grid-column: span 2;"><strong style="color: var(--text-muted);">Примечания:</strong> <span id="viewEqNotes" style="color: #fff;">-</span></div>
+            </div>
+
+            <!-- Блок журнала обслуживания -->
+            <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h4 style="color: #fff; font-size: 14px; margin: 0;">Журнал обслуживания и ремонтов</h4>
+                    <button class="btn" onclick="openMaintenanceModal()" style="background: #0284c7; padding: 4px 10px; font-size: 11px;">➕ Добавить запись</button>
+                </div>
+                <div id="maintenanceListContainer" style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn" onclick="printPassport()" style="background: #334155; padding: 8px 16px;">🖨️ Печать</button>
+                <button type="button" class="btn" id="btnEditFromView" style="background: #0284c7; padding: 8px 16px;">✏️ Редактировать</button>
+                <button type="button" class="btn" onclick="closeViewEquipmentModal()" style="background: #1e293b; border: 1px solid var(--border); padding: 8px 16px;">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления записи обслуживания -->
+    <div id="maintenanceModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1100; align-items: center; justify-content: center;">
+        <div class="modal-content" style="background: #1e293b; border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="color: #fff; margin-bottom: 16px; font-size: 16px;">➕ Запись обслуживания</h3>
+            <form onsubmit="saveMaintenance(event)">
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Вид работ:*</label>
+                    <input type="text" id="maintWorkType" required placeholder="Например: Калибровка, Ремонт..." style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Дата проведения:*</label>
+                    <input type="date" id="maintDate" required style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Описание работ:</label>
+                    <textarea id="maintDesc" rows="2" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Исполнитель:</label>
+                    <input type="text" id="maintPerformedBy" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn" onclick="closeMaintenanceModal()" style="background: #334155; padding: 6px 12px; font-size: 12px;">Отмена</button>
+                    <button type="submit" class="btn" style="background: #0284c7; padding: 6px 12px; font-size: 12px;">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно создания заметки -->
+    <div id="noteModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="modal-content" style="background: #1e293b; border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="color: #fff; margin-bottom: 16px; font-size: 18px;">📝 Новая заметка</h3>
+            <form onsubmit="saveNote(event)">
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Заголовок:*</label>
+                    <input type="text" id="noteNameInput" required style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Содержимое:*</label>
+                    <textarea id="noteContentInput" rows="5" required style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn" onclick="closeModals()" style="background: #334155; padding: 8px 16px;">Отмена</button>
+                    <button type="submit" class="btn" style="background: #0284c7; padding: 8px 16px;">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно просмотра / редактирования заметки -->
+    <div id="viewNoteModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="modal-content" style="background: #1e293b; border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="color: #fff; margin-bottom: 16px; font-size: 18px;">📝 Просмотр заметки</h3>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Заголовок:</label>
+                <input type="text" id="viewNoteNameInput" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;">
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Содержимое:</label>
+                <textarea id="viewNoteContentInput" rows="5" style="width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+            </div>
+            <div id="viewNoteDate" style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px;"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn" onclick="updateExistingNote()" style="background: #0284c7; padding: 8px 16px;">Обновить</button>
+                <button type="button" class="btn" onclick="closeViewNoteModal()" style="background: #334155; padding: 8px 16px;">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно бэкапа -->
+    <div id="backupModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="modal-content" style="background: #1e293b; border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="color: #fff; margin-bottom: 16px; font-size: 18px;">💾 Резервная копия</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Управление бэкапами базы данных и файлов.</p>
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn" onclick="closeBackupModal()" style="background: #334155; padding: 8px 16px;">Закрыть</button>
+            </div>
+        </div>
+    </div>
 
     <script src="/js/script.js"></script>
 </body>
