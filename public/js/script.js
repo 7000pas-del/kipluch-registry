@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadEquipment();
         loadArchiveContent();
         updateCounters();
-        loadUsersList(); // Автоматически загружаем пользователей для админки
+        loadUsersList();
     }
 
     const authForm = document.getElementById('authForm');
@@ -199,7 +199,7 @@ function openUserModal(editData = null) {
     const roleInput = document.getElementById('userRoleInput');
     const permCheckboxes = document.querySelectorAll('.perm-checkbox');
 
-    if (editData) {
+    if (editData && editData.id) {
         if (title) title.textContent = '✏️ Редактировать пользователя';
         if (idInput) idInput.value = editData.id;
         if (loginInput) loginInput.value = editData.username || '';
@@ -237,6 +237,8 @@ function openUserModal(editData = null) {
 
 function closeUserModal() {
     const modal = document.getElementById('userModal');
+    const idInput = document.getElementById('userIdInput');
+    if (idInput) idInput.value = '';
     if (modal) modal.style.display = 'none';
 }
 
@@ -261,7 +263,8 @@ async function saveUser(event) {
     if (event) event.preventDefault();
     const currentUser = getCurrentUser();
 
-    const id = document.getElementById('userIdInput')?.value;
+    const idInput = document.getElementById('userIdInput');
+    const id = idInput ? idInput.value.trim() : '';
     const username = document.getElementById('userLoginInput')?.value.trim();
     const password = document.getElementById('userPasswordInput')?.value.trim();
     const role = document.getElementById('userRoleInput')?.value || 'user';
@@ -276,7 +279,7 @@ async function saveUser(event) {
         return;
     }
 
-    const isEdit = !!id;
+    const isEdit = !!id && id !== '';
     const url = isEdit ? `/api/users/${id}` : '/api/users';
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -353,7 +356,6 @@ function renderEquipment(data) {
 
         const statusClass = status.toLowerCase().includes('выведен') || status.toLowerCase().includes('ремонт') ? 'badge-status badge-warning' : 'badge-status badge-ok';
 
-        // Верстка для ПК (таблица)
         if (tableBody) {
             const row = document.createElement('tr');
             row.style.cursor = 'pointer';
@@ -378,7 +380,6 @@ function renderEquipment(data) {
             tableBody.appendChild(row);
         }
 
-        // Верстка для мобильных карточек
         if (mobileContainer) {
             const card = document.createElement('div');
             card.className = 'mobile-eq-card';
