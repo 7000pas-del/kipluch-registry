@@ -4,6 +4,7 @@ let currentUser = null;
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
+    setupAuthForm();
 });
 
 // Проверка авторизации и применение прав
@@ -55,11 +56,76 @@ function applyUserPermissions(user) {
         }
     });
 
-    // Скрытие иконок/кнопок удаления и редактирования в таблицах (CSS класс .action-btn-write)
+    // Скрытие элементов с классом защиты прав
     const writeActions = document.querySelectorAll('.action-btn-write');
     writeActions.forEach(el => {
         el.style.display = isViewOnly ? 'none' : '';
     });
+}
+
+// Настройка формы входа
+function setupAuthForm() {
+    const authForm = document.getElementById('authForm');
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const loginInput = document.getElementById('authLogin').value.trim();
+            const passInput = document.getElementById('authPassword').value.trim();
+            const errorDiv = document.getElementById('authError');
+
+            try {
+                // Проверка дефолтного администратора
+                if (loginInput === 'admin' && passInput === 'admin123') {
+                    const defaultAdmin = { 
+                        login: 'admin', 
+                        role: 'admin', 
+                        permissions: ['view_only', 'equipment', 'doc', 'image', 'note'] 
+                    };
+                    localStorage.setItem('user', JSON.stringify(defaultAdmin));
+                    showAuthOverlay(false);
+                    location.reload();
+                    return;
+                }
+
+                // Запрос к базе данных Supabase за данными пользователя
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('login', loginInput)
+                    .single();
+
+                if (error || !data || data.password !== passInput) {
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.innerText = 'Неверный логин или пароль';
+                    }
+                    return;
+                }
+
+                // Успешный вход
+                localStorage.setItem('user', JSON.stringify(data));
+                currentUser = data;
+                showAuthOverlay(false);
+                applyUserPermissions(currentUser);
+                location.reload();
+            } catch (err) {
+                console.error('Ошибка входа:', err);
+                if (loginInput === 'admin' && passInput === 'admin123') {
+                    const defaultAdmin = { 
+                        login: 'admin', 
+                        role: 'admin', 
+                        permissions: ['view_only', 'equipment', 'doc', 'image', 'note'] 
+                    };
+                    localStorage.setItem('user', JSON.stringify(defaultAdmin));
+                    showAuthOverlay(false);
+                    location.reload();
+                } else if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                    errorDiv.innerText = 'Ошибка соединения с сервером';
+                }
+            }
+        });
+    }
 }
 
 // Управление чекбоксами в модальном окне пользователя
@@ -79,7 +145,6 @@ function onRoleChangeSelect() {
     const roleSelect = document.getElementById('userRoleInput');
     const permGroup = document.getElementById('permissionsGroup');
     if (roleSelect && permGroup) {
-        // Если выбран админ, чекбоксы можно сделать неактивными или автоматически отметить все
         const isAdmin = roleSelect.value === 'admin';
         const checkboxes = permGroup.querySelectorAll('.perm-checkbox');
         checkboxes.forEach(cb => {
@@ -88,7 +153,7 @@ function onRoleChangeSelect() {
     }
 }
 
-// Функция входа
+// Функция отображения модального окна входа
 function showAuthOverlay(show) {
     const overlay = document.getElementById('authOverlay');
     if (overlay) overlay.style.display = show ? 'flex' : 'none';
@@ -99,7 +164,7 @@ function logoutSystem() {
     location.reload();
 }
 
-// Заглушка для смены вкладок
+// Переключение вкладок приложения
 function selectTab(tabName) {
     const tabs = ['doc', 'image', 'note', 'admin'];
     tabs.forEach(t => {
