@@ -82,12 +82,19 @@ function checkAuthUI() {
     const user = getCurrentUser();
     const authOverlay = document.getElementById('authOverlay');
     const currentUserBadge = document.getElementById('currentUserBadge');
+    const navAdmin = document.getElementById('navAdmin'); // Вкладка админки в меню
 
     if (user) {
         if (authOverlay) authOverlay.style.display = 'none';
         if (currentUserBadge) currentUserBadge.textContent = `👤 ${user.username} (${user.role})`;
+        
+        // Админка видна ТОЛЬКО администратору
+        if (navAdmin) {
+            navAdmin.style.display = (user.role === 'admin') ? 'block' : 'none';
+        }
     } else {
         if (authOverlay) authOverlay.style.display = 'flex';
+        if (navAdmin) navAdmin.style.display = 'none';
     }
 }
 
@@ -136,7 +143,7 @@ async function updateCounters() {
 // --- Управление пользователями (Админ-панель) ---
 async function loadUsersList() {
     const user = getCurrentUser();
-    if (!user) return;
+    if (!user || user.role !== 'admin') return;
 
     try {
         const res = await fetch('/api/users', {
@@ -273,17 +280,13 @@ async function saveUser(event) {
     const password = document.getElementById('userPasswordInput')?.value.trim();
     const role = document.getElementById('userRoleInput')?.value || 'user';
 
+    // Честный сбор актуального состояния всех чекбоксов прав
     const permissions = [];
-    document.querySelectorAll('.perm-checkbox:checked').forEach(cb => {
-        permissions.push(cb.value);
-    });
-
-    // Автостраховка: если права не собрались, но роль обычный пользователь — ставим полный набор по умолчанию
-    if (role === 'user' && permissions.length === 0) {
-        document.querySelectorAll('.perm-checkbox').forEach(cb => {
+    document.querySelectorAll('.perm-checkbox').forEach(cb => {
+        if (cb.checked) {
             permissions.push(cb.value);
-        });
-    }
+        }
+    });
 
     if (!username) {
         alert('Введите логин пользователя!');
@@ -357,6 +360,9 @@ function renderEquipment(data) {
 
     if (!data || data.length === 0) return;
 
+    const currentUser = getCurrentUser();
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
     data.forEach(item => {
         const name = item.name || item.model || item.title || 'Без названия';
         const serial = item.serialnumber || item.serialNumber || item.serial || '-';
@@ -376,6 +382,13 @@ function renderEquipment(data) {
 
             const itemJson = encodeURIComponent(JSON.stringify(item));
 
+            const actionButtonsHtml = isAdmin ? `
+                <td style="text-align: right; white-space: nowrap;">
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
+                </td>
+            ` : `<td style="text-align: right; color: var(--text-muted); font-size: 11px;">Только просмотр</td>`;
+
             row.innerHTML = `
                 <td><strong>${name}</strong></td>
                 <td>${serial}</td>
@@ -383,10 +396,7 @@ function renderEquipment(data) {
                 <td>${location}</td>
                 <td>${nextVer}</td>
                 <td><span class="${statusClass}" style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">${status}</span></td>
-                <td style="text-align: right; white-space: nowrap;">
-                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editEquipmentFromButton(event, '${itemJson}')">✏️</button>
-                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
-                </td>
+                ${actionButtonsHtml}
             `;
             tableBody.appendChild(row);
         }
@@ -397,15 +407,20 @@ function renderEquipment(data) {
             card.onclick = (e) => {
                 if (!e.target.closest('button')) viewEquipmentPassport(item.id);
             };
+
+            const mobileButtonsHtml = isAdmin ? `
+                <div>
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155;" onclick="editEquipmentFromButton(event, '${encodeURIComponent(JSON.stringify(item))}')">✏️</button>
+                    <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
+                </div>
+            ` : '';
+
             card.innerHTML = `
                 <div style="font-weight: 700; color: #fff; font-size: 14px;">${name}</div>
                 <div style="font-size: 12px; color: var(--text-muted);">Зав. №: ${serial} | Объект: ${location}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
                     <span style="padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">${status}</span>
-                    <div>
-                        <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155;" onclick="editEquipmentFromButton(event, '${encodeURIComponent(JSON.stringify(item))}')">✏️</button>
-                        <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteEquipment(event, ${item.id})">🗑️</button>
-                    </div>
+                    ${mobileButtonsHtml}
                 </div>
             `;
             mobileContainer.appendChild(card);
@@ -444,12 +459,18 @@ async function viewEquipmentPassport(id) {
 
     await loadMaintenanceRecords(item.id);
 
+    const currentUser = getCurrentUser();
     const btnEdit = document.getElementById('btnEditFromView');
     if (btnEdit) {
-        btnEdit.onclick = () => {
-            closeViewEquipmentModal();
-            openEquipmentModal(item);
-        };
+        if (currentUser && currentUser.role === 'admin') {
+            btnEdit.style.display = 'inline-flex';
+            btnEdit.onclick = () => {
+                closeViewEquipmentModal();
+                openEquipmentModal(item);
+            };
+        } else {
+            btnEdit.style.display = 'none';
+        }
     }
 
     const modal = document.getElementById('viewEquipmentModal');
@@ -614,11 +635,16 @@ async function loadMaintenanceRecords(equipmentId) {
             return;
         }
 
+        const currentUser = getCurrentUser();
+        const isAdmin = currentUser && currentUser.role === 'admin';
+
         records.forEach(rec => {
             const workType = rec.workType || rec.worktype || 'Работа';
             const maintDate = rec.maintDate || rec.maintdate || rec.date || '';
             const description = rec.description || rec.desc || '';
             const performedBy = rec.performedBy || rec.performedby || '-';
+
+            const deleteBtnHtml = isAdmin ? `<button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteMaintenance(${rec.id})">🗑️</button>` : '';
 
             const div = document.createElement('div');
             div.style.cssText = 'background: #0f172a; border: 1px solid var(--border); padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: flex-start; font-size: 12px;';
@@ -628,7 +654,7 @@ async function loadMaintenanceRecords(equipmentId) {
                     <div style="color: var(--text-main); margin-top: 2px;">${description}</div>
                     <div style="color: #38bdf8; font-size: 11px; margin-top: 2px;">Исполнитель: ${performedBy}</div>
                 </div>
-                <button class="btn" type="button" style="padding: 2px 6px; font-size: 10px; background: #ef4444;" onclick="deleteMaintenance(${rec.id})">🗑️</button>
+                ${deleteBtnHtml}
             `;
             container.appendChild(div);
         });
@@ -728,9 +754,17 @@ function selectTab(tabName) {
     if (btnPhoto) btnPhoto.style.display = 'none';
     if (btnDoc) btnDoc.style.display = 'none';
 
+    const currentUser = getCurrentUser();
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
     if (tabName === 'admin') {
-        if (adminSection) adminSection.style.display = 'flex';
-        loadUsersList();
+        if (isAdmin) {
+            if (adminSection) adminSection.style.display = 'flex';
+            loadUsersList();
+        } else {
+            selectTab('doc'); // Защита от прямого доступа
+            return;
+        }
     } else if (tabName === 'doc' || tabName === 'image' || tabName === 'note') {
         if (contentSection) contentSection.style.display = 'flex';
         
@@ -738,11 +772,11 @@ function selectTab(tabName) {
         if (titleEl) {
             if (tabName === 'doc') {
                 titleEl.textContent = '📄 Документы';
-                if (btnDoc) btnDoc.style.display = 'inline-flex';
+                if (btnDoc) btnDoc.style.display = isAdmin ? 'inline-flex' : 'none';
             }
             if (tabName === 'image') {
                 titleEl.textContent = '🖼️ Фотографии';
-                if (btnPhoto) btnPhoto.style.display = 'inline-flex';
+                if (btnPhoto) btnPhoto.style.display = isAdmin ? 'inline-flex' : 'none';
             }
             if (tabName === 'note') {
                 titleEl.textContent = '📝 Заметки';
@@ -875,13 +909,18 @@ function renderFoldersAndFiles(folders, files) {
         filesContainer.appendChild(hintDiv);
     }
 
+    const currentUser = getCurrentUser();
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
     if (folders && folders.length > 0) {
         folders.forEach(folder => {
+            const deleteFolderBtn = isAdmin ? `<button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFolder(${folder.id})">🗑️</button>` : '';
+
             const div = document.createElement('div');
             div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
             div.innerHTML = `
                 <span style="color: #fff; cursor: pointer; font-weight: 600;" onclick="openFolder(${folder.id})">📁 ${folder.name}</span>
-                <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFolder(${folder.id})">🗑️</button>
+                ${deleteFolderBtn}
             `;
             container.appendChild(div);
         });
@@ -901,13 +940,15 @@ function renderFoldersAndFiles(folders, files) {
                 ? `<button class="btn" type="button" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px;" onclick="window.open('/uploads/${file.filename}', '_blank')">${actionText}</button>`
                 : `<a href="/uploads/${file.filename}" download="${file.name}" class="btn" style="background: ${actionBg}; padding: 4px 8px; font-size: 11px; text-decoration: none; color: #fff; display: inline-flex; align-items: center;">${actionText}</a>`;
 
+            const deleteFileBtn = isAdmin ? `<button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFile(${file.id})">🗑️</button>` : '';
+
             div.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1;">
                     <span style="color: #38bdf8; font-weight: 500;">📄 ${file.name}</span>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     ${actionHtml}
-                    <button class="btn" type="button" style="background: #ef4444; padding: 4px 8px; font-size: 11px;" onclick="deleteFile(${file.id})">🗑️</button>
+                    ${deleteFileBtn}
                 </div>
             `;
             filesContainer.appendChild(div);
@@ -995,7 +1036,12 @@ function renderNotes(notes) {
     if (!container) return;
     container.innerHTML = '';
 
+    const currentUser = getCurrentUser();
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
     notes.forEach(note => {
+        const deleteNoteBtn = isAdmin ? `<button class="btn" type="button" style="background: #ef4444; padding: 2px 6px; font-size: 10px;" onclick="deleteNote(event, ${note.id})">🗑️</button>` : '';
+
         const div = document.createElement('div');
         div.style.cssText = 'background: #1e293b; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s;';
         div.onmouseover = () => div.style.borderColor = 'var(--accent)';
@@ -1010,7 +1056,7 @@ function renderNotes(notes) {
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <strong style="color: #fff;">📝 ${note.title || 'Без названия'}</strong>
-                <button class="btn" type="button" style="background: #ef4444; padding: 2px 6px; font-size: 10px;" onclick="deleteNote(event, ${note.id})">🗑️</button>
+                ${deleteNoteBtn}
             </div>
             <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap; max-height: 80px; overflow: hidden; text-overflow: ellipsis;">${note.content || ''}</div>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">📅 ${note.date || ''}</div>
