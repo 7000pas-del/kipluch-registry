@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadEquipment();
         loadArchiveContent();
         updateCounters();
+        loadUsersList(); // Автоматически загружаем пользователей для админки
     }
 
     const authForm = document.getElementById('authForm');
@@ -60,6 +61,7 @@ async function performLogin() {
         loadEquipment();
         loadArchiveContent();
         updateCounters();
+        loadUsersList();
     } catch (err) {
         if (errorDiv) {
             errorDiv.style.display = 'block';
@@ -128,6 +130,190 @@ async function updateCounters() {
         }
     } catch (err) {
         console.error('Ошибка счетчиков:', err);
+    }
+}
+
+// --- Управление пользователями (Админ-панель) ---
+async function loadUsersList() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    try {
+        const res = await fetch('/api/users', {
+            headers: { 'x-auth-user': JSON.stringify(user) }
+        });
+        if (!res.ok) return;
+        const users = await res.json();
+        renderUsersTable(users);
+    } catch (err) {
+        console.error('Ошибка загрузки пользователей:', err);
+    }
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Нет пользователей</td></tr>';
+        return;
+    }
+
+    users.forEach(u => {
+        const tr = document.createElement('tr');
+        const roleBadge = u.role === 'admin' ? '<span style="color: #38bdf8; font-weight: 700;">Администратор</span>' : 'Пользователь';
+        
+        let permissionsText = 'Полный доступ';
+        if (u.role !== 'admin') {
+            try {
+                const perms = JSON.parse(u.permissions || '[]');
+                permissionsText = perms.length > 0 ? perms.join(', ') : 'Нет прав';
+            } catch (e) {
+                permissionsText = '-';
+            }
+        }
+
+        const userJson = encodeURIComponent(JSON.stringify(u));
+
+        tr.innerHTML = `
+            <td><strong>${u.username}</strong></td>
+            <td>${roleBadge}</td>
+            <td style="font-size: 11px; color: var(--text-muted);">${permissionsText}</td>
+            <td style="text-align: right; white-space: nowrap;">
+                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #334155; margin-right: 4px;" onclick="editUserFromButton('${userJson}')">✏️</button>
+                <button class="btn" type="button" style="padding: 4px 8px; font-size: 11px; background: #ef4444;" onclick="deleteUser(${u.id})">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function openUserModal(editData = null) {
+    const modal = document.getElementById('userModal');
+    const title = document.getElementById('userModalTitle');
+    const idInput = document.getElementById('userIdInput');
+    const loginInput = document.getElementById('userLoginInput');
+    const passwordInput = document.getElementById('userPasswordInput');
+    const passwordLabel = document.getElementById('userPasswordLabel');
+    const roleInput = document.getElementById('userRoleInput');
+    const permCheckboxes = document.querySelectorAll('.perm-checkbox');
+
+    if (editData) {
+        if (title) title.textContent = '✏️ Редактировать пользователя';
+        if (idInput) idInput.value = editData.id;
+        if (loginInput) loginInput.value = editData.username || '';
+        if (passwordInput) {
+            passwordInput.value = '';
+            passwordInput.placeholder = 'Оставьте пустым, чтобы не менять';
+        }
+        if (passwordLabel) passwordLabel.textContent = 'Новый пароль (опционально):';
+        if (roleInput) roleInput.value = editData.role || 'user';
+
+        let userPerms = [];
+        try {
+            userPerms = JSON.parse(editData.permissions || '[]');
+        } catch (e) {}
+
+        permCheckboxes.forEach(cb => {
+            cb.checked = userPerms.includes(cb.value);
+        });
+    } else {
+        if (title) title.textContent = '➕ Новый пользователь';
+        if (idInput) idInput.value = '';
+        if (loginInput) loginInput.value = '';
+        if (passwordInput) {
+            passwordInput.value = '';
+            passwordInput.placeholder = '••••••••';
+        }
+        if (passwordLabel) passwordLabel.textContent = 'Пароль:*';
+        if (roleInput) roleInput.value = 'user';
+        permCheckboxes.forEach(cb => cb.checked = true);
+    }
+
+    onRoleChangeSelect();
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeUserModal() {
+    const modal = document.getElementById('userModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function onRoleChangeSelect() {
+    const role = document.getElementById('userRoleInput')?.value;
+    const permGroup = document.getElementById('permissionsGroup');
+    if (permGroup) {
+        permGroup.style.display = role === 'admin' ? 'none' : 'block';
+    }
+}
+
+function editUserFromButton(encodedUser) {
+    try {
+        const user = JSON.parse(decodeURIComponent(encodedUser));
+        openUserModal(user);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function saveUser(event) {
+    if (event) event.preventDefault();
+    const currentUser = getCurrentUser();
+
+    const id = document.getElementById('userIdInput')?.value;
+    const username = document.getElementById('userLoginInput')?.value.trim();
+    const password = document.getElementById('userPasswordInput')?.value.trim();
+    const role = document.getElementById('userRoleInput')?.value || 'user';
+
+    const permissions = [];
+    document.querySelectorAll('.perm-checkbox:checked').forEach(cb => {
+        permissions.push(cb.value);
+    });
+
+    if (!username) {
+        alert('Введите логин пользователя!');
+        return;
+    }
+
+    const isEdit = !!id;
+    const url = isEdit ? `/api/users/${id}` : '/api/users';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    const payload = { username, password, role, permissions };
+
+    try {
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json', 'x-auth-user': JSON.stringify(currentUser) },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка сохранения пользователя');
+
+        closeUserModal();
+        loadUsersList();
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+}
+
+async function deleteUser(id) {
+    if (!confirm('Удалить этого пользователя?')) return;
+    const currentUser = getCurrentUser();
+
+    try {
+        const res = await fetch(`/api/users/${id}`, {
+            method: 'DELETE',
+            headers: { 'x-auth-user': JSON.stringify(currentUser) }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка удаления');
+
+        loadUsersList();
+    } catch (err) {
+        alert('Не удалось удалить: ' + err.message);
     }
 }
 
@@ -532,6 +718,7 @@ function selectTab(tabName) {
 
     if (tabName === 'admin') {
         if (adminSection) adminSection.style.display = 'flex';
+        loadUsersList();
     } else if (tabName === 'doc' || tabName === 'image' || tabName === 'note') {
         if (contentSection) contentSection.style.display = 'flex';
         
@@ -669,7 +856,6 @@ function renderFoldersAndFiles(folders, files) {
         if (banner) banner.style.display = 'none';
     }
 
-    // Информационная подсказка вверху списка документов
     if (window.currentTab === 'doc') {
         const hintDiv = document.createElement('div');
         hintDiv.style.cssText = 'background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #38bdf8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;';
